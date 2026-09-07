@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Production build
+dist/
+build/
+*.tsbuildinfo
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+
+# Storage & Uploads (large generated scans and SQLite database)
+storage/
+storage/pages/
+storage/preprocessed/
+storage/uploads/
+storage/exports/
+*.db
+*.db-wal
+*.db-shm
+
+# OCR Models (Large Binary Files)
+*.traineddata
+
+# Logs & Temporary Files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
