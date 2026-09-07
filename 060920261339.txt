@@ -1,0 +1,1751 @@
+# 🕉️ PUJA GRANTH DIGITIZER
+
+## Master Full-Proof Development Prompt for Antigravity Agent
+
+You are the lead software architect, senior full-stack engineer, OCR/document-processing engineer, Sanskrit/Devanagari text-processing specialist, QA engineer, and product designer responsible for building this application end-to-end.
+
+The application is a **high-accuracy Puja Book / Sanskrit-Hindi Scripture Digitization and Verification System**.
+
+The primary objective is:
+
+> Take scanned Puja books, Sanskrit/Hindi religious books, PDFs, page images, or photographs and convert them into clean, structured, searchable, editable digital text while preserving the original scripture exactly and preventing OCR/AI hallucinations or silent textual alterations.
+
+This is a **text-fidelity-first application**.
+
+The system must NEVER prioritize visual cleanliness over source accuracy.
+
+---
+
+# 1. CORE PRODUCT PRINCIPLE
+
+The application must follow this absolute rule:
+
+> **NEVER silently change, invent, complete, normalize, translate, paraphrase, or hallucinate scripture text.**
+
+OCR output is NOT automatically considered authoritative.
+
+The original scanned/image source is the authority.
+
+Whenever the system is uncertain, it must explicitly mark the text for human verification.
+
+For religious/scriptural content:
+
+```text
+SOURCE IMAGE
+     ↓
+OCR
+     ↓
+VALIDATION
+     ↓
+CONFIDENCE ANALYSIS
+     ↓
+HUMAN VERIFICATION WHEN REQUIRED
+     ↓
+FINAL VERIFIED TEXT
+```
+
+Never:
+
+```text
+SOURCE IMAGE
+     ↓
+AI guesses what the verse probably says
+     ↓
+silently modifies it
+```
+
+---
+
+# 2. IMPORTANT TERMINOLOGY
+
+Use the product name:
+
+**Puja Granth Digitizer**
+
+Do NOT rename the application unnecessarily.
+
+The application should feel like a professional document digitization and scripture preservation system, not a generic OCR demo.
+
+---
+
+# 3. FIRST TASK — REPOSITORY / ENVIRONMENT AUDIT
+
+Before writing or modifying code:
+
+1. Inspect the complete existing project.
+2. Identify:
+
+   * framework
+   * frontend
+   * backend
+   * database
+   * package manager
+   * existing OCR implementation
+   * existing authentication
+   * existing file upload system
+   * existing PDF handling
+   * existing AI integrations
+   * existing UI components
+   * environment variables
+   * build scripts
+   * test setup
+3. Understand the current architecture.
+4. Reuse existing infrastructure where appropriate.
+5. Do NOT rewrite the entire project unnecessarily.
+6. Do NOT create duplicate systems.
+7. Do NOT introduce mock implementations.
+8. Do NOT remove working functionality without justification.
+9. Create a concise internal implementation plan before major changes.
+10. Then implement incrementally.
+
+If the repository already contains an application, upgrade it instead of creating a disconnected second application.
+
+---
+
+# 4. ZERO-MOCK / ZERO-FAKE DATA POLICY
+
+This is a production-oriented application.
+
+STRICTLY PROHIBITED:
+
+* mock OCR results
+* fake extracted text
+* random confidence values
+* placeholder scripture
+* fake API responses
+* hardcoded sample books presented as real data
+* synthetic OCR output
+* fake verification status
+* fake processing progress
+* fake search results
+
+If an external service is unavailable:
+
+Show a real error/state such as:
+
+```text
+OCR service unavailable.
+Please retry or configure an OCR provider.
+```
+
+Never silently fall back to fake data.
+
+Demo/sample data may exist ONLY if clearly labeled as DEMO and isolated from real user data.
+
+---
+
+# 5. PRIMARY USER WORKFLOW
+
+The complete workflow should be:
+
+```text
+Create Project
+      ↓
+Upload Book
+      ↓
+Detect / Process Pages
+      ↓
+Image Preprocessing
+      ↓
+OCR
+      ↓
+Language Detection
+      ↓
+Text Segmentation
+      ↓
+Devanagari Validation
+      ↓
+Confidence Analysis
+      ↓
+Potential OCR Error Detection
+      ↓
+Human Verification
+      ↓
+Structured Formatting
+      ↓
+Final Book
+      ↓
+Export / Search / Read
+```
+
+---
+
+# 6. INPUT SUPPORT
+
+Support:
+
+### Documents
+
+* PDF
+* scanned PDF
+* image-based PDF
+
+### Images
+
+* PNG
+* JPG/JPEG
+* WEBP
+* TIFF where technically feasible
+
+### Future extensibility
+
+Architect the ingestion layer so that additional document types can be added without redesigning the entire pipeline.
+
+---
+
+# 7. IMAGE PREPROCESSING PIPELINE
+
+Before OCR, provide a robust preprocessing pipeline.
+
+Possible operations:
+
+* resolution detection
+* DPI analysis
+* grayscale conversion
+* contrast enhancement
+* denoising
+* deskew
+* rotation correction
+* crop detection
+* border removal
+* background cleanup
+* adaptive thresholding
+* illumination correction
+* page orientation detection
+* text-region detection
+
+Do NOT permanently modify the original source.
+
+Maintain:
+
+```text
+ORIGINAL IMAGE
+PREPROCESSED IMAGE
+OCR OUTPUT
+VERIFIED OUTPUT
+```
+
+as separate logical stages.
+
+The original must always remain recoverable.
+
+---
+
+# 8. OCR ARCHITECTURE
+
+Create an OCR abstraction layer.
+
+Do not tightly couple the entire application to one OCR provider.
+
+Example conceptual architecture:
+
+```text
+OCRService
+   ├── Provider A
+   ├── Provider B
+   ├── Local OCR
+   └── Future Provider
+```
+
+The system must be capable of supporting high-quality Devanagari OCR.
+
+Language targets:
+
+* Sanskrit
+* Hindi
+* Devanagari
+* Sanskrit/Hindi mixed documents
+
+Where possible, preserve OCR metadata such as:
+
+* word confidence
+* line confidence
+* block confidence
+* bounding boxes
+* page number
+* OCR engine/provider
+* processing timestamp
+
+---
+
+# 9. DEVANAGARI / UNICODE FIDELITY
+
+This is one of the highest-priority requirements.
+
+The application must use proper Unicode text handling.
+
+Do NOT treat Devanagari as visually interchangeable ASCII strings.
+
+Pay special attention to:
+
+* मात्राएँ
+* अनुस्वार
+* अनुनासिक / चंद्रबिंदु
+* विसर्ग
+* हलन्त / ्
+* नुक्ता
+* रेफ
+* रकार
+* संयुक्ताक्षर
+* ॐ
+* ऽ
+* ।
+* ॥
+* Sanskrit vowels
+* ऋ
+* ॠ
+* ऌ where encountered
+* ऎ / ऒ where encountered
+* ष
+* श
+* स
+* ण
+* न
+* ङ
+* ञ
+* ज्ञ
+* त्र
+* क्ष
+* श्र
+* and other conjuncts
+
+The system must correctly handle Unicode normalization without destroying meaningful script distinctions.
+
+Do not blindly normalize every string.
+
+---
+
+# 10. SANSKRIT / HINDI DISTINCTION
+
+The system should distinguish, where technically possible:
+
+```text
+Sanskrit
+Hindi
+Mixed Sanskrit + Hindi
+Unknown Devanagari
+```
+
+This classification must be advisory, not authoritative.
+
+Never alter text simply because a language model believes a Sanskrit form is grammatically preferable.
+
+Example:
+
+If OCR produces:
+
+```text
+रामाय
+```
+
+do NOT automatically change it to another grammatical form.
+
+If uncertain:
+
+```text
+⚠ Verification required
+```
+
+The source image remains authoritative.
+
+---
+
+# 11. PHONETIC / SCRIPTURAL SAFETY ENGINE
+
+Implement a dedicated validation layer for characters that can materially affect pronunciation or meaning.
+
+Pay special attention to:
+
+```text
+ं
+ँ
+ः
+्
+ऽ
+ा
+ि
+ी
+ु
+ू
+ृ
+ॄ
+े
+ै
+ो
+ौ
+```
+
+and consonant distinctions.
+
+The validator should detect suspicious OCR transformations such as:
+
+```text
+ं → ँ
+ः → ं
+श → ष
+ष → श
+स → श
+न → ण
+द → ध
+त → थ
+ब → व
+```
+
+These are examples of suspicious transformations, not automatic correction rules.
+
+The system should FLAG them for review rather than blindly changing them.
+
+---
+
+# 12. SCRIPTURE-SAFE OCR CORRECTION POLICY
+
+AI-assisted correction may be used only as a suggestion engine.
+
+Never allow:
+
+```text
+AI Suggested Correction
+        ↓
+Automatically overwrite verified scripture
+```
+
+Instead:
+
+```text
+OCR Text
+   ↓
+Potential issue detected
+   ↓
+Suggested correction
+   ↓
+Show source image
+   ↓
+Human accepts / rejects
+   ↓
+Verified text
+```
+
+Every correction must be auditable.
+
+Store:
+
+* original OCR
+* proposed correction
+* reason
+* confidence
+* user decision
+* timestamp
+* revision history
+
+---
+
+# 13. SIDE-BY-SIDE VERIFICATION UI
+
+This is a core feature.
+
+Create a verification workspace:
+
+```text
+┌─────────────────────────┬─────────────────────────┐
+│ ORIGINAL SOURCE         │ EXTRACTED TEXT          │
+│                         │                         │
+│ scanned page            │ Sanskrit/Hindi text     │
+│                         │                         │
+│ zoom / pan              │ editable                │
+│                         │                         │
+└─────────────────────────┴─────────────────────────┘
+```
+
+Required capabilities:
+
+* zoom image
+* pan image
+* page navigation
+* text editing
+* word-level or character-level issue highlighting
+* accept suggestion
+* reject suggestion
+* mark verified
+* mark unresolved
+* jump to next issue
+* jump to previous issue
+* save progress
+* keyboard shortcuts where practical
+
+---
+
+# 14. CONFIDENCE SYSTEM
+
+Create a transparent confidence model.
+
+Possible statuses:
+
+### 🟢 HIGH CONFIDENCE
+
+Likely accurate.
+
+### 🟡 REVIEW
+
+Potential OCR issue.
+
+### 🔴 CRITICAL REVIEW
+
+Possible meaningful textual change.
+
+### ⚪ UNPROCESSED
+
+OCR not completed.
+
+### 🔵 VERIFIED
+
+Human has verified against source.
+
+Do not fabricate numerical confidence.
+
+If provider confidence exists, preserve it.
+
+If the system calculates its own score, document the methodology and ensure it is deterministic/reproducible.
+
+---
+
+# 15. CHARACTER-LEVEL / WORD-LEVEL REVIEW
+
+Where technically possible, identify the exact suspicious region.
+
+Example:
+
+```text
+ॐ नमस्ते गणपतये
+          ^^^^^^^
+          REVIEW
+```
+
+Instead of merely saying:
+
+```text
+Page 14 contains an error.
+```
+
+The goal is to reduce human verification effort.
+
+---
+
+# 16. PAGE STRUCTURE DETECTION
+
+Detect document components such as:
+
+* title
+* subtitle
+* chapter
+* section
+* mantra
+* shloka
+* stotra
+* invocation
+* viniyoga
+* dhyana
+* nyasa
+* kavacha
+* main text
+* meaning/commentary
+* phalashruti
+* notes
+* footnotes
+* page number
+
+Detection must remain reversible.
+
+Never permanently change the OCR text while classifying structure.
+
+---
+
+# 17. SCRIPTURE FORMATTING ENGINE
+
+Create a structured document model.
+
+Example:
+
+```text
+Book
+ ├── Front Matter
+ ├── Chapter
+ │    ├── Title
+ │    ├── Invocation
+ │    ├── Mantra
+ │    ├── Shloka
+ │    ├── Meaning
+ │    └── Notes
+ └── End Matter
+```
+
+Formatting should be clean and professional.
+
+Support:
+
+* centered titles
+* proper verse spacing
+* paragraph spacing
+* indentation
+* section headings
+* verse numbering
+* page numbering
+* headers/footers
+* optional decorative separators
+* Devanagari-friendly fonts
+
+---
+
+# 18. DO NOT DESTROY ORIGINAL LINE STRUCTURE
+
+Original line structure can contain important information.
+
+Therefore maintain:
+
+```text
+Original OCR Layout
+```
+
+and separately:
+
+```text
+Clean Reading Layout
+```
+
+The user must be able to switch between them.
+
+---
+
+# 19. READING MODE
+
+Create a clean reading experience.
+
+Features:
+
+* distraction-free reading
+* adjustable font size
+* adjustable line height
+* Devanagari-friendly typography
+* light/dark/sepia reading mode if appropriate
+* chapter navigation
+* page navigation
+* search
+* bookmark
+* continue reading
+* verified/unverified indicator
+
+---
+
+# 20. SEARCH ENGINE
+
+Search across the entire digitized library.
+
+Support:
+
+* exact search
+* partial search
+* page search
+* book search
+* chapter search
+* Sanskrit/Hindi text search
+
+Search results should show:
+
+```text
+Book
+Chapter
+Page
+Matching text
+Verification status
+```
+
+Do not perform aggressive phonetic substitutions that can produce misleading results.
+
+If fuzzy search is implemented, label it clearly as fuzzy search.
+
+---
+
+# 21. LIBRARY
+
+Create a professional library dashboard:
+
+```text
+📚 My Puja Granths
+
+Book
+Author
+Language
+Pages
+Processing status
+Verification progress
+Last opened
+```
+
+Statuses:
+
+```text
+Uploaded
+Processing
+OCR Complete
+Review Required
+Partially Verified
+Fully Verified
+Exported
+```
+
+---
+
+# 22. BOOK DETAILS
+
+Each book should have:
+
+* title
+* author
+* source information
+* language
+* number of pages
+* OCR status
+* verification percentage
+* unresolved issue count
+* created date
+* modified date
+* export options
+
+---
+
+# 23. VERIFICATION PROGRESS
+
+Example:
+
+```text
+Verification Progress
+
+██████████████░░░░ 78%
+
+156 / 200 pages verified
+
+Issues remaining: 23
+Critical issues: 4
+```
+
+Progress must reflect real database/application state.
+
+Never fake progress.
+
+---
+
+# 24. REVISION HISTORY
+
+Every verified change should be traceable.
+
+Example:
+
+```text
+Page 42
+Original OCR:
+...
+
+Changed to:
+...
+
+Reason:
+OCR character mismatch
+
+Changed by:
+User
+
+Date:
+...
+
+Status:
+Verified
+```
+
+Provide undo/revision capability.
+
+---
+
+# 25. ORIGINAL SOURCE PRESERVATION
+
+Never overwrite the original uploaded file.
+
+Maintain:
+
+```text
+Original Source
+Processing Artifacts
+OCR Version
+Verified Version
+Export Version
+```
+
+The user should always be able to return to the original page.
+
+---
+
+# 26. EXPORT SYSTEM
+
+Support, where practical:
+
+### PDF
+
+Clean formatted PDF.
+
+### DOCX
+
+Editable Word document.
+
+### TXT
+
+Plain Unicode text.
+
+### Searchable PDF
+
+Original page + searchable text layer.
+
+### EPUB
+
+Future/extensible support if feasible.
+
+Exports must preserve Unicode correctly.
+
+Never replace Devanagari with transliteration unless the user explicitly requests transliteration.
+
+---
+
+# 27. SEARCHABLE PDF REQUIREMENT
+
+When creating searchable PDF:
+
+* retain original page appearance
+* add accurate invisible/searchable text layer
+* ensure Devanagari search works
+* preserve page mapping
+* avoid visually altering original page unnecessarily
+
+---
+
+# 28. AI USAGE RULES
+
+AI may help with:
+
+* layout classification
+* OCR error detection
+* confidence analysis
+* identifying suspicious characters
+* section classification
+* formatting suggestions
+
+AI must NOT autonomously:
+
+* rewrite scripture
+* improve grammar
+* paraphrase scripture
+* invent missing text
+* fill unreadable text from memory
+* replace source text with a known online version
+* "correct" Sanskrit according to grammar without source verification
+
+If the source is unreadable:
+
+```text
+[UNREADABLE — VERIFY FROM SOURCE]
+```
+
+is safer than guessing.
+
+---
+
+# 29. NO INTERNET RECONSTRUCTION BY DEFAULT
+
+Do NOT automatically search the internet to reconstruct missing scripture.
+
+For example, if a scanned mantra is unclear, the system must not search for a matching mantra online and silently substitute it.
+
+If a future feature provides reference texts, they must be shown as:
+
+```text
+REFERENCE TEXT
+```
+
+and never automatically replace:
+
+```text
+SOURCE TEXT
+```
+
+---
+
+# 30. OCR ERROR DETECTION
+
+Build rule-based and/or model-assisted detection for common Devanagari OCR problems.
+
+Potential categories:
+
+* missing matra
+* extra matra
+* wrong matra
+* incorrect conjunct
+* missing halant
+* incorrect anusvara
+* incorrect chandrabindu
+* incorrect visarga
+* incorrect danda
+* duplicated character
+* missing character
+* accidental Latin character
+* digit substitution
+* punctuation corruption
+* line merge
+* line split
+* column merge
+* header/footer contamination
+* page number contamination
+
+Flag — do not silently repair.
+
+---
+
+# 31. DOCUMENT LAYOUT PROTECTION
+
+Scanned religious books may contain:
+
+* multiple columns
+* decorative borders
+* footnotes
+* page headers
+* page footers
+* illustrations
+* tables
+* Sanskrit + Hindi side-by-side sections
+
+The OCR system must distinguish content from noise wherever technically possible.
+
+When uncertain, preserve the source and flag for review.
+
+---
+
+# 32. MULTI-PAGE CONTINUITY
+
+Handle verses and paragraphs crossing pages.
+
+The system should detect possible:
+
+```text
+Page N ends:
+...
+
+Page N+1 begins:
+...
+```
+
+and offer a continuity suggestion.
+
+Never merge text automatically if confidence is insufficient.
+
+---
+
+# 33. DATA MODEL
+
+Design a robust data model around concepts such as:
+
+```text
+Book
+Document
+Page
+Image
+OCRRun
+OCRBlock
+OCRLine
+OCRWord
+TextSegment
+Issue
+Correction
+Verification
+Revision
+Export
+User
+Project
+```
+
+Use IDs and relationships rather than storing the entire application state as one large blob.
+
+---
+
+# 34. API ARCHITECTURE
+
+Use clean service boundaries.
+
+Conceptually:
+
+```text
+/upload
+/books
+/books/:id
+/books/:id/pages
+/books/:id/process
+/books/:id/ocr
+/books/:id/issues
+/books/:id/verify
+/books/:id/revisions
+/books/:id/export
+/search
+```
+
+Adapt these to the actual project's framework rather than blindly creating these exact endpoints.
+
+Use proper validation and error handling.
+
+---
+
+# 35. FILE SECURITY
+
+Uploaded files must be handled safely.
+
+Implement:
+
+* file type validation
+* file size limits
+* safe filenames
+* path traversal protection
+* isolated processing
+* cleanup of temporary files
+* access control
+* secure storage
+* error handling for corrupt files
+
+Do not execute uploaded files.
+
+---
+
+# 36. PERFORMANCE
+
+Large books can contain hundreds of pages.
+
+Do not process everything synchronously if the existing architecture supports background jobs.
+
+Use:
+
+```text
+Upload
+ ↓
+Job creation
+ ↓
+Background processing
+ ↓
+Progress updates
+ ↓
+OCR complete
+ ↓
+Review
+```
+
+The UI should remain responsive.
+
+---
+
+# 37. RESUMABLE PROCESSING
+
+If processing fails at page 73 of 200:
+
+Do not restart unnecessarily from page 1.
+
+Store per-page processing status.
+
+Allow:
+
+```text
+Retry failed pages
+Resume processing
+Retry OCR
+```
+
+---
+
+# 38. ERROR HANDLING
+
+Never hide errors.
+
+Provide useful states:
+
+```text
+Upload failed
+OCR failed
+Page processing failed
+Unsupported format
+Corrupt PDF
+OCR provider unavailable
+Export failed
+Verification save failed
+```
+
+Give the user a useful next action.
+
+---
+
+# 39. UI / UX PRINCIPLES
+
+The interface should be:
+
+* clean
+* calm
+* professional
+* readable
+* minimal
+* accessible
+* responsive
+* optimized for long reading sessions
+
+Avoid excessive animations.
+
+Prioritize typography and content.
+
+---
+
+# 40. MAIN SCREENS
+
+Implement, as appropriate:
+
+### Dashboard
+
+```text
+My Puja Granths
+Recent Books
+Processing
+Needs Verification
+```
+
+### Upload
+
+```text
+Upload PDF / Images
+Book information
+Start Processing
+```
+
+### Processing
+
+```text
+Pages processed
+OCR progress
+Errors
+Current page
+```
+
+### Verification
+
+Side-by-side source and extracted text.
+
+### Reader
+
+Clean book reading experience.
+
+### Search
+
+Library-wide search.
+
+### Book Details
+
+Metadata + progress + actions.
+
+### Export
+
+Choose output format.
+
+---
+
+# 41. ACCESSIBILITY
+
+Support:
+
+* keyboard navigation
+* visible focus states
+* readable contrast
+* scalable text
+* screen-reader-friendly controls where practical
+* semantic HTML
+* accessible buttons
+* clear error messages
+
+---
+
+# 42. TYPOGRAPHY
+
+Use high-quality Unicode Devanagari fonts.
+
+Do not assume that every system font supports Sanskrit correctly.
+
+The application must gracefully handle:
+
+* glyph rendering
+* conjuncts
+* matras
+* punctuation
+* line breaking
+
+Avoid fonts that produce broken Devanagari shaping.
+
+---
+
+# 43. TEXT STORAGE
+
+Store text as Unicode.
+
+Never store Devanagari as:
+
+* images only
+* escaped ASCII approximations
+* transliteration-only representations
+
+Maintain UTF-8 throughout the stack wherever applicable.
+
+---
+
+# 44. TESTING — CRITICAL
+
+Create automated tests for:
+
+### Unicode
+
+Test:
+
+* ॐ
+* ॥
+* ः
+* ं
+* ँ
+* ऽ
+* ृ
+* ॄ
+* conjuncts
+
+### OCR transformations
+
+Test that suspicious transformations are detected.
+
+### Text integrity
+
+Verify that save/load/export does not corrupt characters.
+
+### PDF export
+
+Verify extracted Unicode text.
+
+### Search
+
+Verify Devanagari search.
+
+### Revision history
+
+Verify original and corrected versions remain distinct.
+
+### Verification
+
+Verify verified/unverified states.
+
+---
+
+# 45. GOLDEN TEST DATASET
+
+Create a small internal test dataset ONLY from legally usable or user-provided sample material.
+
+For each sample:
+
+```text
+Source Image
+Expected Unicode Text
+Expected Structure
+Expected Critical Characters
+```
+
+Use this to regression-test OCR processing.
+
+Do NOT use copyrighted book content as hidden test fixtures unless appropriately provided/licensed.
+
+---
+
+# 46. CRITICAL REGRESSION TESTS
+
+Create explicit tests for cases such as:
+
+```text
+ॐ
+श्री
+॥ 
+।
+ः
+ं
+ँ
+ऽ
+क्ष
+त्र
+ज्ञ
+श्र
+कृ
+त्म
+```
+
+and mixed Sanskrit/Hindi paragraphs.
+
+---
+
+# 47. DATA INTEGRITY RULE
+
+For every page maintain a chain similar to:
+
+```text
+Original
+   ↓
+OCR
+   ↓
+Corrected Draft
+   ↓
+Verified
+```
+
+Never destroy previous versions.
+
+---
+
+# 48. VERIFICATION STATES
+
+Use explicit state transitions:
+
+```text
+UNPROCESSED
+    ↓
+OCR_COMPLETE
+    ↓
+REVIEW_REQUIRED
+    ↓
+IN_REVIEW
+    ↓
+VERIFIED
+```
+
+Allow re-opening verified pages for correction with revision history.
+
+---
+
+# 49. AUDIT LOG
+
+Record important actions:
+
+* upload
+* OCR run
+* OCR retry
+* correction
+* verification
+* unverification
+* export
+* deletion
+
+The audit system should help answer:
+
+> What changed, when, and why?
+
+---
+
+# 50. BACKUP / RECOVERY
+
+If the application stores user books locally:
+
+Provide safe data handling and recovery architecture.
+
+Do not delete original source files when derived files are regenerated.
+
+---
+
+# 51. FUTURE-READY ARCHITECTURE
+
+Keep the architecture extensible for future features such as:
+
+* Sanskrit transliteration
+* IAST
+* Hindi meaning
+* pronunciation assistance
+* audio chanting
+* bookmark synchronization
+* cloud backup
+* multi-user collaboration
+* reference text comparison
+* advanced OCR providers
+* mobile application
+
+BUT:
+
+Do not implement unnecessary future features now if they compromise the core OCR/verification workflow.
+
+Build clean extension points instead.
+
+---
+
+# 52. OPTIONAL REFERENCE COMPARISON
+
+If implemented later:
+
+```text
+Source Text
+vs
+Reference Text
+```
+
+must be visually separated.
+
+Never automatically merge them.
+
+Example:
+
+```text
+SOURCE
+ॐ नमस्ते गणपतये।
+
+REFERENCE
+ॐ नमस्ते गणपतये।
+```
+
+If different:
+
+```text
+⚠ Difference detected
+```
+
+Let the human decide.
+
+---
+
+# 53. NO SILENT NORMALIZATION
+
+Be especially careful with:
+
+* Unicode normalization
+* punctuation
+* danda
+* double danda
+* whitespace
+* line breaks
+* verse numbering
+* Sanskrit-specific punctuation
+
+Cleaning whitespace is acceptable only when it is demonstrably formatting-only.
+
+Never normalize away meaningful characters.
+
+---
+
+# 54. BOOK FORMAT OUTPUT
+
+The clean book should look professionally typeset.
+
+Example conceptual format:
+
+```text
+════════════════════════════
+
+       ॥ श्री गणपति अथर्वशीर्षम् ॥
+
+                 अथ
+
+          श्री गणपत्यथर्वशीर्षम्
+
+════════════════════════════
+
+ॐ नमस्ते गणपतये।
+त्वमेव प्रत्यक्षं तत्त्वमसि।
+त्वमेव केवलं कर्ताऽसि।
+
+...
+
+॥ इति श्रीगणपत्यथर्वशीर्षम् ॥
+```
+
+Do not hard-code this example as actual book content.
+
+The formatter must generate formatting dynamically from verified source text.
+
+---
+
+# 55. HUMAN-IN-THE-LOOP PHILOSOPHY
+
+The application is not intended to eliminate human verification.
+
+Its purpose is:
+
+> **Make verification fast, transparent, and reliable.**
+
+The system should reduce the amount of text a human needs to inspect while making it very difficult for a dangerous OCR error to go unnoticed.
+
+---
+
+# 56. QUALITY SCORE
+
+At book level provide:
+
+```text
+OCR Quality
+Verification Coverage
+Critical Issues
+Unresolved Issues
+```
+
+Example:
+
+```text
+OCR Quality:        96%
+Verified Pages:     82%
+Critical Issues:    3
+Unresolved Issues:  17
+```
+
+These values must come from actual system state.
+
+---
+
+# 57. NEVER CLAIM "100% ACCURATE" AUTOMATICALLY
+
+Even if OCR confidence is high, do not claim scripture is perfectly accurate until it has been human-verified against the source.
+
+Use wording such as:
+
+```text
+OCR processed
+```
+
+or:
+
+```text
+Verified against source
+```
+
+---
+
+# 58. PERFORMANCE MONITORING
+
+Track actual:
+
+* OCR processing time
+* page processing time
+* failed pages
+* retry count
+* export duration
+
+Do not expose unnecessary technical details to normal users, but preserve useful diagnostics for debugging.
+
+---
+
+# 59. LOGGING
+
+Implement structured logging.
+
+Errors should contain enough information to diagnose issues without logging sensitive document contents unnecessarily.
+
+Never log entire private books by default.
+
+---
+
+# 60. PRIVACY
+
+User-uploaded books may be private.
+
+Treat all uploaded content as private by default.
+
+Do not send documents to external OCR/AI services unless the application explicitly uses that provider and the user/environment configuration permits it.
+
+Clearly separate:
+
+```text
+Local Processing
+```
+
+from:
+
+```text
+External Processing
+```
+
+where applicable.
+
+---
+
+# 61. ENVIRONMENT CONFIGURATION
+
+All external providers must be configurable through environment variables.
+
+Never hard-code:
+
+* API keys
+* secrets
+* tokens
+* passwords
+
+Provide a safe `.env.example` where appropriate.
+
+Never commit real secrets.
+
+---
+
+# 62. DEVELOPMENT METHOD
+
+Implement in phases.
+
+## Phase 1 — Audit & Architecture
+
+Inspect the project and establish the architecture.
+
+## Phase 2 — Upload & Document Processing
+
+Implement reliable ingestion and page extraction.
+
+## Phase 3 — OCR
+
+Implement real OCR pipeline.
+
+## Phase 4 — Devanagari Validation
+
+Implement Unicode/scriptural validation.
+
+## Phase 5 — Verification Workspace
+
+Implement side-by-side review.
+
+## Phase 6 — Structured Formatting
+
+Implement book structure and clean reading mode.
+
+## Phase 7 — Search & Library
+
+Implement indexing and search.
+
+## Phase 8 — Export
+
+Implement PDF/DOCX/TXT/searchable PDF.
+
+## Phase 9 — Testing
+
+Run comprehensive tests.
+
+## Phase 10 — Hardening
+
+Fix edge cases, security, performance and UX issues.
+
+---
+
+# 63. AGENT EXECUTION RULES
+
+When working on this project:
+
+1. Inspect before changing.
+2. Make small, logically grouped changes.
+3. Keep the application runnable after each major phase.
+4. Run tests after meaningful changes.
+5. Run lint/type checks where available.
+6. Fix errors rather than ignoring them.
+7. Do not leave TODO placeholders for core functionality.
+8. Do not claim a feature is complete when it is mocked.
+9. Do not fabricate successful OCR.
+10. Do not silently change scripture.
+11. Preserve original source files.
+12. Preserve revision history.
+13. Keep APIs and components maintainable.
+14. Avoid unnecessary dependencies.
+15. Document major architectural decisions.
+
+---
+
+# 64. DEFINITION OF DONE
+
+A feature is NOT complete merely because the UI exists.
+
+A feature is complete only when:
+
+```text
+UI
++
+Backend
++
+Real Data Flow
++
+Error Handling
++
+Persistence
++
+Validation
++
+Tests
+```
+
+are working together.
+
+---
+
+# 65. FINAL ACCEPTANCE TEST
+
+Before declaring the application complete, test this workflow end-to-end:
+
+```text
+1. Upload a real scanned Puja book.
+2. Extract pages.
+3. Preprocess pages.
+4. Run real OCR.
+5. Generate Sanskrit/Hindi Unicode text.
+6. Detect suspicious OCR characters.
+7. Display source and OCR side-by-side.
+8. Edit an OCR error.
+9. Save correction.
+10. Verify page.
+11. Reopen page.
+12. Confirm correction persists.
+13. Confirm original OCR remains available.
+14. Search for Devanagari text.
+15. Open result.
+16. Export DOCX.
+17. Export PDF.
+18. Re-open exported document.
+19. Verify Devanagari rendering.
+20. Verify searchable text.
+21. Confirm revision history.
+22. Confirm no mock data exists.
+23. Confirm no scripture was silently rewritten.
+```
+
+---
+
+# 66. FINAL ENGINEERING PRINCIPLE
+
+The most important requirement of this entire application is:
+
+> **Accuracy before automation.
+> Source before AI.
+> Verification before publication.
+> Unicode fidelity before visual formatting.**
+
+The application should behave like a professional digital preservation tool.
+
+If there is ever a conflict between:
+
+```text
+Beautiful output
+```
+
+and
+
+```text
+Faithful source reproduction
+```
+
+choose:
+
+# SOURCE FIDELITY.
+
+If there is uncertainty:
+
+# ASK FOR VERIFICATION.
+
+If the OCR cannot read something:
+
+# DO NOT GUESS.
+
+If an AI model believes it knows the correct scripture:
+
+# IT MUST NOT OVERRIDE THE SOURCE.
+
+Build the application accordingly.

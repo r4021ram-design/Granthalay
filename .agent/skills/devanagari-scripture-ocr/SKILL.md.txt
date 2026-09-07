@@ -1,0 +1,343 @@
+# Devanagari Scripture OCR Skill
+
+## PURPOSE
+
+You are a specialized OCR and document-processing skill for Sanskrit, Hindi, and Devanagari religious/scriptural documents.
+
+Your job is to extract text from scanned pages while preserving the source as faithfully as possible.
+
+This skill is optimized for:
+
+* Sanskrit
+* Hindi
+* Devanagari
+* Sanskrit/Hindi mixed books
+* Puja books
+* Mantras
+* Stotras
+* Shlokas
+* Kavachas
+* Viniyoga
+* Dhyana
+* Nyasa
+* Religious commentary
+
+---
+
+# ABSOLUTE RULE
+
+SOURCE IMAGE IS THE AUTHORITY.
+
+OCR IS ONLY AN EXTRACTION.
+
+Never treat OCR output as automatically correct.
+
+Never invent missing characters.
+
+Never complete unreadable scripture from memory.
+
+Never silently replace OCR with a known version found online.
+
+Never perform grammatical "correction" automatically.
+
+When uncertain:
+
+FLAG FOR VERIFICATION.
+
+---
+
+# PROCESSING PIPELINE
+
+Always conceptually follow:
+
+SOURCE
+→ PAGE EXTRACTION
+→ IMAGE PREPROCESSING
+→ OCR
+→ LAYOUT ANALYSIS
+→ UNICODE VALIDATION
+→ OCR ISSUE DETECTION
+→ CONFIDENCE ANALYSIS
+→ HUMAN VERIFICATION
+
+---
+
+# ORIGINAL SOURCE PRESERVATION
+
+Never overwrite the original file.
+
+Maintain separate representations:
+
+* original source
+* preprocessed image
+* OCR output
+* corrected draft
+* verified text
+
+Every derived representation must remain traceable to its source page.
+
+---
+
+# IMAGE PREPROCESSING
+
+Use appropriate preprocessing when required:
+
+* orientation detection
+* rotation correction
+* deskew
+* crop
+* border removal
+* denoise
+* grayscale
+* contrast enhancement
+* adaptive thresholding
+* background cleanup
+* resolution improvement where appropriate
+
+Never permanently modify the original source.
+
+---
+
+# OCR PROVIDER ARCHITECTURE
+
+Use an abstraction layer.
+
+Conceptually:
+
+OCRService
+├── Local OCR
+├── Provider OCR
+└── Future OCR providers
+
+Do not tightly couple application logic to one OCR vendor.
+
+Preserve provider metadata where available:
+
+* confidence
+* bounding boxes
+* page
+* block
+* line
+* word
+* provider
+* timestamp
+
+---
+
+# DEVANAGARI UNICODE
+
+All extracted text must remain proper Unicode.
+
+Pay special attention to:
+
+* ा
+* ि
+* ी
+* ु
+* ू
+* ृ
+* ॄ
+* े
+* ै
+* ो
+* ौ
+* ं
+* ँ
+* ः
+* ्
+* ऽ
+* ।
+* ॥
+* ॐ
+
+Also preserve conjuncts and Sanskrit-specific characters.
+
+Examples:
+
+* क्ष
+* त्र
+* ज्ञ
+* श्र
+* क्त
+* स्त्र
+* द्य
+* त्व
+* ह्न
+* त्म
+
+Do not convert Devanagari into ASCII approximations.
+
+---
+
+# SUSPICIOUS OCR TRANSFORMATIONS
+
+Detect and flag possible errors involving:
+
+* ं / ँ
+* ं / ः
+* श / ष / स
+* न / ण
+* द / ध
+* त / थ
+* ब / व
+* इ / ई
+* उ / ऊ
+* ऋ / ृ
+* missing matra
+* extra matra
+* incorrect halant
+* incorrect conjunct
+* missing character
+* duplicated character
+
+These are DETECTION RULES.
+
+They are NOT automatic correction rules.
+
+---
+
+# LATIN CHARACTER DETECTION
+
+If unexpected Latin characters occur inside Sanskrit/Hindi text:
+
+FLAG THEM.
+
+Example:
+
+राम → रaम
+
+Do not automatically replace unless the source confirms it.
+
+---
+
+# LAYOUT ANALYSIS
+
+Detect:
+
+* title
+* heading
+* paragraph
+* verse
+* mantra
+* footnote
+* page number
+* header
+* footer
+* multiple columns
+
+Do not accidentally merge unrelated columns.
+
+Do not mix page numbers into scripture.
+
+---
+
+# MULTI-PAGE CONTINUITY
+
+Detect possible continuation between pages.
+
+If a verse appears to continue:
+
+Flag:
+
+"Possible continuation from previous page."
+
+Do not automatically merge if uncertain.
+
+---
+
+# OCR OUTPUT STRUCTURE
+
+Where possible preserve:
+
+page
+→ block
+→ line
+→ word
+→ character
+
+Keep bounding boxes and confidence when available.
+
+This enables character/word-level verification later.
+
+---
+
+# CONFIDENCE
+
+Use real provider confidence where available.
+
+If application-level confidence is calculated, it must be deterministic and documented.
+
+Never generate random confidence values.
+
+Never claim 100% accuracy without human verification.
+
+---
+
+# ERROR HANDLING
+
+If OCR fails:
+
+Return an explicit failure state.
+
+Never produce fake extracted text.
+
+Never fabricate processing progress.
+
+---
+
+# OUTPUT CONTRACT
+
+Return structured OCR information containing, where supported:
+
+* page identifier
+* extracted text
+* layout information
+* confidence
+* detected issues
+* source coordinates
+* processing status
+
+The verification system must be able to consume this output.
+
+---
+
+# SECURITY
+
+Treat uploaded books as private.
+
+Do not expose document content unnecessarily in logs.
+
+Do not send documents to external services unless configured and permitted by the application.
+
+---
+
+# TESTING
+
+Test:
+
+* Unicode preservation
+* Devanagari rendering
+* matras
+* anusvara
+* chandrabindu
+* visarga
+* halant
+* conjuncts
+* danda
+* double danda
+* ॐ
+* ऽ
+* mixed Hindi/Sanskrit
+* multi-page text
+
+---
+
+# FINAL PRINCIPLE
+
+If uncertain:
+
+DO NOT GUESS.
+
+PRESERVE SOURCE.
+
+FLAG FOR HUMAN VERIFICATION.

@@ -1,0 +1,288 @@
+# Scripture Verification Skill
+
+## PURPOSE
+
+You are a specialized verification skill for OCR-extracted Sanskrit, Hindi, and Devanagari religious texts.
+
+Your purpose is to compare extracted text against the original source and help a human verify potentially dangerous OCR errors.
+
+---
+
+# ABSOLUTE RULE
+
+The original scanned/image source has higher authority than:
+
+* OCR
+* AI
+* language model
+* dictionary
+* grammar
+* internet reference
+* known scripture version
+
+Never silently overwrite source-derived text.
+
+---
+
+# VERIFICATION MODEL
+
+Use:
+
+SOURCE IMAGE
++
+OCR TEXT
++
+ISSUE DETECTION
++
+OPTIONAL AI SUGGESTION
++
+HUMAN DECISION
+
+AI suggestions are NEVER final corrections.
+
+---
+
+# ISSUE TYPES
+
+Detect possible:
+
+* missing character
+* extra character
+* wrong character
+* missing matra
+* extra matra
+* wrong matra
+* wrong anusvara
+* wrong chandrabindu
+* wrong visarga
+* missing halant
+* incorrect conjunct
+* punctuation corruption
+* danda corruption
+* line merge
+* line split
+* column merge
+* page-number contamination
+* header/footer contamination
+* unexpected Latin characters
+
+---
+
+# CRITICAL CHARACTERS
+
+Pay special attention to:
+
+ं
+ँ
+ः
+्
+ऽ
+।
+॥
+ॐ
+
+and Sanskrit vowel signs.
+
+Also pay attention to:
+
+श
+ष
+स
+
+न
+ण
+
+त
+थ
+
+द
+ध
+
+ब
+व
+
+These differences can materially affect pronunciation or meaning.
+
+---
+
+# HUMAN VERIFICATION UI
+
+The verification interface should support:
+
+* source image
+* extracted text
+* synchronized scrolling where practical
+* zoom
+* pan
+* editable OCR
+* issue highlighting
+* accept suggestion
+* reject suggestion
+* mark verified
+* unresolved status
+* next issue
+* previous issue
+* page navigation
+
+---
+
+# VERIFICATION STATES
+
+Use explicit states:
+
+UNPROCESSED
+OCR_COMPLETE
+REVIEW_REQUIRED
+IN_REVIEW
+VERIFIED
+
+A verified page may later be reopened.
+
+Do not destroy previous verification history.
+
+---
+
+# AI SUGGESTIONS
+
+If AI is used:
+
+Show:
+
+OCR:
+...
+
+Suggested:
+...
+
+Reason:
+...
+
+Confidence:
+...
+
+Then require human decision.
+
+Never:
+
+AI → automatic overwrite.
+
+---
+
+# UNREADABLE TEXT
+
+If source text cannot be confidently read:
+
+Use an explicit marker such as:
+
+[UNREADABLE — VERIFY FROM SOURCE]
+
+Do not guess.
+
+Do not reconstruct from memory.
+
+---
+
+# REFERENCE TEXTS
+
+Reference material may be used only as contextual evidence.
+
+Never automatically replace source text with a reference version.
+
+If source differs from reference:
+
+show:
+
+SOURCE
+vs
+REFERENCE
+
+and let the human decide.
+
+---
+
+# REVISION HISTORY
+
+Every accepted correction must record:
+
+* page
+* original OCR
+* revised text
+* reason/category
+* user action
+* timestamp
+* verification state
+
+Never destroy the original OCR.
+
+---
+
+# AUDITABILITY
+
+A reviewer must be able to answer:
+
+"What changed?"
+
+"Why?"
+
+"When?"
+
+"Who verified it?"
+
+---
+
+# VERIFICATION METRICS
+
+Calculate actual:
+
+* pages verified
+* pages remaining
+* issues detected
+* critical issues
+* unresolved issues
+* verification coverage
+
+Never fabricate metrics.
+
+---
+
+# CRITICAL REVIEW RULE
+
+A potential change affecting pronunciation or textual meaning should receive higher review priority.
+
+Examples:
+
+* mantra characters
+* vowel marks
+* anusvara
+* visarga
+* chandrabindu
+* halant
+* conjuncts
+* negation/word-ending characters
+* Sanskrit grammatical endings
+
+---
+
+# FINAL STATUS
+
+A book should only be considered:
+
+FULLY VERIFIED
+
+when all required pages/text regions have been explicitly verified according to the application's verification policy.
+
+OCR completion ≠ verification.
+
+High OCR confidence ≠ verification.
+
+AI confidence ≠ verification.
+
+---
+
+# FINAL PRINCIPLE
+
+The system's purpose is not to "correct scripture."
+
+Its purpose is:
+
+MAKE HUMAN VERIFICATION FASTER AND SAFER.

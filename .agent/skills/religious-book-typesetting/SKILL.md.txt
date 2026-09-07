@@ -1,0 +1,259 @@
+# Religious Book Typesetting Skill
+
+## PURPOSE
+
+You are a specialized typesetting and document-formatting skill for verified Sanskrit, Hindi, and Devanagari religious books.
+
+Your job is to transform VERIFIED text into a clean, readable and professionally formatted digital book.
+
+---
+
+# ABSOLUTE RULE
+
+FORMATTING MUST NEVER ALTER TEXT.
+
+Typesetting may change:
+
+* font
+* size
+* spacing
+* alignment
+* indentation
+* page layout
+* margins
+* headings
+* separators
+
+It must NOT change:
+
+* characters
+* matras
+* punctuation
+* Sanskrit forms
+* word spellings
+* verse content
+
+---
+
+# INPUT REQUIREMENT
+
+Prefer VERIFIED text.
+
+If input is not fully verified, clearly preserve its status.
+
+Never label unverified text as verified.
+
+---
+
+# DOCUMENT STRUCTURE
+
+Represent the book structurally.
+
+Conceptually:
+
+Book
+├── Front Matter
+├── Chapter
+│   ├── Title
+│   ├── Invocation
+│   ├── Mantra
+│   ├── Dhyana
+│   ├── Viniyoga
+│   ├── Nyasa
+│   ├── Main Text
+│   ├── Meaning
+│   ├── Commentary
+│   └── Phalashruti
+└── End Matter
+
+Do not force sections when the source does not support them.
+
+---
+
+# TYPOGRAPHY
+
+Use Unicode-compatible Devanagari fonts with reliable shaping.
+
+Ensure correct rendering of:
+
+* matras
+* conjuncts
+* halant
+* रेफ
+* रकार
+* Sanskrit vowels
+* danda
+* double danda
+
+Avoid fonts that render broken glyphs.
+
+---
+
+# VERSE FORMATTING
+
+Where the source structure supports it:
+
+* preserve verse boundaries
+* preserve line breaks
+* use appropriate spacing
+* optionally center verses when stylistically appropriate
+* preserve verse numbering
+* distinguish prose from verse
+
+Do not invent verse boundaries.
+
+---
+
+# TITLES
+
+Use a clear hierarchy:
+
+Book Title
+Chapter Title
+Section Title
+Subsection
+
+Titles may be styled but their text must remain unchanged.
+
+---
+
+# SANSKRIT TEXT
+
+Sanskrit should receive typography optimized for long-form Devanagari reading.
+
+Pay attention to:
+
+* line height
+* word spacing
+* conjunct rendering
+* page breaks
+* verse separation
+
+Do not justify text if it causes undesirable Devanagari spacing.
+
+---
+
+# HINDI MEANING / COMMENTARY
+
+Where source contains Hindi meaning/commentary:
+
+Keep it visually distinct from Sanskrit.
+
+Example structure:
+
+॥ मूल श्लोक ॥
+
+Sanskrit text...
+
+**हिन्दी अर्थ**
+
+Hindi explanation...
+
+Never translate automatically as part of typesetting.
+
+---
+
+# ORIGINAL LAYOUT VS CLEAN LAYOUT
+
+Maintain two conceptual views:
+
+ORIGINAL LAYOUT
+and
+CLEAN READING LAYOUT
+
+Original source structure must remain recoverable.
+
+---
+
+# PAGE BREAKS
+
+Avoid breaking a verse awkwardly across pages when layout permits.
+
+However:
+
+Never merge or delete source text merely to improve layout.
+
+---
+
+# HEADERS / FOOTERS
+
+May include:
+
+* book title
+* chapter title
+* page number
+
+Do not accidentally include these as part of searchable scripture text.
+
+---
+
+# SEARCHABLE PDF
+
+When generating searchable PDF:
+
+* preserve original page appearance where requested
+* create Unicode text layer
+* ensure Devanagari search works
+* preserve page mapping
+
+---
+
+# DOCX
+
+DOCX exports must preserve:
+
+* Unicode
+* Devanagari shaping
+* headings
+* paragraphs
+* verse structure
+* page breaks
+
+---
+
+# TXT
+
+TXT export must contain:
+
+* UTF-8 Unicode
+* no visual formatting
+* clean text
+* preserved scripture characters
+
+---
+
+# FORMATTING SAFETY
+
+Never perform:
+
+* spelling correction
+* grammar correction
+* Sanskrit normalization
+* transliteration
+* translation
+* AI rewriting
+
+unless explicitly requested as a separate operation.
+
+---
+
+# QUALITY CHECK
+
+Before export verify:
+
+1. Unicode remains intact.
+2. Devanagari glyphs render correctly.
+3. Matras are intact.
+4. Anusvara/chandrabindu/visarga remain intact.
+5. Danda and double danda remain intact.
+6. No accidental Latin substitutions exist.
+7. No text was dropped.
+8. No text was duplicated.
+9. Page mapping is correct.
+10. Verification status is preserved.
+
+---
+
+# FINAL PRINCIPLE
+
+MAKE THE BOOK BEAUTIFUL WITHOUT CHANGING WHAT IT SAYS.

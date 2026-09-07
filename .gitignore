@@ -23,8 +23,10 @@ storage/exports/
 *.db-wal
 *.db-shm
 
-# OCR Models (Large Binary Files)
+# OCR Models & Reference Documents (Large Binary Files)
 *.traineddata
+Docs/
+*.pdf
 
 # Logs & Temporary Files
 npm-debug.log*

@@ -1,0 +1,120 @@
+# Puja Granth Workflow Orchestrator
+
+## PURPOSE
+
+Coordinate the three core skills:
+
+1. devanagari-scripture-ocr
+2. scripture-verification
+3. religious-book-typesetting
+
+---
+
+# PIPELINE
+
+For every new book:
+
+UPLOAD
+↓
+OCR
+↓
+VALIDATION
+↓
+ISSUE DETECTION
+↓
+HUMAN VERIFICATION
+↓
+STRUCTURED FORMATTING
+↓
+EXPORT
+
+---
+
+# SKILL SELECTION
+
+Use:
+
+## devanagari-scripture-ocr
+
+When:
+
+* importing PDF
+* extracting pages
+* preprocessing images
+* performing OCR
+* detecting OCR issues
+* handling Devanagari Unicode
+
+## scripture-verification
+
+When:
+
+* reviewing OCR
+* comparing source and OCR
+* correcting text
+* handling uncertainty
+* accepting/rejecting AI suggestions
+* recording revisions
+
+## religious-book-typesetting
+
+When:
+
+* formatting verified text
+* generating reading mode
+* generating PDF
+* generating DOCX
+* generating TXT
+* generating searchable PDF
+
+---
+
+# CROSS-SKILL RULES
+
+Never bypass verification merely because OCR confidence is high.
+
+Never send unverified text directly to final publication without clearly labeling it.
+
+Never allow typesetting to modify source text.
+
+Never allow AI to override source text.
+
+Never delete original source material.
+
+Never destroy previous revisions.
+
+---
+
+# PRIORITY
+
+When skills conflict, use this priority:
+
+1. Source fidelity
+2. Text integrity
+3. Verification
+4. Unicode correctness
+5. Structural correctness
+6. Readability
+7. Visual aesthetics
+
+---
+
+# FAILURE POLICY
+
+If any stage fails:
+
+STOP THAT STAGE.
+
+Preserve all successful previous stages.
+
+Report the actual error.
+
+Allow retry/resume.
+
+Never fabricate output.
+
+---
+
+# FINAL PRODUCT RULE
+
+The final published/verified text must always be traceable back to the original source page.
