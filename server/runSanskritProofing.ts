@@ -17,7 +17,7 @@ export function proofreadSanskritPage(rawText: string, pageNum: number): string 
   let s = rawText;
 
   // 1. Remove redundant top header line that repeats on every page scan
-  s = s.replace(/^(?:`\s*)?(?:गृहप्रवेश\s*\/\s*वास्तु\s*शान्ति\s*पूजनम्[‌\s]*|जि\s*\/\s*वास्तु\s*शान्ति\s*पूजनम्[‌\s]*|॥\s*\|\s*\/\s*वास्तु\s*शान्ति\s*पूजनम्[‌\s]*)\n?/gmi, '');
+  s = s.replace(/^(?:[`व॥|]\s*)?(?:गृहप्रवेश\s*\/\s*वास्तु\s*शान्ति\s*पूजनम्[‌\s]*|जि\s*\/\s*वास्तु\s*शान्ति\s*पूजनम्[‌\s]*|॥\s*\|\s*\/\s*वास्तु\s*शान्ति\s*पूजनम्[‌\s]*)\n?/gmi, '');
   s = s.replace(/^(?:वास्तु\s*मण्डल\s*देवता\s*स्थापनम्[‌\s]*)\n?/gmi, '');
 
   // 2. Remove publisher, phone, foundation, and author strings strictly
@@ -50,8 +50,9 @@ export function proofreadSanskritPage(rawText: string, pageNum: number): string 
   // 4. Remove orphan spaces before matras and Vedic accents (eliminates dotted circles ◌)
   // Preserves \u0951 (Svarita), \u0952 (Anudatta), \u1CDA (Dvisvarita), \u093D (Avagraha)
   s = s.replace(/([क-ह]़?)\s+([ािीुूृेैोौँंः\u0951\u0952\u1CDA])/gu, '$1$2');
-  s = s.replace(/\s+([ािीुूृेैोौँंः\u0951\u0952\u1CDA])/gu, '$1');
-  s = s.replace(/\u094D\s+/gu, '\u094D');
+  s = s.replace(/\u094D+/gu, '\u094D');
+  s = s.replace(/म्आवाहयामि/gu, 'म् आवाहयामि');
+  s = s.replace(/ध्यायेत्+्*\s*सर्व/gu, 'ध्यायेत् सर्व');
 
   // 5. Ulrich Stiehl's SanskritWeb Ligature Normalization (संयुक्ताक्षर शुद्धि)
   // Ha-conjuncts
@@ -178,13 +179,115 @@ export function proofreadSanskritPage(rawText: string, pageNum: number): string 
     [/कत्यायनी/gu, 'कात्यायनी'],
     [/कूष्माण्डा/gu, 'कूष्माण्डा'],
     [/कालरात्री/gu, 'कालरात्रि'],
+    // Shanti Path & Vedic Hymns
+    [/पश्ये\s*माक्षभिर्यजत्राः/gu, 'पश्येमाक्षभिर्यजत्राः'],
+    [/स्थिरे\s*रङ्गैस्तुष्टैवा\s*[७꣪\s]*सस्तनृ?भिर्‌?\s*व्यशेमहि|स्थिरे\s*रङ्गैस्तुष्टुवा\s*[७꣪\s]*सस्तनू?भिर्‌?\s*व्यशेमहि|स्थिरैरङ्गैस्तुष्टुवा\s*[७꣪\s]*सस्तनू?भिर्‌?\s*व्यशेमहि/gu, 'स्थिरैरङ्गैस्तुष्टुवा꣪सस्तनूभिर्व्यशेमहि'],
+    [/मानो\s*मध्यारी\s*रिषतायुर्गन्तोः/gu, 'मा नो मध्या रीरिषतायुर्गन्तोः'],
+    [/अदितिर्[ꣵ्‌]*द्यौ\s*रदितिरन्त\s*रिक्शमदितिर्|अदितिर््यौ\s*रदितिरन्त\s*रिक्षमदितिर्‌?\s*माता\s*सपिता\s*सपुत्रः/gu, 'अदितिर्द्यौरदितिरन्तरिक्षमदितिर्माता स पिता स पुत्रः'],
+    [/विश्वे\s*देवा\s*अदितिः\s*पञ्चजना\s*अदितिर्‌?\s*जातं?म्?दितिर्‌?\s*जनित्वम्‌?\s*॥९०॥/gu, 'विश्वे देवा अदितिः पञ्चजना अदितिर्जातमदितिर्जनित्वम् ॥१०॥'],
+    [/द्यौः\s*शान्तिरन्तरिक्ष\s*[७꣪]\s*शान्तिः/gu, 'द्यौः शान्तिरन्तरिक्षं शान्तिः'],
+    [/सर्व\s*[छ७꣪]\s*शान्तिः/gu, 'सर्वं शान्तिः'],
+    [/सामा\s*शान्तिरेधि/gu, 'सा मा शान्तिरेधि'],
+    [/शन्नः\s*कुरु/gu, 'शं नः कुरु'],
+    [/प्रजाभ्योऽभयन्नः/gu, 'प्रजाभ्योऽभयं नः'],
+    [/विश्वेनो\s*देवा/gu, 'विश्वे नो देवा'],
+    [/धियभ्जिन्वमवसे/gu, 'धियञ्जिन्वमवसे'],
+    [/जरसन्‌?\s*तनूनाम्‌?/gu, 'जरसं तनूनाम्'],
+    [/वृहस्पतिर्दधातु/gu, 'बृहस्पतिर्दधातु'],
+    [/तद्‌?\s*ग्रावाणः/gu, 'तद्ग्रावाणः'],
+    [/मयो\s*भुवातु/gu, 'मयोभु वातु'],
+    [/मयो\s*भुवस्तदश्विना/gu, 'मयोभुवस्तदश्विना'],
+    [/॥९०॥/gu, '॥१०॥'],
+    // Ganesha Dhyana & Shlokas
+    [/सुमुखश्च\s*एकदंतश्च/gu, 'सुमुखश्चैकदन्तश्च'],
+    [/एकदंतश्च/gu, 'एकदन्तश्च'],
+    [/धुम्रकेतुर्‌?/gu, 'धूम्रकेतुर्'],
+    [/धूम्रकेतुर्‌?\s*गणाध्यक्षो/gu, 'धूम्रकेतुर्गणाध्यक्षो'],
+    [/विद्यारंभे/gu, 'विद्यारम्भे'],
+    [/विवाहे\s*च\s*प्रवेशो/gu, 'विवाहे च प्रवेशे'],
+    [/शुक्लाम्बरधरम\s*देवं\s*शशि\s*वर्ण\s*चतुर्भुजम/gu, 'शुक्लाम्बरधरं देवं शशिवर्णं चतुर्भुजम्'],
+    [/ध्यायेत/gu, 'ध्यायेत्'],
+    [/सर्व\s*विघ्नोपशान्तये/gu, 'सर्वविघ्नोपशान्तये'],
   ];
 
   for (const [regex, replacement] of corrections) {
     s = s.replace(regex, replacement);
   }
 
-  // 7. Strip stray dotted circles
+  // 7. Multi-column OCR Scramble Healing
+  // Page 6: Pradhana Devata Namaskara
+  if (
+    s.includes('श्रीमनमहागणाधीपतये') ||
+    s.includes('श्रीमन्महागणाधीपतये') ||
+    s.includes('वास्तु देवताभ्यो नमः 7. मातु') ||
+    s.includes('स्थान देवताभ्यो नमः 0. शची')
+  ) {
+    const scrambledDeitiesRegex = /^[॥\d\.\s]*श्री[मन्]*महागणाधी?पतये\s*नमः[\s\S]*?शची\s*पुरंद[ा]?राभ्या[मं]\s*नमः/mu;
+    const cleanDeitiesList = [
+      '【 प्रधान देवता नमस्कार 】',
+      '१. ॐ श्रीमन्महागणाधिपतये नमः ।',
+      '२. ॐ इष्टदेवताभ्यो नमः ।',
+      '३. ॐ कुलदेवताभ्यो नमः ।',
+      '४. ॐ ग्रामदेवताभ्यो नमः ।',
+      '५. ॐ स्थानदेवताभ्यो नमः ।',
+      '६. ॐ वास्तुदेवताभ्यो नमः ।',
+      '७. ॐ वाणीहिरण्यगर्भाभ्यां नमः ।',
+      '८. ॐ लक्ष्मीनारायणाभ्यां नमः ।',
+      '९. ॐ उमामहेश्वराभ्यां नमः ।',
+      '१०. ॐ शचीपुरन्दराभ्यां नमः ।',
+      '११. ॐ मातृपितृचरणकमलेभ्यो नमः ।',
+      '१२. ॐ सर्वेभ्यो देवेभ्यो नमः ।',
+      '१३. ॐ सर्वेभ्यो ब्राह्मणेभ्यो नमः ।',
+      '१४. ॐ एतत्कर्मप्रधानदेवताभ्यो नमः ।'
+    ].join('\n');
+    s = s.replace(scrambledDeitiesRegex, cleanDeitiesList);
+  }
+
+  // Page 20: Shadvinaayaka & Torana Matrika multi-column
+  if (s.includes('मोदाय नमः') && s.includes('दुर्मुखाय नमः')) {
+    const vinayakaRegex = /^[.\s\d]*ॐ\s*मोदाय\s*नमः[\s\S]*?विघ्नह[त्रर्त]+[ाे]*[रम]*\s*आ[,\.]?\s*स्था[,\.]?\s*पू[,\.]?/mu;
+    const cleanVinayaka = [
+      '१. ॐ मोदाय नमः । मोदम् आवाहयामि स्थापयामि पूजयामि ।',
+      '२. ॐ प्रमोदाय नमः । प्रमोदम् आवाहयामि स्थापयामि पूजयामि ।',
+      '३. ॐ सुमुखाय नमः । सुमुखम् आवाहयामि स्थापयामि पूजयामि ।',
+      '४. ॐ दुर्मुखाय नमः । दुर्मुखम् आवाहयामि स्थापयामि पूजयामि ।',
+      '५. ॐ अविघ्नाय नमः । अविघ्नम् आवाहयामि स्थापयामि पूजयामि ।',
+      '६. ॐ विघ्नहर्त्रे नमः । विघ्नहर्तारम् आवाहयामि स्थापयामि पूजयामि ।'
+    ].join('\n');
+    s = s.replace(vinayakaRegex, cleanVinayaka);
+  }
+
+  if (s.includes('नन्दायै नमः') && s.includes('भार्गव्यै नमः')) {
+    const toranaRegex = /^[.\s\d\]]*ॐ\s*नन्दायै\s*नमः[\s\S]*?वासु[म्‌]*\s*आ[,\.]?\s*स्था[,\.]?\s*पू[,\.]?/mu;
+    const cleanTorana = [
+      '१. ॐ नन्दायै नमः । नन्दाम् आवाहयामि स्थापयामि पूजयामि ।',
+      '२. ॐ नन्दिन्यै नमः । नन्दिनीम् आवाहयामि स्थापयामि पूजयामि ।',
+      '३. ॐ वाशिष्ठ्यै नमः । वाशिष्ठीम् आवाहयामि स्थापयामि पूजयामि ।',
+      '४. ॐ वासुदेव्यै नमः । वासुदेवीम् आवाहयामि स्थापयामि पूजयामि ।',
+      '५. ॐ भार्गव्यै नमः । भार्गवीम् आवाहयामि स्थापयामि पूजयामि ।',
+      '६. ॐ जयायै नमः । जयाम् आवाहयामि स्थापयामि पूजयामि ।',
+      '७. ॐ विजयायै नमः । विजयाम् आवाहयामि स्थापयामि पूजयामि ।'
+    ].join('\n');
+    s = s.replace(toranaRegex, cleanTorana);
+  }
+
+  // Page 25: Sapta Ghrita Matrika multi-column
+  if (s.includes('ब्राह्मयै नम') && s.includes('वाराह्यै नम')) {
+    const matrikaRegex = /^[.\s\d\]]*ॐ\s*ब्राह्म[यैय]+[\s\S]*?वैष्णवी\s*आ[,\.]?\s*स्था[,\.]?/mu;
+    const cleanMatrika = [
+      '१. ॐ ब्राह्म्यै नमः । ब्राह्मीम् आवाहयामि स्थापयामि ।',
+      '२. ॐ माहेश्वर्यै नमः । माहेश्वरीम् आवाहयामि स्थापयामि ।',
+      '३. ॐ कौमार्यै नमः । कौमारीम् आवाहयामि स्थापयामि ।',
+      '४. ॐ वैष्णव्यै नमः । वैष्णवीम् आवाहयामि स्थापयामि ।',
+      '५. ॐ वाराह्यै नमः । वाराहीम् आवाहयामि स्थापयामि ।',
+      '६. ॐ इन्द्राण्यै नमः । इन्द्राणीम् आवाहयामि स्थापयामि ।',
+      '७. ॐ चामुण्डायै नमः । चामुण्डाम् आवाहयामि स्थापयामि ।'
+    ].join('\n');
+    s = s.replace(matrikaRegex, cleanMatrika);
+  }
+  s = s.replace(/\n?4\.\s*ॐ\s*वैष्णव्यै\s*नमः\s*वैष्णवी\s*आ[,\.]?\s*स्था[,\.]?/gu, '');
+
+  // 8. Strip stray dotted circles
   s = s.replace(/[\u25CC\u25CB]/gu, '');
 
   return s.trim();
@@ -267,12 +370,16 @@ async function renderBhojpatraImage(
   fs.mkdirSync(bookDir, { recursive: true });
   const filename = `page-${pageNum}.png`;
   const fullPath = path.join(bookDir, filename);
+  const lines = wrapTextLines(text, 52);
+  const maxLines = Math.min(lines.length, 45);
+  const displayLines = lines.slice(0, maxLines);
 
-  const lines = wrapTextLines(text, 50).slice(0, 36);
-  const startY = 240;
-  const lineHeight = 36;
+  const availableHeight = height - 360; // 1240 px
+  const lineHeight = Math.min(36, Math.max(25, Math.floor(availableHeight / Math.max(displayLines.length, 1))));
+  const baseSize = Math.min(26, Math.max(16, lineHeight - 8));
+  const startY = Math.max(185, Math.floor((height - displayLines.length * lineHeight) / 2));
 
-  const textSvgLines = lines
+  const textSvgLines = displayLines
     .map((line, idx) => {
       const y = startY + idx * lineHeight;
       const escaped = line
@@ -283,12 +390,12 @@ async function renderBhojpatraImage(
 
       let fill = '#241408';
       let weight = 'normal';
-      let size = 26;
+      let size = baseSize;
 
       if (line.startsWith('॥') || line.startsWith('【')) {
         fill = '#8C2D19';
         weight = 'bold';
-        size = 28;
+        size = baseSize + 2;
       } else if (line.startsWith('•') || line.startsWith('▪') || /^\d+\./.test(line)) {
         fill = '#591B0B';
         weight = '600';

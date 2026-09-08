@@ -158,4 +158,20 @@
   margin: 0 0.08em;
 }
 
+/* OpenType Vedic Mark-to-Mark and Mark-to-Base Positioning */
+.font-feature-settings-vedic {
+  font-feature-settings: "mkmk" 1, "mark" 1, "kern" 1, "liga" 1, "dlig" 1;
+  text-rendering: optimizeLegibility;
+}
+
+.vaidika-mantra-card {
+  box-shadow: inset 0 0 20px rgba(194, 65, 12, 0.03);
+}
+
+.vaidika-badge {
+  font-feature-settings: normal;
+  letter-spacing: 0.04em;
+}
+
+
 

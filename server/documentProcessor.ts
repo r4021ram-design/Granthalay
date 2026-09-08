@@ -196,8 +196,24 @@ export const DocumentProcessor = {
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.js');
     const { createCanvas } = await import('@napi-rs/canvas');
 
+    const canvasFactory = {
+      create(w: number, h: number) {
+        const c = createCanvas(w, h);
+        return { canvas: c, context: c.getContext('2d') };
+      },
+      reset(c: any, w: number, h: number) {
+        c.canvas.width = w;
+        c.canvas.height = h;
+      },
+      destroy(c: any) {
+        c.canvas = null;
+        c.context = null;
+      }
+    };
+
     const loadingTask = (pdfjs as any).getDocument({
       data: new Uint8Array(pdfBytes),
+      canvasFactory,
       useSystemFonts: true,
       disableFontFace: false,
     });
@@ -208,13 +224,13 @@ export const DocumentProcessor = {
     const width = Math.floor(viewport.width);
     const height = Math.floor(viewport.height);
 
-    const canvas = createCanvas(width, height);
-    const context = canvas.getContext('2d');
+    const { canvas, context } = canvasFactory.create(width, height);
 
     await pdfPage.render({
       canvasContext: context as any,
       viewport,
-    }).promise;
+      canvasFactory,
+    } as any).promise;
 
     const pngBuffer = canvas.toBuffer('image/png');
     await sharp(pngBuffer).png().toFile(outputPath);

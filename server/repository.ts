@@ -53,6 +53,7 @@ export const Repository = {
         (SELECT COUNT(*) FROM issues i JOIN pages p ON i.page_id = p.id WHERE p.book_id = b.id AND i.status = 'OPEN') as total_issues,
         (SELECT COUNT(*) FROM issues i JOIN pages p ON i.page_id = p.id WHERE p.book_id = b.id AND i.status = 'OPEN' AND i.severity = 'CRITICAL') as critical_issues
       FROM books b
+      WHERE b.title NOT LIKE '%Test%' AND b.title NOT LIKE '%परीक्षण%' AND b.author != 'Author'
       ORDER BY b.created_at DESC
     `).all() as any[];
 

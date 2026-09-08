@@ -146,7 +146,17 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
         mantra: '॥ ॐ हनुमते नमः ॥',
       };
     }
-    if (combined.includes('ग्रह') || combined.includes('नवग्रह') || combined.includes('पद्धति')) {
+    if (combined.includes('विद्यार्णव') || combined.includes('श्रीविद्या') || combined.includes('तन्त्र') || combined.includes('तंत्र') || combined.includes('त्रिपुरसुन्दरी') || combined.includes('ललिता') || combined.includes('कादि') || combined.includes('हादि')) {
+      return {
+        name: 'श्रीविद्या / शाक्त तन्त्र',
+        gradient: 'from-rose-950/95 via-fuchsia-950/70 to-neutral-900',
+        border: 'border-fuchsia-700/60 hover:border-rose-400',
+        badge: 'bg-fuchsia-950 text-rose-300 border-fuchsia-800',
+        glyph: '🌺',
+        mantra: '॥ ॐ ऐं ह्रीं श्रीं त्रिपुरसुन्दर्यै नमः ॥',
+      };
+    }
+    if (combined.includes('ग्रह') || combined.includes('नवग्रह') || combined.includes('ग्रहशान्ति')) {
       return {
         name: 'नवग्रह मण्डल',
         gradient: 'from-purple-950/90 via-indigo-950/60 to-neutral-900',
@@ -179,9 +189,17 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     }
   };
 
-  // Filtered Books
+  // Filtered and sorted Books
   const filteredBooks = useMemo(() => {
-    return books.filter(b => {
+    const list = books.filter(b => {
+      // Exclude test fixture books strictly
+      const isTestBook =
+        b.title.toLowerCase().includes('test') ||
+        b.title.includes('परीक्षण') ||
+        b.author === 'Author' ||
+        b.description === 'Desc';
+      if (isTestBook) return false;
+
       const matchSearch =
         searchTerm.trim() === '' ||
         b.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -190,6 +208,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 
       const matchCategory =
         selectedCategory === 'all' ||
+        (selectedCategory === 'tantra' && (b.title.includes('तन्त्र') || b.title.includes('तंत्र') || b.title.includes('विद्यार्णव') || b.description.includes('तन्त्र') || b.description.includes('शाक्त'))) ||
         (selectedCategory === 'upanishad' && b.title.includes('उपनिषत्')) ||
         (selectedCategory === 'sukta' && (b.title.includes('सूक्तम्') || b.title.includes('सूक्त'))) ||
         (selectedCategory === 'ashtaka' && (b.title.includes('अष्टक') || b.description.includes('अष्टक'))) ||
@@ -201,6 +220,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       const deityTheme = getDeityTheme(b.title, b.description);
       const matchDeity =
         selectedDeity === 'all' ||
+        (selectedDeity === 'shakta' && (deityTheme.name.includes('श्रीविद्या') || deityTheme.name.includes('तन्त्र') || deityTheme.name.includes('ललिता'))) ||
         (selectedDeity === 'ganesha' && deityTheme.name.includes('गणेश')) ||
         (selectedDeity === 'vastu' && deityTheme.name.includes('वास्तु')) ||
         (selectedDeity === 'shiva' && (deityTheme.name.includes('शिव') || deityTheme.name.includes('शङ्कर'))) ||
@@ -212,6 +232,27 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
         (selectedDeity === 'navagraha' && deityTheme.name.includes('नवग्रह'));
 
       return matchSearch && matchCategory && matchDeity;
+    });
+
+    const getSriVidyaOrder = (title: string): number => {
+      if (title.includes('विद्यार्णव') || title.includes('श्रीविद्या')) {
+        if (title.includes('पूर्वार्द्ध') && (title.includes('प्रथम') || title.includes('भाग १'))) return 1;
+        if (title.includes('पूर्वार्द्ध') && (title.includes('द्वितीय') || title.includes('द्वितिय') || title.includes('भाग २'))) return 2;
+        if (title.includes('उत्तरार्द्ध') && (title.includes('प्रथम') || title.includes('भाग १'))) return 3;
+        if (title.includes('उत्तरार्द्ध') && (title.includes('द्वितीय') || title.includes('द्वितिय') || title.includes('भाग २'))) return 4;
+        if (title.includes('उत्तरार्द्ध') && (title.includes('तृतीय') || title.includes('तृत्तिय') || title.includes('भाग ३'))) return 5;
+        return 6;
+      }
+      return 100;
+    };
+
+    return list.sort((a, b) => {
+      const orderA = getSriVidyaOrder(a.title);
+      const orderB = getSriVidyaOrder(b.title);
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      return 0;
     });
   }, [books, searchTerm, selectedCategory, selectedDeity]);
 
@@ -252,7 +293,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
         <div className="mt-6 pt-6 border-t border-neutral-800/80 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-devanagari text-neutral-300">
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span><strong>{books.length}</strong> पावन ग्रन्थ उपलब्ध</span>
+            <span><strong>{filteredBooks.length}</strong> पावन ग्रन्थ उपलब्ध</span>
           </div>
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-sacred-400" />
@@ -296,12 +337,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 text-xs font-devanagari">
             {[
               { id: 'all', label: 'सभी ग्रन्थ' },
+              { id: 'tantra', label: 'तन्त्र व आगम 🌺' },
+              { id: 'puja_vidhi', label: 'पूजापद्धति 🏛️' },
               { id: 'upanishad', label: 'उपनिषद्' },
               { id: 'sukta', label: 'सूक्तम्' },
-              { id: 'ashtaka', label: 'अष्टकम्' },
               { id: 'stotra', label: 'स्तोत्र एवं स्तुति' },
+              { id: 'ashtaka', label: 'अष्टकम्' },
               { id: 'shastra', label: 'दर्शन व सुभाषित' },
-              { id: 'puja_vidhi', label: 'पूजापद्धति' },
               { id: 'gita', label: 'गीता' },
             ].map(tab => (
               <button
@@ -327,6 +369,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           </span>
           {[
             { id: 'all', label: 'सभी देव व विषय' },
+            { id: 'shakta', label: 'श्रीविद्या / शाक्त 🌺' },
             { id: 'ganesha', label: 'श्रीगणेश 🐘' },
             { id: 'vastu', label: 'वास्तु पुरुष 🏛️' },
             { id: 'shiva', label: 'देवाधिदेव शिव 🔱' },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,11 +15,23 @@ import {
   Sliders,
   ZoomIn,
   ZoomOut,
-  Split
+  Split,
+  Layers
 } from 'lucide-react';
 import { api } from '../api.js';
 import { devanagariToIast } from '../utils/transliteration.js';
 import { generatePadachheda } from '../utils/padachheda.js';
+import {
+  groupScriptureFolio,
+  getScriptureBlockConfig,
+  ScriptureBlockType,
+} from '../utils/scriptureTypography.js';
+import {
+  KarmakandaSegmentRenderer,
+} from './KarmakandaCards.js';
+import { parseKarmakandaSegment } from '../utils/karmakandaParser.js';
+import { GitaTableOfContents } from './GitaTableOfContents.js';
+import { GITA_SECTIONS, GitaChapter } from '../data/bhagavadGitaIndex.js';
 import type { Book, Page } from '../../shared/types.js';
 
 interface ReadingModeProps {
@@ -29,7 +41,7 @@ interface ReadingModeProps {
 }
 
 type ReadingTheme = 'bhojpatra' | 'golden-birch' | 'dark-slate' | 'ivory-white';
-type ScriptureFont = 'tiro' | 'yatra' | 'rozha' | 'notoSerif' | 'notoSans';
+type ScriptureFont = 'harmonized' | 'tiro' | 'yatra' | 'rozha' | 'notoSerif' | 'notoSans';
 type LineHeightOption = 'compact' | 'normal' | 'relaxed';
 
 export const ReadingMode: React.FC<ReadingModeProps> = ({
@@ -42,12 +54,27 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
   const [fontSize, setFontSize] = useState<number>(22);
   const [lineHeight, setLineHeight] = useState<LineHeightOption>('compact');
-  const [fontFamily, setFontFamily] = useState<ScriptureFont>('tiro');
+  const [fontFamily, setFontFamily] = useState<ScriptureFont>('harmonized');
   const [readingTheme, setReadingTheme] = useState<ReadingTheme>('bhojpatra');
   const [scriptMode, setScriptMode] = useState<'devanagari' | 'iast'>('devanagari');
   const [viewMode, setViewMode] = useState<'text' | 'split' | 'scan'>('text');
   const [isPadachhedaMode, setIsPadachhedaMode] = useState<boolean>(false);
+  const [isKarmakandaMode, setIsKarmakandaMode] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [jumpPageInput, setJumpPageInput] = useState<string>('1');
+  const [isTocOpen, setIsTocOpen] = useState<boolean>(false);
+  const [activeChapterScope, setActiveChapterScope] = useState<GitaChapter | null>(null);
+
+  // Derive current chapter from current page if not explicitly scoped
+  const currentChapter = useMemo(() => {
+    if (activeChapterScope) return activeChapterScope;
+    const pageNum = currentPageIndex + 1;
+    return GITA_SECTIONS.find(s => pageNum >= s.startPage && pageNum <= s.endPage) || null;
+  }, [activeChapterScope, currentPageIndex]);
+
+  useEffect(() => {
+    setJumpPageInput(String(currentPageIndex + 1));
+  }, [currentPageIndex]);
 
   useEffect(() => {
     async function loadBook() {
@@ -85,9 +112,13 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
     }
   };
 
-  const getFontFamilyStyle = (): React.CSSProperties => {
+  const getFontFamilyStyle = (blockType?: ScriptureBlockType): React.CSSProperties => {
     if (scriptMode === 'iast') {
       return { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' };
+    }
+    if (fontFamily === 'harmonized' && blockType) {
+      const config = getScriptureBlockConfig(blockType);
+      return { fontFamily: config.fontFamily };
     }
     switch (fontFamily) {
       case 'tiro':
@@ -99,8 +130,10 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
       case 'notoSerif':
         return { fontFamily: '"Noto Serif Devanagari", serif' };
       case 'notoSans':
-      default:
         return { fontFamily: '"Noto Sans Devanagari", "Yantramanav", sans-serif' };
+      case 'harmonized':
+      default:
+        return { fontFamily: '"Tiro Devanagari Sanskrit", "Noto Serif Devanagari", serif' };
     }
   };
 
@@ -304,49 +337,389 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   // Render text with sacred Devanagari styling
   const renderFormattedScripture = (rawText: string) => {
     const cleaned = sanitizeScriptureText(rawText);
-    const lines = cleaned.split('\n');
+    const units = groupScriptureFolio(cleaned);
+
+    const formatLineText = (lineText: string) => {
+      let targetLine = lineText;
+      if (isPadachhedaMode) {
+        targetLine = generatePadachheda(lineText).padachheda;
+      }
+      const displayText = scriptMode === 'iast' ? devanagariToIast(targetLine) : targetLine;
+
+      if (isPadachhedaMode && scriptMode === 'devanagari') {
+        return displayText.split(/([ -]+)/).map((part, pIdx) => {
+          if (part === '-') {
+            return <span key={pIdx} className="padachheda-delimiter">-</span>;
+          }
+          if (part.trim()) {
+            return <span key={pIdx} className="padachheda-split-word">{part}</span>;
+          }
+          return part;
+        });
+      }
+      return displayText;
+    };
+
+    const isGita = book.id === 'granth-bhagavad-gita' || book.title.includes('गीता');
+
+    // High-contrast, distinctly separated dual-layer layout for Srimad Bhagavad Gita
+    if (isGita) {
+      const rawLines = cleaned.split('\n').map(l => l.trim()).filter(Boolean);
+
+      type GitaBlock =
+        | { type: 'HEADING'; text: string }
+        | { type: 'SPEAKER'; speaker: string }
+        | { type: 'SHLOKA'; lines: string[] }
+        | { type: 'ANUVAD'; lines: string[] };
+
+      const blocks: GitaBlock[] = [];
+      let currentShloka: string[] = [];
+      let currentAnuvad: string[] = [];
+
+      const flushShloka = () => {
+        if (currentShloka.length > 0) {
+          blocks.push({ type: 'SHLOKA', lines: [...currentShloka] });
+          currentShloka = [];
+        }
+      };
+
+      const flushAnuvad = () => {
+        if (currentAnuvad.length > 0) {
+          blocks.push({ type: 'ANUVAD', lines: [...currentAnuvad] });
+          currentAnuvad = [];
+        }
+      };
+
+      // Comprehensive Hindi vocabulary and structural signatures for Anuvad detection
+      const HINDI_INDICATOR = /(?:^|\s|[.,!?-])(?:में|ने|और|है|हैं|को|के|की|से|था|थी|थे|बोले|कहा|करके|हुए|इस|उस|अपने|लिये|लिए|सकते|होते|जाता|किया|रहा|रही|रहे|जो|तो|कि|भी|पर|देखिये|करेंगे|दिये|संजय|अर्जुनने|श्रीकृष्ण|भगवान्|राजा|आपके|तुम्हारा|हमारे|सब|द्वारा|खड़ी|हुई|बड़ी|भारी|सेनाको|हे|हो|जाता|गया|गयी|गए|जैसे|वैसे|जब|तब)(?:$|\s|[.,!?-])/u;
+
+      let inTranslation = false;
+
+      for (const line of rawLines) {
+        // Strip running headers like "श्रीमद्भगवद्गीता 18" or "अध्याय 1"
+        if (/^\*?\s*श्रीमद्भगवद्गीता\s*\d*\s*\*?$/u.test(line) || /^श्रीमद्भगवद्गीता\s+\d+$/u.test(line) || /^\d+\s*श्रीमद्भगवद्गीता/u.test(line) || /^अध्याय\s*\d+$/u.test(line)) {
+          continue;
+        }
+
+        // Speaker tags: अर्जुन उवाच, सञ्जय उवाच, श्रीभगवानुवाच
+        if (/उवाच[ः:]?$/u.test(line)) {
+          flushShloka();
+          flushAnuvad();
+          inTranslation = false;
+          blocks.push({ type: 'SPEAKER', speaker: line.replace(/[ः:]+$/, '') });
+          continue;
+        }
+
+        // Sacred section headings
+        if (line.startsWith('॥') && line.endsWith('॥') && line.length < 55 && !/\d/.test(line)) {
+          flushShloka();
+          flushAnuvad();
+          inTranslation = false;
+          blocks.push({ type: 'HEADING', text: line });
+          continue;
+        }
+
+        // Shloka vs Anuvad detection
+        const hasVerseNum = /॥\s*[\d०-९\-]+(?:\s*वेंका[^\n]*?)?\s*॥/.test(line);
+        const hasDanda = /[।॥]/.test(line);
+        const isHindi = HINDI_INDICATOR.test(line);
+
+        if (inTranslation) {
+          currentAnuvad.push(line);
+          if (hasVerseNum) {
+            flushAnuvad();
+            inTranslation = false;
+          }
+        } else {
+          // If the line has Hindi markers or does not have danda when previous was shloka
+          if (isHindi || (!hasDanda && currentShloka.length >= 2)) {
+            flushShloka();
+            inTranslation = true;
+            currentAnuvad.push(line);
+            if (hasVerseNum) {
+              flushAnuvad();
+              inTranslation = false;
+            }
+          } else {
+            flushAnuvad();
+            currentShloka.push(line);
+          }
+        }
+      }
+
+      flushShloka();
+      flushAnuvad();
+
+      return (
+        <div className="space-y-4 py-1">
+          {blocks.map((b, bIdx) => {
+            if (b.type === 'HEADING') {
+              return (
+                <div key={bIdx} className="my-3 sm:my-4 text-center select-none">
+                  <span className="font-serifDevanagari font-bold text-base sm:text-lg text-[#8C2D19] dark:text-amber-400 tracking-wider">
+                    {formatLineText(b.text)}
+                  </span>
+                </div>
+              );
+            }
+
+            const isDarkSlate = readingTheme === 'dark-slate';
+
+            if (b.type === 'SPEAKER') {
+              return (
+                <div key={bIdx} className="my-3 text-center select-none">
+                  <span
+                    className={`inline-flex items-center space-x-2 px-4 py-1 rounded-full border font-serifDevanagari font-bold text-sm tracking-widest shadow-xs ${
+                      isDarkSlate
+                        ? 'border-amber-600/40 bg-amber-950/40 text-amber-300'
+                        : 'border-[#8C2D19]/40 bg-[#8C2D19]/10 text-[#8C2D19]'
+                    }`}
+                  >
+                    <span className={isDarkSlate ? 'text-amber-400' : 'text-[#C44D25]'}>॥</span>
+                    <span>{formatLineText(b.speaker)}</span>
+                    <span className={isDarkSlate ? 'text-amber-400' : 'text-[#C44D25]'}>॥</span>
+                  </span>
+                </div>
+              );
+            }
+
+            if (b.type === 'SHLOKA') {
+              return (
+                <div
+                  key={bIdx}
+                  className={`my-3 px-3 sm:px-6 py-2.5 rounded-2xl border text-center select-text shadow-2xs ${
+                    isDarkSlate
+                      ? 'bg-amber-950/25 border-amber-600/25'
+                      : 'bg-[#8C2D19]/[0.05] border-[#8C2D19]/15'
+                  }`}
+                >
+                  {b.lines.map((sLine, sIdx) => (
+                    <p
+                      key={sIdx}
+                      className={`font-tiro font-bold text-center tracking-normal leading-[2.2] select-text ${
+                        isDarkSlate ? 'text-[#FFDE99]' : 'text-[#7A1505]'
+                      } ${isPadachhedaMode ? 'padachheda-mode-container' : ''}`}
+                      style={{
+                        fontSize: `${Math.round(fontSize * 1.05)}px`,
+                        ...getFontFamilyStyle('PAURANIK_SHLOKA'),
+                      }}
+                    >
+                      {formatLineText(sLine)}
+                    </p>
+                  ))}
+                </div>
+              );
+            }
+
+            if (b.type === 'ANUVAD') {
+              return (
+                <div
+                  key={bIdx}
+                  className={`my-3 px-4 py-3 rounded-2xl border-l-4 text-left select-text shadow-xs ${
+                    isDarkSlate
+                      ? 'bg-white/[0.04] border-amber-500/80'
+                      : 'bg-black/[0.035] border-[#8C2D19]'
+                  }`}
+                >
+                  <div
+                    className={`flex items-center space-x-1.5 text-xs font-bold font-devanagari tracking-wider mb-1.5 select-none ${
+                      isDarkSlate ? 'text-amber-400' : 'text-[#8C2D19]'
+                    }`}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        isDarkSlate ? 'bg-amber-400' : 'bg-[#8C2D19]'
+                      }`}
+                    ></span>
+                    <span>हिन्दी अनुवाद :</span>
+                  </div>
+                  <p
+                    className={`font-devanagari font-normal leading-[1.85] select-text ${
+                      isDarkSlate ? 'text-[#F0E6D8]' : 'text-[#22130A]'
+                    }`}
+                    style={{
+                      fontSize: `${fontSize}px`,
+                      ...getFontFamilyStyle('REGULAR_TEXT'),
+                    }}
+                  >
+                    {formatLineText(b.lines.join(' '))}
+                  </p>
+                </div>
+              );
+            }
+
+            return null;
+          })}
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-1 sm:space-y-1.5">
-        {lines.map((line, idx) => {
-          const trimmed = line.trim();
-          if (!trimmed) {
-            return <div key={idx} className="h-2.5 sm:h-3" />;
-          }
-
-          // Sacred Section Headings like 【 शान्ति पाठः 】, 【 विनियोगः 】, 【 ध्यानम् 】
-          if (trimmed.startsWith('【') && trimmed.endsWith('】')) {
+        {units.map((unit, idx) => {
+          if (unit.kind === 'namavali_grid') {
             return (
-              <div key={idx} className="my-3 sm:my-3.5 text-center select-none">
-                <div className="inline-flex items-center space-x-2 px-4 py-1 rounded-full border border-[#8C2D19]/40 bg-[#8C2D19]/10 text-[#8C2D19] dark:text-sacred-300 font-bold tracking-wider text-xs sm:text-sm font-serifDevanagari shadow-sm">
-                  <Sparkles className="w-3.5 h-3.5 text-sacred-600" />
-                  <span>{trimmed.replace(/【|】/g, '')}</span>
-                  <Sparkles className="w-3.5 h-3.5 text-sacred-600" />
+              <div
+                key={idx}
+                className="my-3 sm:my-4 p-3.5 sm:p-4 rounded-2xl bg-amber-500/[0.05] dark:bg-amber-400/[0.04] border border-amber-600/25 shadow-xs"
+              >
+                <div className="text-center text-xs font-devanagari font-bold text-amber-900 dark:text-amber-300 uppercase tracking-widest mb-3 flex items-center justify-center space-x-2">
+                  <span>🙏</span>
+                  <span>प्रधान देवता नमस्कार नामावली</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-600/15 text-amber-800 dark:text-amber-200">
+                    {unit.items.length} देवता
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
+                  {unit.items.map((item, nIdx) => (
+                    <div
+                      key={nIdx}
+                      className="px-3.5 py-2 rounded-xl bg-white/50 dark:bg-black/25 border border-amber-600/15 flex items-center hover:bg-white/80 dark:hover:bg-black/45 transition-colors shadow-2xs"
+                    >
+                      <span
+                        className="font-tiro font-semibold text-xs sm:text-sm text-[#7A2814] dark:text-amber-200 select-text"
+                        style={{ ...getFontFamilyStyle('NAMAVALI') }}
+                      >
+                        {formatLineText(item)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             );
           }
 
+          const trimmed = unit.line;
+
+          // Sacred Section Headings like 【 शान्ति पाठः 】, 【 विनियोगः 】, 【 ध्यानम् 】
+          if (unit.type === 'SECTION_HEADING' || (trimmed.startsWith('【') && trimmed.endsWith('】'))) {
+            return (
+              <div key={idx} className="my-4 text-center select-none">
+                <span className="font-serifDevanagari font-bold text-sm sm:text-base text-[#8C2D19] dark:text-amber-300 tracking-wider">
+                  {trimmed}
+                </span>
+              </div>
+            );
+          }
+
           // Subheadings or invocation lines like ॥ श्रीगणेशाय नमः ॥
-          if (trimmed.startsWith('॥') && trimmed.endsWith('॥') && trimmed.length < 50) {
+          if (unit.type === 'INVOCATION_HEADING' || (trimmed.startsWith('॥') && trimmed.endsWith('॥') && trimmed.length < 50)) {
             return (
               <div
                 key={idx}
-                className="text-center font-bold tracking-wide my-2 sm:my-2.5 text-[#7A2814] dark:text-sacred-400 font-serifDevanagari"
-                style={{ fontSize: `${Math.round(fontSize * 1.12)}px` }}
+                className="text-center font-bold tracking-wide my-2 text-[#7A2814] dark:text-sacred-400 font-serifDevanagari select-none"
+                style={{
+                  fontSize: `${Math.round(fontSize * 1.15)}px`,
+                  ...getFontFamilyStyle('INVOCATION_HEADING'),
+                }}
               >
                 {trimmed}
               </div>
             );
           }
 
-          // Regular shloka or mantra line
-          let targetLine = trimmed;
-          if (isPadachhedaMode) {
-            targetLine = generatePadachheda(trimmed).padachheda;
-          }
-          let displayText = scriptMode === 'iast' ? devanagariToIast(targetLine) : targetLine;
+          // Karmakanda Segments (Viniyoga, Sankalpa, Nyasa, Upachara)
+          const karmakanda = parseKarmakandaSegment(trimmed);
 
+          // If interactive ritual mode is toggled on, show detailed interactive cards
+          if (isKarmakandaMode && karmakanda.type !== 'REGULAR' && karmakanda.type !== 'MANTRA') {
+            return (
+              <div key={idx} className="my-2 select-text">
+                <KarmakandaSegmentRenderer segment={karmakanda} />
+              </div>
+            );
+          }
+
+          // In standard Reading Mode (ग्रन्थ पाठ): Render pure, authentic book typography
+          if (karmakanda.type === 'VINIYOGA' && karmakanda.viniyogaData) {
+            const v = karmakanda.viniyogaData;
+            return (
+              <div key={idx} className="my-3 text-center select-text">
+                <p
+                  className="font-tiro font-semibold text-center leading-relaxed text-[#2C1810] dark:text-amber-100 select-text"
+                  style={{ fontSize: `${fontSize}px` }}
+                >
+                  {formatLineText(v.fullText)}
+                </p>
+                <div className="mt-1 text-xs text-[#8C2D19] dark:text-amber-300 font-devanagari flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
+                  <span>(ऋषि: <strong>{v.rishi?.name || 'गणक'}</strong> [{v.rishi?.touchPoint || 'शिरसि'}]</span>
+                  <span>• छन्द: <strong>{v.chhandas?.name || 'निचृद्गायत्री'}</strong> [{v.chhandas?.touchPoint || 'मुखे'}]</span>
+                  <span>• देवता: <strong>{v.devata?.name || 'श्रीमहागणपति'}</strong> [{v.devata?.touchPoint || 'हृदये'}]</span>
+                  {v.bija && <span>• बीज: <strong>{v.bija.name}</strong></span>}
+                  {v.shakti && <span>• शक्ति: <strong>{v.shakti.name}</strong></span>}
+                  {v.kilaka && <span>• कीलक: <strong>{v.kilaka.name}</strong></span>}
+                  <span>• विनियोग: <strong>जल-त्याग</strong>)</span>
+                </div>
+              </div>
+            );
+          }
+
+          if (karmakanda.type === 'SANKALPA' && karmakanda.sankalpaData) {
+            const s = karmakanda.sankalpaData;
+            return (
+              <div key={idx} className="my-3 text-center select-text">
+                <p
+                  className="font-tiro text-center leading-relaxed text-[#2C1810] dark:text-amber-100 select-text"
+                  style={{ fontSize: `${fontSize}px` }}
+                >
+                  {formatLineText(s.fullText)}
+                </p>
+                <p className="mt-1 text-xs sm:text-sm font-devanagari text-[#8C2D19] dark:text-amber-300/90 italic">
+                  (💧 {s.actionInstruction})
+                </p>
+              </div>
+            );
+          }
+
+          // Vaidika Mantras: Pure, flowing sacred text with Svara accents
+          if (unit.type === 'VEDIC_MANTRA') {
+            return (
+              <p
+                key={idx}
+                className={`text-center tracking-wide font-feature-settings-vedic transition-all leading-[2.1] select-text text-[#231208] dark:text-amber-100 my-1 sm:my-1.5 ${
+                  isPadachhedaMode ? 'padachheda-mode-container' : ''
+                }`}
+                style={{
+                  fontSize: `${fontSize}px`,
+                  ...getFontFamilyStyle('VEDIC_MANTRA'),
+                }}
+              >
+                {formatLineText(trimmed)}
+              </p>
+            );
+          }
+
+          // Pauranika Shlokas & Stotras: Pure classical Sanskrit typography
+          if (unit.type === 'PAURANIK_SHLOKA') {
+            return (
+              <p
+                key={idx}
+                className={`text-center tracking-normal leading-[1.9] select-text text-[#2C1810] dark:text-amber-200 my-1 sm:my-1.5 ${
+                  isPadachhedaMode ? 'padachheda-mode-container' : ''
+                }`}
+                style={{
+                  fontSize: `${fontSize}px`,
+                  ...getFontFamilyStyle('PAURANIK_SHLOKA'),
+                }}
+              >
+                {formatLineText(trimmed)}
+              </p>
+            );
+          }
+
+          // Karmakanda Vidhi Instructions: Traditional parenthetical liturgical red/italic
+          if (unit.type === 'VIDHI_INSTRUCTION') {
+            return (
+              <p
+                key={idx}
+                className="text-center font-devanagari text-xs sm:text-sm text-[#8C2D19] dark:text-amber-400 font-medium italic my-1.5 select-text"
+              >
+                ( {formatLineText(trimmed)} )
+              </p>
+            );
+          }
+
+          // Regular text
           return (
             <p
               key={idx}
@@ -355,22 +728,10 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
               }`}
               style={{
                 fontSize: `${fontSize}px`,
-                ...getFontFamilyStyle(),
+                ...getFontFamilyStyle('REGULAR_TEXT'),
               }}
             >
-              {isPadachhedaMode && scriptMode === 'devanagari' ? (
-                displayText.split(/([ -]+)/).map((part, pIdx) => {
-                  if (part === '-') {
-                    return <span key={pIdx} className="padachheda-delimiter">-</span>;
-                  }
-                  if (part.trim()) {
-                    return <span key={pIdx} className="padachheda-split-word">{part}</span>;
-                  }
-                  return part;
-                })
-              ) : (
-                displayText
-              )}
+              {formatLineText(trimmed)}
             </p>
           );
         })}
@@ -391,14 +752,30 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             <span className="font-devanagari">ग्रन्थालय</span>
           </button>
 
+          {/* Table of Contents Trigger */}
+          <button
+            onClick={() => setIsTocOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-700/90 to-sacred-700/90 hover:from-amber-600 hover:to-sacred-600 text-amber-100 font-devanagari text-xs font-bold border border-amber-500/40 shadow-md transition-all active:scale-95"
+            title="श्रीमद्भगवद्गीता अनुक्रमणिका एवं अध्याय सूची खोलें"
+          >
+            <Layers className="w-3.5 h-3.5 text-amber-300" />
+            <span>अनुक्रमणिका</span>
+          </button>
+
           <div>
             <h1 className="font-bold text-sm sm:text-base font-serifDevanagari truncate max-w-xs sm:max-w-md text-amber-200">
-              {book.title}
+              {book.title.replace(/\s*\([^)]*गीताप्रेस[^)]*\)/gi, '').trim()}
             </h1>
             <p className="text-[11px] text-neutral-400 font-devanagari flex items-center space-x-2">
               <span>दृष्टा / रचयिता: <strong>{book.author || 'पारंपरिक महर्षि'}</strong></span>
               <span>•</span>
-              <span>पत्र {currentPage ? currentPage.page_number : 0} / {pages.length}</span>
+              {activeChapterScope ? (
+                <span className="text-amber-300 font-semibold">
+                  पत्र {currentPageIndex + 1 - activeChapterScope.startPage + 1} / {activeChapterScope.endPage - activeChapterScope.startPage + 1} ({activeChapterScope.titleSa})
+                </span>
+              ) : (
+                <span>पत्र {currentPage ? currentPage.page_number : 0} / {pages.length}</span>
+              )}
             </p>
           </div>
         </div>
@@ -445,6 +822,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             className="bg-neutral-900 border border-neutral-700 text-amber-200 rounded-xl px-2.5 py-1.5 text-xs font-devanagari focus:outline-none focus:border-sacred-500 cursor-pointer shadow-inner"
             title="पवित्र संस्कृत लिपि फॉन्ट चुनें"
           >
+            <option value="harmonized">⚜️ शास्त्र सम्मत (वैदिक + पौराणिक द्वैध)</option>
             <option value="tiro">📜 पारंपरिक पोथी (Tiro Sanskrit)</option>
             <option value="yatra">🪶 काष्ठ पाण्डुलिपि (Yatra One)</option>
             <option value="rozha">🛕 राजसी मन्दिर शैली (Rozha One)</option>
@@ -571,6 +949,20 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             <span>{isPadachhedaMode ? 'पदच्छेद (विभक्त शब्द)' : 'पदच्छेद'}</span>
           </button>
 
+          {/* Karmakanda Ritual Action Toggle */}
+          <button
+            onClick={() => setIsKarmakandaMode(!isKarmakandaMode)}
+            className={`px-3 py-1 rounded-xl border text-xs font-semibold transition-all flex items-center space-x-1.5 font-devanagari shadow-sm ${
+              isKarmakandaMode
+                ? 'bg-gradient-to-r from-amber-600 to-sacred-600 border-amber-400 text-white shadow-md font-bold'
+                : 'bg-white/10 hover:bg-white/20 border-white/20 text-neutral-300'
+            }`}
+            title="कर्मकाण्ड विधि निर्देश, सङ्कल्प, विनियोग, न्यास एवं उपचार चक्र दर्शन"
+          >
+            <span>🪔</span>
+            <span>{isKarmakandaMode ? 'क्रिया-कार्ड सक्रिय' : 'क्रिया-कार्ड'}</span>
+          </button>
+
           {/* Quick Verify Button */}
           <button
             onClick={() => onOpenVerification(book.id)}
@@ -581,6 +973,56 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
           </button>
         </div>
       </header>
+
+      {/* Chapter Focus Scope Banner */}
+      {activeChapterScope && (
+        <div className="w-full bg-gradient-to-r from-[#2A1208] via-[#3D1A0D] to-[#2A1208] border-b border-amber-600/40 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs font-devanagari text-amber-200 shadow-xl sticky top-[57px] z-30">
+          <div className="flex items-center space-x-2.5">
+            <span className="text-base text-amber-400">🚩</span>
+            <div>
+              <span className="font-bold text-amber-100 text-sm font-serifDevanagari">
+                {activeChapterScope.titleSa}
+                {activeChapterScope.nameSa ? ` • ${activeChapterScope.nameSa}` : ''}
+              </span>
+              <span className="text-neutral-400 ml-2 text-[11px]">
+                ({activeChapterScope.nameHi})
+              </span>
+            </div>
+            {activeChapterScope.shlokaCount > 0 && (
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono font-semibold">
+                {activeChapterScope.shlokaCount} श्लोक
+              </span>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setActiveChapterScope(null)}
+              className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-neutral-200 hover:text-white transition-all text-xs font-semibold flex items-center space-x-1"
+              title="सम्पूर्ण ग्रन्थ (अखण्ड पारायण) मोड में लौटें"
+            >
+              <span>सम्पूर्ण ग्रन्थ ↩</span>
+            </button>
+            {(() => {
+              const nextChap = GITA_SECTIONS.find(s => s.id === activeChapterScope.id + 1);
+              if (nextChap) {
+                return (
+                  <button
+                    onClick={() => {
+                      setActiveChapterScope(nextChap);
+                      setCurrentPageIndex(nextChap.startPage - 1);
+                    }}
+                    className="px-3 py-1 rounded-xl bg-sacred-700 hover:bg-sacred-600 text-white font-bold transition-all text-xs flex items-center space-x-1 shadow"
+                    title={`अगले अध्याय (${nextChap.titleSa}) पर जाएँ`}
+                  >
+                    <span>अगला अध्याय ⏩</span>
+                  </button>
+                );
+              }
+              return null;
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Main Reading Container */}
       <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-10 w-full flex-grow flex flex-col items-center justify-center">
@@ -642,7 +1084,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
               {/* Header Title */}
               <div className="text-center pb-4 border-b border-[#8C2D19]/30 mb-6">
                 <p className="text-xl font-bold font-serifDevanagari text-[#8C2D19] dark:text-sacred-400">
-                  {book.title}
+                  {book.title.replace(/\s*\([^)]*गीताप्रेस[^)]*\)/gi, '').trim()}
                 </p>
                 <p className="text-xs opacity-75 font-devanagari mt-0.5">
                   पत्रम् {currentPage?.page_number} / {pages.length}
@@ -687,7 +1129,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
                 ॐ
               </div>
               <h2 className="text-xl sm:text-2xl font-bold font-serifDevanagari text-[#7A2814] dark:text-sacred-300 tracking-wide">
-                {book.title}
+                {book.title.replace(/\s*\([^)]*गीताप्रेस[^)]*\)/gi, '').trim()}
               </h2>
               {book.author && (
                 <p className="text-xs font-devanagari opacity-80">
@@ -696,69 +1138,182 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
               )}
             </div>
 
-            {/* Verification & Padachheda Status Banner */}
-            {currentPage && (
+            {/* Padachheda Status Banner if active */}
+            {currentPage && isPadachhedaMode && (
               <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-                <span className="flex items-center space-x-1.5 text-xs px-3 py-0.5 rounded-full bg-[#8C2D19]/10 border border-[#8C2D19]/30 text-[#8C2D19] dark:text-sacred-300 font-medium">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>पत्रम् {currentPage.page_number} • SanskritDocuments &amp; UoHyd प्रामाणिक पाठ</span>
+                <span className="flex items-center space-x-1.5 text-xs px-3 py-0.5 rounded-full bg-amber-600/15 border border-amber-600/40 text-amber-900 dark:text-amber-200 font-semibold animate-pulse">
+                  <Split className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                  <span>पदच्छेद सक्रिय (Padachheda Mode)</span>
                 </span>
-                {isPadachhedaMode && (
-                  <span className="flex items-center space-x-1.5 text-xs px-3 py-0.5 rounded-full bg-amber-600/15 border border-amber-600/40 text-amber-900 dark:text-amber-200 font-semibold animate-pulse">
-                    <Split className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                    <span>पदच्छेद सक्रिय (UoHyd Sandhi-Split)</span>
-                  </span>
-                )}
               </div>
             )}
 
             {/* Core Scripture Body */}
             {currentPage ? (
-              renderFormattedScripture(currentPage.verified_text || currentPage.ocr_text || '')
+              (currentPage.verified_text || currentPage.ocr_text) ? (
+                renderFormattedScripture(currentPage.verified_text || currentPage.ocr_text || '')
+              ) : (
+                <div className="text-center py-6 px-4 space-y-4">
+                  <div className="w-12 h-12 mx-auto rounded-2xl bg-[#8C2D19]/10 border border-[#8C2D19]/30 flex items-center justify-center text-[#8C2D19] dark:text-sacred-400">
+                    <Scroll className="w-6 h-6" />
+                  </div>
+                  <p className="font-serifDevanagari text-base sm:text-lg text-[#8C2D19] dark:text-sacred-300 font-bold">
+                    यह पृष्ठ (पत्रम् {currentPage.page_number}) अभी पाठ-सत्यापन अवस्था में है
+                  </p>
+                  <p className="text-xs font-devanagari opacity-75 max-w-md mx-auto">
+                    इस पृष्ठ का मूल पाण्डुलिपि स्कैन उपलब्ध है। आप मूल पाण्डुलिपि दर्शन हेतु नीचे क्लिक कर सकते हैं:
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                    <button
+                      onClick={() => setViewMode('split')}
+                      className="px-4 py-2 rounded-xl bg-sacred-600 hover:bg-sacred-500 text-white font-bold text-xs font-devanagari shadow-md transition-all active:scale-95 flex items-center space-x-1.5"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      <span>उभय दर्शन (मूल स्कैन + पाठ)</span>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('scan')}
+                      className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-200 border border-neutral-700 text-xs font-devanagari transition-all flex items-center space-x-1.5"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                      <span>मूल पोथी स्कैन देखें</span>
+                    </button>
+                  </div>
+                  {currentPage.original_image_path && (
+                    <div className="mt-4 pt-4 border-t border-[#8C2D19]/20 max-w-sm mx-auto">
+                      <img
+                        src={currentPage.original_image_path}
+                        alt={`Scan ${currentPage.page_number}`}
+                        className="w-full h-auto rounded-xl border border-[#8C2D19]/30 shadow-lg object-contain max-h-56 mx-auto cursor-pointer"
+                        onClick={() => setViewMode('scan')}
+                        title="बड़ा स्कैन देखने हेतु क्लिक करें"
+                      />
+                    </div>
+                  )}
+                </div>
+              )
             ) : (
               <p className="text-center opacity-60">कोई पृष्ठ नहीं मिला।</p>
             )}
 
-            {/* Pothi Manuscript Footer Seal */}
-            <div className="text-center pt-4 mt-4 border-t border-dashed border-[#8C2D19]/40 select-none space-y-1">
+            {/* Pothi Manuscript Folio Number */}
+            <div className="text-center pt-3 mt-4 border-t border-dashed border-[#8C2D19]/30 select-none">
               <p className="text-sm font-serifDevanagari font-bold text-[#8C2D19] dark:text-sacred-400 tracking-wider">
-                ॥ पत्रम् {currentPageIndex + 1} / {pages.length} • सनातन प्रामाणिक भोजपत्र पाण्डुलिपि ॥
-              </p>
-              <p className="text-[10px] opacity-70 font-devanagari">
-                अक्षर-सत्यता एवं वैदिक स्वर-सुरक्षा सहित डिजिटाइज़्ड
+                ॥ पत्रम् {currentPageIndex + 1} / {pages.length} ॥
               </p>
             </div>
           </div>
         )}
+
       </main>
 
       {/* Sticky Bottom Navigation Bar */}
-      <footer className="sticky bottom-0 z-40 border-t border-black/20 bg-black/50 backdrop-blur-md px-4 py-3 flex items-center justify-between max-w-xl mx-auto rounded-t-2xl shadow-2xl w-full">
+      <footer className="sticky bottom-0 z-40 border-t border-black/20 bg-black/60 backdrop-blur-md px-4 py-3 flex items-center justify-between max-w-2xl mx-auto rounded-t-2xl shadow-2xl w-full">
         <button
-          onClick={() => setCurrentPageIndex(prev => Math.max(0, prev - 1))}
-          disabled={currentPageIndex === 0}
-          className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed font-medium text-xs text-white transition-all active:scale-95"
+          onClick={() => {
+            if (activeChapterScope && currentPageIndex <= activeChapterScope.startPage - 1) {
+              const prevChap = GITA_SECTIONS.find(s => s.id === activeChapterScope.id - 1);
+              if (prevChap) {
+                setActiveChapterScope(prevChap);
+                setCurrentPageIndex(prevChap.endPage - 1);
+              }
+              return;
+            }
+            setCurrentPageIndex(prev => Math.max(0, prev - 1));
+          }}
+          disabled={activeChapterScope ? (activeChapterScope.id === 1 && currentPageIndex <= 0) : currentPageIndex === 0}
+          className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed font-medium text-xs text-white transition-all active:scale-95"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span className="font-devanagari font-semibold">पूर्व पृष्ठ</span>
+          <span className="font-devanagari font-semibold hidden sm:inline">
+            {activeChapterScope && currentPageIndex <= activeChapterScope.startPage - 1 ? 'पूर्व अध्याय' : 'पूर्व पृष्ठ'}
+          </span>
         </button>
 
-        <div className="text-xs font-serifDevanagari font-bold text-amber-300 flex items-center space-x-2">
-          <span>पत्रम्</span>
-          <span className="font-mono bg-black/40 px-2 py-0.5 rounded border border-white/15">
-            {currentPageIndex + 1} / {pages.length}
+        {/* Direct Page Jump Input */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const p = parseInt(jumpPageInput, 10);
+            if (!isNaN(p)) {
+              if (activeChapterScope) {
+                // If user entered a number in chapter page range
+                const target = activeChapterScope.startPage + p - 1;
+                if (target >= activeChapterScope.startPage && target <= activeChapterScope.endPage) {
+                  setCurrentPageIndex(target - 1);
+                } else if (p >= 1 && p <= pages.length) {
+                  setCurrentPageIndex(p - 1);
+                }
+              } else if (p >= 1 && p <= pages.length) {
+                setCurrentPageIndex(p - 1);
+              }
+            }
+          }}
+          className="flex items-center space-x-1.5 text-xs font-serifDevanagari"
+        >
+          <span className="text-amber-300 font-bold hidden sm:inline">पत्रम्</span>
+          <input
+            type="number"
+            min="1"
+            max={pages.length}
+            value={jumpPageInput}
+            onChange={(e) => setJumpPageInput(e.target.value)}
+            className="w-16 text-center font-mono bg-black/60 text-amber-200 px-1 py-1 rounded-lg border border-white/20 text-xs focus:outline-none focus:border-sacred-500 font-bold"
+          />
+          <span className="text-neutral-400 font-mono">
+            / {activeChapterScope ? (activeChapterScope.endPage - activeChapterScope.startPage + 1) : pages.length}
           </span>
-        </div>
+          <button
+            type="submit"
+            className="px-2.5 py-1 rounded-lg bg-sacred-700 hover:bg-sacred-600 text-white text-[11px] font-devanagari font-semibold transition-colors shadow"
+          >
+            जाएँ
+          </button>
+        </form>
 
         <button
-          onClick={() => setCurrentPageIndex(prev => Math.min(pages.length - 1, prev + 1))}
-          disabled={currentPageIndex === pages.length - 1}
-          className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed font-medium text-xs text-white transition-all active:scale-95"
+          onClick={() => {
+            if (activeChapterScope && currentPageIndex >= activeChapterScope.endPage - 1) {
+              const nextChap = GITA_SECTIONS.find(s => s.id === activeChapterScope.id + 1);
+              if (nextChap) {
+                setActiveChapterScope(nextChap);
+                setCurrentPageIndex(nextChap.startPage - 1);
+              }
+              return;
+            }
+            setCurrentPageIndex(prev => Math.min(pages.length - 1, prev + 1));
+          }}
+          disabled={activeChapterScope ? (activeChapterScope.id === GITA_SECTIONS.length && currentPageIndex >= pages.length - 1) : currentPageIndex === pages.length - 1}
+          className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed font-medium text-xs text-white transition-all active:scale-95"
         >
-          <span className="font-devanagari font-semibold">अग्रिम पृष्ठ</span>
+          <span className="font-devanagari font-semibold hidden sm:inline">
+            {activeChapterScope && currentPageIndex >= activeChapterScope.endPage - 1 ? 'अग्रिम अध्याय' : 'अग्रिम पृष्ठ'}
+          </span>
           <ChevronRight className="w-4 h-4" />
         </button>
       </footer>
+
+      {/* Gita Interactive Table of Contents Drawer */}
+      <GitaTableOfContents
+        isOpen={isTocOpen}
+        onClose={() => setIsTocOpen(false)}
+        currentPageNumber={currentPageIndex + 1}
+        activeChapterId={activeChapterScope ? activeChapterScope.id : null}
+        onSelectChapter={(chap, focusMode) => {
+          if (focusMode) {
+            setActiveChapterScope(chap);
+          } else {
+            setActiveChapterScope(null);
+          }
+          setCurrentPageIndex(chap.startPage - 1);
+        }}
+        onJumpToPage={(pageNum) => {
+          setCurrentPageIndex(pageNum - 1);
+        }}
+        onResetToFullBook={() => {
+          setActiveChapterScope(null);
+        }}
+      />
     </div>
   );
 };
