@@ -19,14 +19,17 @@ export function chanakyaToUnicode(text: string): string {
   str = str.replace(/—/g, 'ः');
   str = str.replace(/˘/g, 'ऽ');
 
-  // Common Hindi words with '•ı' before split
+  // Common Hindi words with '•ı' and whole vowels with matras
   str = str.replace(/•ı⁄U/g, 'और');
   str = str.replace(/•ı⁄/g, 'और');
-  str = str.replace(/•ı/g, 'और');
-
-  // 3. Whole Vowels
-  str = str.replace(/•ÊÒ/g, 'औ');
+  str = str.replace(/•ı/g, 'औ');
+  str = str.replace(/•Ù¥/g, 'ओं');
+  str = str.replace(/•Ù¢/g, 'ओं');
+  str = str.replace(/•Ù/g, 'ओ');
+  str = str.replace(/•Ê¥/g, 'ओं');
+  str = str.replace(/•Ê¢/g, 'ओं');
   str = str.replace(/•Ê/g, 'ओ');
+  str = str.replace(/•ÊÒ/g, 'औ');
   str = str.replace(/•Ê/g, 'आ');
   str = str.replace(/•Ò/g, 'ऐ');
   str = str.replace(/•/g, 'ए');
@@ -318,12 +321,22 @@ export function chanakyaToUnicode(text: string): string {
   str = str.replace(/»§/g, 'फ');
   str = str.replace(/»/g, 'फ');
 
+  str = str.replace(/÷˝Ê/g, 'भ्रा');
+  str = str.replace(/÷˝/g, 'भ्र');
   str = str.replace(/º˝/g, 'द्र');
   str = str.replace(/ª˝/g, 'ग्र');
   str = str.replace(/¬˝/g, 'प्र');
   str = str.replace(/Ã˝/g, 'त्र');
   str = str.replace(/‡Ê˝/g, 'श्र');
   str = str.replace(/ø˝/g, 'च्र');
+  str = str.replace(/d/g, 'स्र');
+  str = str.replace(/@/g, 'ञ्च');
+  str = str.replace(/ÎÎ/g, 'ॄ');
+  str = str.replace(/L§/g, 'रु');
+  str = str.replace(/NU/g, 'हृ');
+  str = str.replace(/ÛÊ/g, 'न्न');
+  str = str.replace(/àSÕ/g, 'त्स्थ');
+  str = str.replace(/ÁˇÊ/g, 'क्षि');
 
   str = str.replace(/ÁQ§/g, 'क्ति');
   str = str.replace(/Q§/g, 'क्त');
@@ -474,6 +487,112 @@ export function chanakyaToUnicode(text: string): string {
   str = str.replace(/औरर/g, 'और');
   str = str.replace(/सिंहह/g, 'सिंह');
   str = str.replace(/विनद्योच्चौः/g, 'विनद्योच्चैः');
+
+  // Devanagari Unicode Canonical Normalization & Dotted Circle Prevention
+  str = str.replace(/अ\s*ों/g, 'ओं');
+  str = str.replace(/अों/g, 'ओं');
+  str = str.replace(/अ\s*ो/g, 'ओ');
+  str = str.replace(/अ\s*ौ/g, 'औ');
+  str = str.replace(/अ\s*ै/g, 'ऐ');
+  str = str.replace(/अ\s*े/g, 'ए');
+  str = str.replace(/अ\s*ा/g, 'आ');
+  str = str.replace(/अ\s*ी/g, 'ई');
+  str = str.replace(/अ\s*ि/g, 'इ');
+  str = str.replace(/अ\s*ू/g, 'ऊ');
+  str = str.replace(/अ\s*ु/g, 'उ');
+  str = str.replace(/अ\s*ृ/g, 'ऋ');
+  str = str.replace(/आ\s*ों/g, 'ओं');
+  str = str.replace(/आ\s*ें/g, 'ओं');
+  str = str.replace(/ृृ/g, 'ॄ');
+  str = str.replace(/पितृृनथ/g, 'पितॄनथ');
+  str = str.replace(/पितृृन्/g, 'पितॄन्');
+  str = str.replace(/भ[˝\u02DD]ातृृन्/g, 'भ्रातॄन्');
+  str = str.replace(/भ[˝\u02DD]ातॄन्/g, 'भ्रातॄन्');
+  str = str.replace(/भ[˝\u02DD]ा/g, 'भ्रा');
+  str = str.replace(/भ[˝\u02DD]म/g, 'भ्रम');
+  str = str.replace(/([क-ह])[˝\u02DD]/g, '$1्र');
+  str = str.replace(/[˝\u02DD]/g, '्र');
+  str = str.replace(/दृष्ट्वाेमं/g, 'दृष्ट्वेमं');
+  str = str.replace(/रोमा@/g, 'रोमाञ्च');
+  str = str.replace(/\bdंसते\b/g, 'स्रंसते');
+  str = str.replace(/dंसते/g, 'स्रंसते');
+
+  // Chanakya unmapped characters and ligature healing
+  str = str.replace(/उÀलंघान/g, 'उल्लङ्घन');
+  str = str.replace(/उÀलंघन/g, 'उल्लङ्घन');
+  str = str.replace(/बिÀाकुल/g, 'बिल्कुल');
+  str = str.replace(/मि\^ी/g, 'मिट्टी');
+  str = str.replace(/ख\^े/g, 'खट्टे');
+  str = str.replace(/चि_े/g, 'चिट्ठे');
+  str = str.replace(/लड़Âँगा/g, 'लड़ूँगा');
+  str = str.replace(/कीÏत/g, 'कीर्तिं');
+  str = str.replace(/अकीÏत/g, 'अकीर्तिं');
+  str = str.replace(/बढ∏/g, 'बढ़');
+  str = str.replace(/जड़∏/g, 'जड़');
+  str = str.replace(/∏/g, '');
+
+  str = str.replace(/बु®द्ध/g, 'बुद्धिं');
+  str = str.replace(/सि®द्ध/g, 'सिद्धिं');
+  str = str.replace(/प्रकृ®त/g, 'प्रकृतिं');
+  str = str.replace(/अ®हसा/g, 'अहिंसा');
+  str = str.replace(/शा®न्त/g, 'शान्तिं');
+  str = str.replace(/ग®त/g, 'गतिं');
+  str = str.replace(/दुर्ग®त/g, 'दुर्गतिं');
+  str = str.replace(/रा®त्र/g, 'रात्रिं');
+  str = str.replace(/आवृ®त्त/g, 'आवृत्तिं');
+  str = str.replace(/प्रवृ®त्त/g, 'प्रवृत्तिं');
+  str = str.replace(/निवृ®त्त/g, 'निवृत्तिं');
+  str = str.replace(/भ®क्त/g, 'भक्तिं');
+  str = str.replace(/®/g, '•');
+
+  str = str.replace(/गृˆ/g, 'गृह्ण');
+  str = str.replace(/निगृˆ/g, 'निगृह्ण');
+  str = str.replace(/ˆ/g, 'ह्ण');
+
+  str = str.replace(/´क्साम/g, 'ऋक्साम');
+  str = str.replace(/´ग्यवेद/g, 'ऋग्वेद');
+  str = str.replace(/देव´णरूप/g, 'देवऋणरूप');
+  str = str.replace(/´षि/g, 'ऋषि');
+  str = str.replace(/´तु/g, 'ऋतु');
+  str = str.replace(/´तेऽपि/g, 'ऋतेऽपि');
+  str = str.replace(/´/g, 'ऋ');
+
+  str = str.replace(/द्रष्ट‰/g, 'द्रष्टु');
+  str = str.replace(/प्रवेष्ट‰/g, 'प्रवेष्टुं');
+  str = str.replace(/श्र‰/g, 'श्रु');
+  str = str.replace(/क्षणभङ्‰र/g, 'क्षणभङ्गुर');
+  str = str.replace(/‰/g, 'ु');
+
+  str = str.replace(/@/g, 'ञ्च');
+  str = str.replace(/([\u0900-\u097F])%([\u0900-\u097F])/gu, '$1त्न$2');
+  str = str.replace(/प्रय%/g, 'प्रयत्न');
+  str = str.replace(/असप%/g, 'असपत्न');
+  str = str.replace(/प%ी/g, 'पत्नी');
+  str = str.replace(/य%/g, 'यत्न');
+  str = str.replace(/À/g, 'ल्');
+  str = str.replace(/\^/g, '•');
+
+  str = str.replace(/K/g, '्य');
+  str = str.replace(/F/g, 'स्न');
+  str = str.replace(/V/g, 'ङ्क');
+  str = str.replace(/d/g, 'स्र');
+  str = str.replace(/u/g, 'ह्व');
+  str = str.replace(/g/g, 'द्द');
+  str = str.replace(/O/g, 'ह्र');
+  str = str.replace(/G/g, 'त्र');
+  str = str.replace(/Y/g, 'ङ्घ');
+  str = str.replace(/P/g, 'क्क');
+  str = str.replace(/t/g, 'ह्ला');
+  str = str.replace(/जाqवी/g, 'जाह्नवी');
+  str = str.replace(/विq/g, 'वह्नि');
+  str = str.replace(/q/g, 'ह्न');
+  str = str.replace(/Mँ/g, 'रूँ');
+  str = str.replace(/कMँ/g, 'करूँ');
+  str = str.replace(/M/g, 'रू');
+  str = str.replace(/तैNर्त/g, 'तैर्हृत');
+  str = str.replace(/N/g, 'र्हृ');
+  str = str.replace(/साङ्ख्यये/g, 'साङ्ख्ये');
+  str = str.replace(/श्ृणु/g, 'शृणु');
 
   return str;
 }

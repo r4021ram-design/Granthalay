@@ -121,13 +121,22 @@ The digitizer supports three synchronized representations:
      - ASCII pipes (`|`, `||`) replacing sacred dandas (`।`, `॥`)
      - Latin letters or digits embedded in Devanagari words
 
+5. **Zero-Arbitrary-Numbering Axiom**:
+   - Never guess or fabricate verse numbering arbitrarily ("अपने हिसाब से नंबरिंग नहीं करना").
+   - Cross-verify verse counts against authentic recension standards (e.g., Śrīmad Bhagavad Gītā has exactly 700 verses across 18 chapters).
+6. **Unicode Shaper Cleanliness & DTP Font Healing**:
+   - Eliminate all legacy DTP font artifacts (`अों` ➔ `ओं`, `अो` ➔ `ओ`, `ृृ` ➔ `ॄ`).
+   - Text must be 100% free of Unicode Dotted Circles (`◌` U+25CC).
+
 ---
 
 ## 6. Verification Checklist for Digitizers
 
 - [ ] Original page scan clearly visible and high-resolution.
 - [ ] Viniyoga, Rishi, Chhandas, and Devata clearly segmented.
-- [ ] Mula verses numbered with sacred double dandas (`॥ १ ॥`).
+- [ ] Mula verses numbered with verified canonical double dandas (`॥ १ ॥`), strictly conforming to recension counts without arbitrary numbering.
+- [ ] Zero Unicode Dotted Circles (`◌`) or illegal independent vowel + matra sequences (`अों`, `अो`, `अै`).
+- [ ] Double vocalic R ligatures normalized (`ॄ`, e.g. `भ्रातॄन्`, `पितॄन्`).
 - [ ] Vedic accents (`॑`, `॒`) preserved if present in the printed grantha.
 - [ ] No ASCII pipes (`|`) or colons (`:`) substituting sacred dandas or visargas.
 - [ ] Devanagari and IAST transliterations verified for diacritical correctness.

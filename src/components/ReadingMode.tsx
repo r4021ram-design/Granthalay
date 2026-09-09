@@ -25,6 +25,7 @@ import {
   groupScriptureFolio,
   getScriptureBlockConfig,
   ScriptureBlockType,
+  parseGitaFolio,
 } from '../utils/scriptureTypography.js';
 import {
   KarmakandaSegmentRenderer,
@@ -73,8 +74,13 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   }, [activeChapterScope, currentPageIndex]);
 
   useEffect(() => {
-    setJumpPageInput(String(currentPageIndex + 1));
-  }, [currentPageIndex]);
+    if (activeChapterScope) {
+      const chapterFolio = currentPageIndex + 1 - activeChapterScope.startPage + 1;
+      setJumpPageInput(String(chapterFolio));
+    } else {
+      setJumpPageInput(String(currentPageIndex + 1));
+    }
+  }, [currentPageIndex, activeChapterScope]);
 
   useEffect(() => {
     async function loadBook() {
@@ -286,10 +292,114 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
     s = s.replace(/श्रावविकेवप/gu, 'श्रावणिकेऽपि');
     s = s.replace(/वक्षप्त/gu, 'क्षिप्र');
 
-    // 2. Fix orphan matras and spaces before combining marks (eliminates dotted circles ◌)
+    // 2. Fix orphan matras, illegal vowel combinations and spaces before combining marks (eliminates dotted circles ◌)
     s = s.replace(/([क-ह]़?)\s+([ािीुूृेैोौँंः])/gu, '$1$2');
     s = s.replace(/\s+([ािीुूृेैोौँंः])/gu, '$1');
     s = s.replace(/\u094D\s+/gu, '\u094D');
+    s = s.replace(/अ\s*ों/gu, 'ओं');
+    s = s.replace(/अों/gu, 'ओं');
+    s = s.replace(/अ\s*ो/gu, 'ओ');
+    s = s.replace(/अ\s*ौ/gu, 'औ');
+    s = s.replace(/अ\s*ै/gu, 'ऐ');
+    s = s.replace(/अ\s*े/gu, 'ए');
+    s = s.replace(/अ\s*ा/gu, 'आ');
+    s = s.replace(/अ\s*ी/gu, 'ई');
+    s = s.replace(/अ\s*ि/gu, 'इ');
+    s = s.replace(/अ\s*ू/gu, 'ऊ');
+    s = s.replace(/अ\s*ु/gu, 'उ');
+    s = s.replace(/अ\s*ृ/gu, 'ऋ');
+    s = s.replace(/आ\s*ों/gu, 'ओं');
+    s = s.replace(/आ\s*ें/gu, 'ओं');
+    s = s.replace(/ृृ/gu, 'ॄ');
+    s = s.replace(/पितृृनथ/gu, 'पितॄनथ');
+    s = s.replace(/पितृृन्/gu, 'पितॄन्');
+    s = s.replace(/भ[˝\u02DD]ातृृन्/gu, 'भ्रातॄन्');
+    s = s.replace(/भ[˝\u02DD]ातॄन्/gu, 'भ्रातॄन्');
+    s = s.replace(/भ[˝\u02DD]ा/gu, 'भ्रा');
+    s = s.replace(/भ[˝\u02DD]म/gu, 'भ्रम');
+    s = s.replace(/([क-ह])[˝\u02DD]/gu, '$1्र');
+    s = s.replace(/[˝\u02DD]/gu, '्र');
+    s = s.replace(/दृष्ट्वाेमं/gu, 'दृष्ट्वेमं');
+    s = s.replace(/([क-ह])ाो/gu, '$1ो');
+    s = s.replace(/([क-ह])ाौ/gu, '$1ौ');
+    // Chanakya legacy font ligatures & OCR healing
+    s = s.replace(/उÀलंघान/gu, 'उल्लङ्घन');
+    s = s.replace(/उÀलंघन/gu, 'उल्लङ्घन');
+    s = s.replace(/बिÀाकुल/gu, 'बिल्कुल');
+    s = s.replace(/मि\^ी/gu, 'मिट्टी');
+    s = s.replace(/ख\^े/gu, 'खट्टे');
+    s = s.replace(/चि_े/gu, 'चिट्ठे');
+    s = s.replace(/लड़Âँगा/gu, 'लड़ूँगा');
+    s = s.replace(/कीÏत/gu, 'कीर्तिं');
+    s = s.replace(/अकीÏत/gu, 'अकीर्तिं');
+    s = s.replace(/बढ∏/gu, 'बढ़');
+    s = s.replace(/जड़∏/gu, 'जड़');
+    s = s.replace(/∏/gu, '');
+
+    // ® fixes
+    s = s.replace(/बु®द्ध/gu, 'बुद्धिं');
+    s = s.replace(/सि®द्ध/gu, 'सिद्धिं');
+    s = s.replace(/प्रकृ®त/gu, 'प्रकृतिं');
+    s = s.replace(/अ®हसा/gu, 'अहिंसा');
+    s = s.replace(/शा®न्त/gu, 'शान्तिं');
+    s = s.replace(/ग®त/gu, 'गतिं');
+    s = s.replace(/दुर्ग®त/gu, 'दुर्गतिं');
+    s = s.replace(/रा®त्र/gu, 'रात्रिं');
+    s = s.replace(/आवृ®त्त/gu, 'आवृत्तिं');
+    s = s.replace(/प्रवृ®त्त/gu, 'प्रवृत्तिं');
+    s = s.replace(/निवृ®त्त/gu, 'निवृत्तिं');
+    s = s.replace(/भ®क्त/gu, 'भक्तिं');
+    s = s.replace(/®/gu, '•');
+
+    // ˆ (U+02C6) -> ह्ण
+    s = s.replace(/गृˆ/gu, 'गृह्ण');
+    s = s.replace(/निगृˆ/gu, 'निगृह्ण');
+    s = s.replace(/ˆ/gu, 'ह्ण');
+
+    // ´ (U+00B4) -> ऋ
+    s = s.replace(/´क्साम/gu, 'ऋक्साम');
+    s = s.replace(/´ग्यवेद/gu, 'ऋग्वेद');
+    s = s.replace(/देव´णरूप/gu, 'देवऋणरूप');
+    s = s.replace(/´षि/gu, 'ऋषि');
+    s = s.replace(/´तु/gu, 'ऋतु');
+    s = s.replace(/´तेऽपि/gu, 'ऋतेऽपि');
+    s = s.replace(/´/gu, 'ऋ');
+
+    // ‰ (U+2030) -> ु
+    s = s.replace(/द्रष्ट‰/gu, 'द्रष्टु');
+    s = s.replace(/प्रवेष्ट‰/gu, 'प्रवेष्टुं');
+    s = s.replace(/श्र‰/gu, 'श्रु');
+    s = s.replace(/क्षणभङ्‰र/gu, 'क्षणभङ्गुर');
+    s = s.replace(/‰/gu, 'ु');
+
+    // @ -> ञ्च
+    s = s.replace(/@/gu, 'ञ्च');
+
+    // % -> त्न
+    s = s.replace(/([\u0900-\u097F])%([\u0900-\u097F])/gu, '$1त्न$2');
+    s = s.replace(/प्रय%/gu, 'प्रयत्न');
+    s = s.replace(/असप%/gu, 'असपत्न');
+    s = s.replace(/प%ी/gu, 'पत्नी');
+    s = s.replace(/य%/gu, 'यत्न');
+
+    // À -> ल्
+    s = s.replace(/À/gu, 'ल्');
+
+    // ^ alone -> •
+    s = s.replace(/\^/gu, '•');
+
+    // Common OCR spelling fixes in Gita
+    s = s.replace(/मामाश्रिात्य/gu, 'मामाश्रित्य');
+    s = s.replace(/भावमाश्रिाताः/gu, 'भावमाश्रिताः');
+    s = s.replace(/चर्तुवधा/gu, 'चतुर्विधा');
+    s = s.replace(/साधियज्ञां/gu, 'साधियज्ञं');
+    s = s.replace(/अधियज्ञाके/gu, 'अधियज्ञके');
+    s = s.replace(/श्रीमानोंके घारमें/gu, 'श्रीमानोंके घरमें');
+    s = s.replace(/आर्कषत किया/gu, 'आकर्षित किया');
+    s = s.replace(/छ्ूटनेके/gu, 'छूटनेके');
+    s = s.replace(/सुघाोष/gu, 'सुघोष');
+    s = s.replace(/नरसिंघो/gu, 'नरसिंघे');
+    s = s.replace(/उच्चा\s*स्वर/gu, 'उच्च स्वर');
 
     // 3. Spaced words
     s = s.replace(/गृह\s*प्र\s*वेश/gu, 'गृहप्रवेश');
@@ -329,6 +439,73 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
     // Convert 'वव' to 'वि' prefix
     s = s.replace(/वव([क-ह])/gu, 'वि$1');
 
+    // Gita OCR & Kruti-Dev/Chanakya legacy font healing
+    s = s.replace(/Âँ/gu, 'ूँ');
+    s = s.replace(/Â/gu, 'ू');
+    s = s.replace(/सङ्ख्यये/gu, 'सङ्ख्ये');
+    s = s.replace(/भोगान्रुधिरप्रदिग्यधान्/gu, 'भोगान्रुधिरप्रदिग्धान्');
+    s = s.replace(/अस्वग्यर्यमर्कीतकरमर्जुन/gu, 'अस्वर्ग्यमकीर्तिकरमर्जुन');
+    s = s.replace(/त्वय्ययुपपद्यते/gu, 'त्वय्युपपद्यते');
+    s = s.replace(/कMँगा|कmँगा/gu, 'करूँगा');
+    s = s.replace(/अश्राु/gu, 'अश्रु');
+    s = s.replace(/श्राुत्वा/gu, 'श्रुत्वा');
+    s = s.replace(/श्ृणोति/gu, 'शृणोति');
+    s = s.replace(/श्ृणु/gu, 'शृणु');
+    s = s.replace(/साङ्ख्यये/gu, 'साङ्ख्ये');
+
+    // Chanakya unmapped Latin character and ligature healing
+    s = s.replace(/K/gu, '्य');
+    s = s.replace(/F/gu, 'स्न');
+    s = s.replace(/V/gu, 'ङ्क');
+    s = s.replace(/d/gu, 'स्र');
+    s = s.replace(/u/gu, 'ह्व');
+    s = s.replace(/g/gu, 'द्द');
+    s = s.replace(/O/gu, 'ह्र');
+    s = s.replace(/G/gu, 'त्र');
+    s = s.replace(/Y/gu, 'ङ्घ');
+    s = s.replace(/P/gu, 'क्क');
+    s = s.replace(/t/gu, 'ह्ला');
+    s = s.replace(/जाqवी/gu, 'जाह्नवी');
+    s = s.replace(/विq/gu, 'वह्नि');
+    s = s.replace(/q/gu, 'ह्न');
+    s = s.replace(/Mँ/gu, 'रूँ');
+    s = s.replace(/कMँ/gu, 'करूँ');
+    s = s.replace(/M/gu, 'रू');
+    s = s.replace(/तैNर्त/gu, 'तैर्हृत');
+    s = s.replace(/N/gu, 'र्हृ');
+
+    // Chanakya unmapped character and ligature healing
+    s = s.replace(/मि्रय/gu, 'म्रिय');
+    s = s.replace(/गृˆाति|गृ्णाति|गृ\s*ˆ\s*ाति/gu, 'गृह्णाति');
+    s = s.replace(/निगृˆामि|निगृ्णामि|निगृ\s*ˆ\s*ामि/gu, 'निगृह्णामि');
+    s = s.replace(/गृˆन्|गृ्णन्|गृ\s*ˆ\s*न्/gu, 'गृह्णन्');
+    s = s.replace(/ˆ/gu, 'ह्ण');
+    s = s.replace(/À/gu, 'ल्');
+    s = s.replace(/´/gu, 'ऋ');
+    s = s.replace(/शा®न्त/gu, 'शान्ति');
+    s = s.replace(/संसि®द्ध/gu, 'संसिद्धि');
+    s = s.replace(/सि®द्ध/gu, 'सिद्धि');
+    s = s.replace(/बु®द्ध/gu, 'बुद्धि');
+    s = s.replace(/प्रवृ®त्त/gu, 'प्रवृत्ति');
+    s = s.replace(/निवृ®त्त/gu, 'निवृत्ति');
+    s = s.replace(/आवृ®त्त/gu, 'आवृत्ति');
+    s = s.replace(/प्रकृ®त/gu, 'प्रकृति');
+    s = s.replace(/भ®क्त/gu, 'भक्ति');
+    s = s.replace(/दुर्ग®त/gu, 'दुर्गति');
+    s = s.replace(/ग®त/gu, 'गति');
+    s = s.replace(/रा®त्र/gu, 'रात्रि');
+    s = s.replace(/अ®हसा/gu, 'अहिंसा');
+    s = s.replace(/®/gu, 'ि');
+    s = s.replace(/बढ∏ने|बढ़∏ने/gu, 'बढ़ने');
+    s = s.replace(/बढ∏ाने|बढ़∏ाने/gu, 'बढ़ाने');
+    s = s.replace(/जड़∏ें/gu, 'जड़ें');
+    s = s.replace(/∏/gu, '');
+    s = s.replace(/सVÀप/gu, 'संकल्प');
+    s = s.replace(/VÀ/gu, 'ङ्कल्प');
+    s = s.replace(/सVार/gu, 'सङ्कार');
+    s = s.replace(/मोVार/gu, 'मोङ्कार');
+    s = s.replace(/पवित्रमोVार/gu, 'पवित्रमोंकार');
+
     // Remove any stray dotted circle characters
     s = s.replace(/[\u25CC\u25CB]/gu, '');
     return s;
@@ -364,91 +541,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
 
     // High-contrast, distinctly separated dual-layer layout for Srimad Bhagavad Gita
     if (isGita) {
-      const rawLines = cleaned.split('\n').map(l => l.trim()).filter(Boolean);
-
-      type GitaBlock =
-        | { type: 'HEADING'; text: string }
-        | { type: 'SPEAKER'; speaker: string }
-        | { type: 'SHLOKA'; lines: string[] }
-        | { type: 'ANUVAD'; lines: string[] };
-
-      const blocks: GitaBlock[] = [];
-      let currentShloka: string[] = [];
-      let currentAnuvad: string[] = [];
-
-      const flushShloka = () => {
-        if (currentShloka.length > 0) {
-          blocks.push({ type: 'SHLOKA', lines: [...currentShloka] });
-          currentShloka = [];
-        }
-      };
-
-      const flushAnuvad = () => {
-        if (currentAnuvad.length > 0) {
-          blocks.push({ type: 'ANUVAD', lines: [...currentAnuvad] });
-          currentAnuvad = [];
-        }
-      };
-
-      // Comprehensive Hindi vocabulary and structural signatures for Anuvad detection
-      const HINDI_INDICATOR = /(?:^|\s|[.,!?-])(?:में|ने|और|है|हैं|को|के|की|से|था|थी|थे|बोले|कहा|करके|हुए|इस|उस|अपने|लिये|लिए|सकते|होते|जाता|किया|रहा|रही|रहे|जो|तो|कि|भी|पर|देखिये|करेंगे|दिये|संजय|अर्जुनने|श्रीकृष्ण|भगवान्|राजा|आपके|तुम्हारा|हमारे|सब|द्वारा|खड़ी|हुई|बड़ी|भारी|सेनाको|हे|हो|जाता|गया|गयी|गए|जैसे|वैसे|जब|तब)(?:$|\s|[.,!?-])/u;
-
-      let inTranslation = false;
-
-      for (const line of rawLines) {
-        // Strip running headers like "श्रीमद्भगवद्गीता 18" or "अध्याय 1"
-        if (/^\*?\s*श्रीमद्भगवद्गीता\s*\d*\s*\*?$/u.test(line) || /^श्रीमद्भगवद्गीता\s+\d+$/u.test(line) || /^\d+\s*श्रीमद्भगवद्गीता/u.test(line) || /^अध्याय\s*\d+$/u.test(line)) {
-          continue;
-        }
-
-        // Speaker tags: अर्जुन उवाच, सञ्जय उवाच, श्रीभगवानुवाच
-        if (/उवाच[ः:]?$/u.test(line)) {
-          flushShloka();
-          flushAnuvad();
-          inTranslation = false;
-          blocks.push({ type: 'SPEAKER', speaker: line.replace(/[ः:]+$/, '') });
-          continue;
-        }
-
-        // Sacred section headings
-        if (line.startsWith('॥') && line.endsWith('॥') && line.length < 55 && !/\d/.test(line)) {
-          flushShloka();
-          flushAnuvad();
-          inTranslation = false;
-          blocks.push({ type: 'HEADING', text: line });
-          continue;
-        }
-
-        // Shloka vs Anuvad detection
-        const hasVerseNum = /॥\s*[\d०-९\-]+(?:\s*वेंका[^\n]*?)?\s*॥/.test(line);
-        const hasDanda = /[।॥]/.test(line);
-        const isHindi = HINDI_INDICATOR.test(line);
-
-        if (inTranslation) {
-          currentAnuvad.push(line);
-          if (hasVerseNum) {
-            flushAnuvad();
-            inTranslation = false;
-          }
-        } else {
-          // If the line has Hindi markers or does not have danda when previous was shloka
-          if (isHindi || (!hasDanda && currentShloka.length >= 2)) {
-            flushShloka();
-            inTranslation = true;
-            currentAnuvad.push(line);
-            if (hasVerseNum) {
-              flushAnuvad();
-              inTranslation = false;
-            }
-          } else {
-            flushAnuvad();
-            currentShloka.push(line);
-          }
-        }
-      }
-
-      flushShloka();
-      flushAnuvad();
+      const blocks = parseGitaFolio(cleaned);
 
       return (
         <div className="space-y-4 py-1">
@@ -457,7 +550,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
               return (
                 <div key={bIdx} className="my-3 sm:my-4 text-center select-none">
                   <span className="font-serifDevanagari font-bold text-base sm:text-lg text-[#8C2D19] dark:text-amber-400 tracking-wider">
-                    {formatLineText(b.text)}
+                    {formatLineText(b.text || '')}
                   </span>
                 </div>
               );
@@ -476,7 +569,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
                     }`}
                   >
                     <span className={isDarkSlate ? 'text-amber-400' : 'text-[#C44D25]'}>॥</span>
-                    <span>{formatLineText(b.speaker)}</span>
+                    <span>{formatLineText(b.speaker || '')}</span>
                     <span className={isDarkSlate ? 'text-amber-400' : 'text-[#C44D25]'}>॥</span>
                   </span>
                 </div>
@@ -602,8 +695,8 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             );
           }
 
-          // Subheadings or invocation lines like ॥ श्रीगणेशाय नमः ॥
-          if (unit.type === 'INVOCATION_HEADING' || (trimmed.startsWith('॥') && trimmed.endsWith('॥') && trimmed.length < 50)) {
+          // Subheadings or invocation lines like ॥ श्रीगणेशाय नमः ॥ (excluding isolated verse numbers like ॥ १३ ॥)
+          if (unit.type === 'INVOCATION_HEADING' || (trimmed.startsWith('॥') && trimmed.endsWith('॥') && trimmed.length < 50 && !/[०-९\d]/.test(trimmed))) {
             return (
               <div
                 key={idx}
@@ -762,16 +855,31 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             <span>अनुक्रमणिका</span>
           </button>
 
-          <div>
-            <h1 className="font-bold text-sm sm:text-base font-serifDevanagari truncate max-w-xs sm:max-w-md text-amber-200">
-              {book.title.replace(/\s*\([^)]*गीताप्रेस[^)]*\)/gi, '').trim()}
-            </h1>
-            <p className="text-[11px] text-neutral-400 font-devanagari flex items-center space-x-2">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="font-bold text-sm sm:text-base font-serifDevanagari text-amber-200 flex items-center gap-2">
+                <span>{book.title.replace(/\s*\([^)]*गीताप्रेस[^)]*\)/gi, '').trim()}</span>
+                {currentChapter && (
+                  <>
+                    <span className="text-amber-500 font-serif text-sm opacity-80">•</span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-amber-500/20 to-sacred-500/20 border border-amber-500/40 text-amber-300 text-xs sm:text-sm font-devanagari font-bold shadow-xs">
+                      {currentChapter.sectionType === 'adhyaya' && currentChapter.chapterNumber ? (
+                        <span>अध्याय {currentChapter.chapterNumber} : {currentChapter.nameSa}</span>
+                      ) : (
+                        <span>{currentChapter.titleSa}</span>
+                      )}
+                    </span>
+                  </>
+                )}
+              </h1>
+            </div>
+            <p className="text-[11px] text-neutral-400 font-devanagari flex items-center space-x-2 mt-0.5">
               <span>दृष्टा / रचयिता: <strong>{book.author || 'पारंपरिक महर्षि'}</strong></span>
               <span>•</span>
-              {activeChapterScope ? (
-                <span className="text-amber-300 font-semibold">
-                  पत्र {currentPageIndex + 1 - activeChapterScope.startPage + 1} / {activeChapterScope.endPage - activeChapterScope.startPage + 1} ({activeChapterScope.titleSa})
+              {currentChapter ? (
+                <span className="text-amber-300/90 font-medium">
+                  अध्याय पत्र {currentPageIndex + 1 - currentChapter.startPage + 1} / {currentChapter.endPage - currentChapter.startPage + 1}
+                  <span className="text-neutral-500 font-mono ml-1.5">(सकल पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
                 </span>
               ) : (
                 <span>पत्र {currentPage ? currentPage.page_number : 0} / {pages.length}</span>
@@ -1237,11 +1345,12 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             const p = parseInt(jumpPageInput, 10);
             if (!isNaN(p)) {
               if (activeChapterScope) {
-                // If user entered a number in chapter page range
-                const target = activeChapterScope.startPage + p - 1;
-                if (target >= activeChapterScope.startPage && target <= activeChapterScope.endPage) {
-                  setCurrentPageIndex(target - 1);
+                // If user entered a number in chapter page range (1 to total chapter pages)
+                const chapterPageCount = activeChapterScope.endPage - activeChapterScope.startPage + 1;
+                if (p >= 1 && p <= chapterPageCount) {
+                  setCurrentPageIndex(activeChapterScope.startPage - 1 + (p - 1));
                 } else if (p >= 1 && p <= pages.length) {
+                  // Fallback: user entered global page number
                   setCurrentPageIndex(p - 1);
                 }
               } else if (p >= 1 && p <= pages.length) {
@@ -1251,18 +1360,25 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
           }}
           className="flex items-center space-x-1.5 text-xs font-serifDevanagari"
         >
-          <span className="text-amber-300 font-bold hidden sm:inline">पत्रम्</span>
+          <span className="text-amber-300 font-bold hidden sm:inline">
+            {activeChapterScope ? 'अध्याय पत्र' : 'पत्रम्'}
+          </span>
           <input
             type="number"
             min="1"
-            max={pages.length}
+            max={activeChapterScope ? (activeChapterScope.endPage - activeChapterScope.startPage + 1) : pages.length}
             value={jumpPageInput}
             onChange={(e) => setJumpPageInput(e.target.value)}
-            className="w-16 text-center font-mono bg-black/60 text-amber-200 px-1 py-1 rounded-lg border border-white/20 text-xs focus:outline-none focus:border-sacred-500 font-bold"
+            className="w-14 text-center font-mono bg-black/60 text-amber-200 px-1 py-1 rounded-lg border border-white/20 text-xs focus:outline-none focus:border-sacred-500 font-bold"
           />
           <span className="text-neutral-400 font-mono">
             / {activeChapterScope ? (activeChapterScope.endPage - activeChapterScope.startPage + 1) : pages.length}
           </span>
+          {activeChapterScope && (
+            <span className="text-neutral-500 text-[10px] font-mono hidden md:inline ml-1" title="सम्पूर्ण ग्रन्थ पत्र संख्या">
+              (सकल {currentPageIndex + 1}/{pages.length})
+            </span>
+          )}
           <button
             type="submit"
             className="px-2.5 py-1 rounded-lg bg-sacred-700 hover:bg-sacred-600 text-white text-[11px] font-devanagari font-semibold transition-colors shadow"

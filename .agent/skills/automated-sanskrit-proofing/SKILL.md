@@ -69,6 +69,81 @@ Devanagari scripts from classical presses (Nirnaya Sagar Press, Motilal Banarsid
    - `द्` + `भ` = **`द्भ`** (e.g. *अद्भुत* — OCR renders `अदभुत`, `अद्भुत`)
    - `द्` + `व` = **`द्व`** (e.g. *द्वार*, *द्वन्द्व* — OCR renders `द्रार`, `द्रदरामय`, `द्वन्द्र`)
 
+
+### 2.3 Legacy DTP Font Conversion & Unicode Normalization (Chanakya / Kruti-Dev / Walkman)
+
+Classical Indian presses (Gita Press Gorakhpur, Chaukhamba, Motilal Banarsidass) originally set digital texts in legacy 8-bit non-Unicode DTP fonts (Chanakya, Kruti-Dev, Walkman-Chanakya, Shusha). When these legacy encodings are converted or OCR-extracted, they produce predictable phonetic corruptions, broken ligatures, and illegal combining sequences.
+
+#### 1. The Dotted Circle (`◌` U+25CC / U+25CB) Root Cause
+In 8-bit fonts, composite vowels were keyed by combining independent vowel glyphs with combining matras. For example, the sacred syllable `ओं` was keyed as `अ` + `ो` + `ं` (`अों`).
+In modern Unicode OpenType text shapers (HarfBuzz, Uniscribe, CoreText), attaching a combining matra (e.g. `ो` `\u094B`) to an independent vowel (e.g. `अ` `\u0905`) is structurally illegal. Because an independent vowel is not a consonant, the shaper cannot apply a vowel matra to it, forcing font engines to render a **Dotted Circle (`◌`)** placeholder artifact.
+
+**Mandatory Canonical Normalization Table:**
+| Illegal Vowel Sequence | Unicode Codepoint Error | Canonical Unicode Glyphs | Correct Sacred Character |
+|---|---|---|---|
+| `अों` | `\u0905\u094B\u0902` | `ओं` (`\u0913\u0902`) | **ओं** (Pranava / Om) |
+| `अो` | `\u0905\u094B` | `ओ` (`\u0913`) | **ओ** (Independent O) |
+| `अौ` | `\u0905\u094C` | `औ` (`\u0914`) | **औ** (Independent Au) |
+| `अै` | `\u0905\u0948` | `ऐ` (`\u0910`) | **ऐ** (Independent Ai) |
+| `अे` | `\u0905\u0947` | `ए` (`\u090F`) | **ए** (Independent E) |
+| `अा` | `\u0905\u093E` | `आ` (`\u0906`) | **आ** (Independent Aa) |
+| `अी` | `\u0905\u0940` | `ई` (`\u0908`) | **ई** (Independent Ii) |
+| `अि` | `\u0905\u093F` | `इ` (`\u0907`) | **इ** (Independent I) |
+| `अू` | `\u0905\u0942` | `ऊ` (`\u090A`) | **ऊ** (Independent Uu) |
+| `अु` | `\u0905\u0941` | `उ` (`\u0909`) | **उ** (Independent U) |
+| `अृ` | `\u0905\u0943` | `ऋ` (`\u090B`) | **ऋ** (Independent Vocalic R) |
+
+#### 3. Complete Chanakya DTP Font Ligature Matrix & Healing Rules
+When parsing raw Chanakya PDF glyph streams or OCR transcripts, unmapped ASCII artifacts must be healed corpus-wide:
+
+| Legacy Character / Artifact | Canonical Scripture Glyph | Example Corrupted Words | Healed Canonical Scripture Form | Grammatical / Shastra Context |
+|---|---|---|---|---|
+| `@` | **`ञ्च`** | `च@ल`, `मनश्च@ल`, `पा@जन्य`, `प@म`, `का@न`, `कि@ित्`, `स@य`, `विमु@ति` | **`चञ्चल`**, **`मनश्चञ्चल`**, **`पाञ्चजन्य`**, **`पञ्चम`**, **`काञ्चन`**, **`किञ्चित्`**, **`सञ्चय`**, **`विमुञ्चति`** | Palatal nasal-stop conjunct (ञ् + च) |
+| `%` | **`त्न`** | `प्रय%ा`, `असप%`, `प%ी`, `य%` | **`प्रयत्न`**, **`असपत्न`**, **`पत्नी`**, **`यत्न`** | Retroflex/dental conjunct (त् + न) |
+| `À` | **`ल्`** | `किÀबषः`, `अकÀमषम्`, `उÀलंघन`, `कÀप`, `स्वÀप`, `बÀकि`, `सङ्कÀप`, `अÀप` | **`किल्बिषः`**, **`अकल्मषम्`**, **`उल्लङ्घन`**, **`कल्प`**, **`स्वल्प`**, **`बल्कि`**, **`सङ्कल्प`**, **`अल्प`** | Half-la (ल्) conjunct |
+| `®` | **`िं`** / **`•`** | `बुद्धि®`, `सिद्धि®`, `प्रकृति®`, `शान्ति®`, `गति®`, `दुर्गति®`, `रात्रि®`, `आवृत्ति®`, `प्रवृत्ति®`, `निवृत्ति®`, `भक्ति®`, `अहिंसा®` | **`बुद्धिं`**, **`सिद्धिं`**, **`प्रकृतिं`**, **`शान्तिं`**, **`गतिं`**, **`दुर्गतिं`**, **`रात्रिं`**, **`आवृत्तिं`**, **`प्रवृत्तिं`**, **`निवृत्तिं`**, **`भक्तिं`**, **`अहिंसा`** | Accusative singular feminine `-इम्` / trailing bullet |
+| `ˆ` | **`ह्ण`** | `गृह्ˆाति`, `गृह्ˆन्`, `निगृह्ˆामि` | **`गृह्णाति`**, **`गृह्णन्`**, **`निगृह्णामि`** | Ha-conjunct (ह् + ण) |
+| `´` | **`ऋ`** | `´क्साम`, `´ग्वेद`, `देव´णरूप`, `´षि`, `´तु`, `´तेऽपि` | **`ऋक्साम`**, **`ऋग्वेद`**, **`देवऋणरूप`**, **`ऋषि`**, **`ऋतु`**, **`ऋतेऽपि`** | Independent Vocalic R (`\u090B`) |
+| `‰` | **`ु`** | `द्रष्ट‰म्`, `प्रवेष्ट‰ं`, `श्र‰त्वा`, `क्षणभङ्ग‰र` | **`द्रष्टुम्`**, **`प्रवेष्टुं`**, **`श्रुत्वा`**, **`क्षणभङ्गुर`** | Chhoti u matra after retroflex conjuncts |
+| `∏` | **`ढ़`** / nukta | `ब∏कर`, `ज∏ें` | **`बढ़कर`**, **`जड़ें`** | Hindi nukta conjuncts (ढ़/ड़) |
+| `Ï` | **`र्तिं`** | `कीÏ`, `अकीÏ` | **`कीर्तिं`**, **`अकीर्तिं`** | Repha + ti + anusvara |
+| `^` | **`ट्ट`** | `मि^ी`, `ख^े` | **`मिट्टी`**, **`खट्टे`** | Retroflex geminate |
+| `_` | **`ट्ठ`** | `चि_े` | **`चिट्ठे`** | Retroflex aspirate geminate |
+| `Â` | **`ू`** | `लड़Âँगा`, `करÂँगा` | **`लड़ूँगा`**, **`करूँगा`** | Badi uu matra before candrabindu |
+| `÷˝` | **`भ्र`** | `÷˝ंशते`, `वि÷˝मः` | **`भ्रंशते`**, **`विभ्रमः`** | Bha + ra-phala |
+| `d` (before vowel) | **`स्र`** | `dंसते` | **`स्रंसते`** | BG 1.30: *गाण्डीवं स्रंसते हस्तात्* |
+| `([क-ह])[˝]` | **`$1्र`** | `भ˝ातृ`, `वि˝म` | **`भ्रातृ`**, **`विभ्रम`** | Consonant + `˝` ➔ ra-phala |
+| `भोगान्रुधिरप्रदिग्यधान्` | **`भोगान्रुधिरप्रदिग्धान्`** | BG 2.5 OCR error | **`भोगान्रुधिरप्रदिग्धान्`** | Digdhan |
+| `अस्वग्यर्यमर्कीतकरमर्जुन` | **`अस्वर्ग्यमकीर्तिकरमर्जुन`** | BG 2.2 OCR error | **`अस्वर्ग्यमकीर्तिकरमर्जुन`** | Asvargyamakirtikaramarjuna |
+| `अृ` | `\u0905\u0943` | `ऋ` (`\u090B`) | **ऋ** (Independent Vocalic R) |
+
+#### 2. Double Vocalic R (`ॄ` U+0944) Ligature Healing
+Legacy fonts could not represent the long vocalic R sign (`ॄ`), so compositors typed two short vocalic R signs sequentially: `ृृ` or `ÎÎ`.
+- `भ[˝]ातृृन्` ➔ **`भ्रातॄन्`** (Bhagavad Gita 1.26: *भ्रातॄंस्तथैव च*)
+- `पितृृन्` / `पितृृनथ` ➔ **`पितॄनथ`** (Bhagavad Gita 1.26: *पितॄनथ पितामहान्*)
+- Normalization Rule: `text.replace(/ृ\s*ृ/gu, 'ॄ')`
+
+#### 3. Unmapped Chanakya Ligatures & Trailing Repha/Ra-phala Glyphs
+When parsing raw Chanakya PDF glyph streams, unmapped ASCII artifacts must be healed:
+| Legacy Glyph / Artifact | Corrupted Output | Canonical Scripture Form | Example Context |
+|---|---|---|---|
+| `÷˝` | `÷˝` / `˝` | **`भ्र`** | *भ्रंशते*, *विभ्रमः* |
+| `d` (isolated before vowel) | `dंसते` | **`स्रंसते`** | Bhagavad Gita 1.30: *गाण्डीवं स्रंसते हस्तात्* |
+| `@` | `रोमा@` / `@` | **`ञ्च`** / **`रोमाञ्च`** | Bhagavad Gita 1.29: *रोमहर्षश्च जायते* / *रोमाञ्च* |
+| `Âँ` / `Â` | `लड़Âँगा` / `Â` | **`ूँ`** / **`ू`** | Bhagavad Gita 2.4 translation: *लड़ूँगा?* |
+| `Mँ` / `mँ` | `कMँगा` | **`रूँ`** / **`करूँगा`** | Bhagavad Gita 2.9 translation: *युद्ध नहीं करूँगा* |
+| `सङ्ख्यये` | Unneeded ya-shruti | **`सङ्ख्ये`** | Bhagavad Gita 2.4: *कथं भीष्ममहं सङ्ख्ये* |
+| `भोगान्रुधिरप्रदिग्यधान्` | `ग्यध` ligature OCR corruption | **`भोगान्रुधिरप्रदिग्धान्`** | Bhagavad Gita 2.5: *भुञ्जीय भोगान्रुधिरप्रदिग्धान्* |
+| `अस्वग्यर्यमर्कीतकरमर्जुन` | Broken repha placement | **`अस्वर्ग्यमकीर्तिकरमर्जुन`** | Bhagavad Gita 2.2: *अनार्यजुष्टमस्वर्ग्यमकीर्तिकरमर्जुन* |
+| `अश्राु` / `श्राु` | Stray aa-matra before ra-phala | **`अश्रु`** / **`श्रु`** | *अश्रुपूर्णाकुलेक्षणम्*, *श्रुत्वा* |
+| `श्ृ` | Halanta sha + vocalic r | **`शृ`** | *शृणोति* |
+| `àSÕ` | `àSÕ` | **`त्स्थ`** | *अन्तस्थ*, *हृत्स्थ* |
+| `ÁˇÊ` | `ÁˇÊ` | **`क्षि`** | *क्षीर*, *क्षिति* |
+| `NU` | `NU` | **`हृ`** | *हृदय*, *हृषीकेश* |
+| `ÛÊ` | `ÛÊ` | **`न्न`** | *प्रसन्न*, *अन्न* |
+| `•Ù¥` / `•Ù¢` / `•Ê¥` | Stray bullets/vowels | **`ओं`** | Mangalacharana invocation |
+| `([क-ह])[˝]` | Consonant + `˝` | **`$1्र`** | `भ˝ातृ` ➔ `भ्रातृ`, `वि˝म` ➔ `विभ्रम` |
+
 ---
 
 ## 3. UoHyd Paninian Sandhi & Padachheda Engine Standards
@@ -113,6 +188,25 @@ For students, pujaris, and liturgical practitioners, Granth supports interactive
   1. Separate samasa elements using a thin hyphen (`-`) or space.
   2. Restore underlying un-sandhied words (e.g. `नमोऽस्तु` ➔ `नमः अस्तु`, `सर्वार्थ` ➔ `सर्व-अर्थ`).
   3. Keep case endings (विभक्ति) attached to the final noun stem.
+
+### 3.3 The JavaScript Unicode Regex Word Boundary Trap (`\b` Pitfall)
+
+In JavaScript's `RegExp` engine (V8, JavaScriptCore, SpiderMonkey), `\b` strictly checks for an ASCII word boundary (i.e., a transition between `[A-Za-z0-9_]` and non-ASCII/non-word characters).
+Because **all Devanagari characters (`\u0900`–`\u097F`) are non-word characters in JS regexes**, `\b` fails completely on Devanagari text:
+- `/\bकहा\b/u.test("अर्जुन ने कहा ।")` ➔ `false`! (Because space is non-word, and `क` is non-word; two non-words have NO `\b` boundary between them!)
+- `/\bबजाये\b/u.test("शंख बजाये ॥")` ➔ `false`!
+
+**MANDATORY CODING AXIOM:**
+**NEVER use `\b` for Devanagari script matching in JavaScript/TypeScript.**
+Always use explicit boundary capture groups or Lookbehinds/Lookaheads:
+```typescript
+// Pattern 1: Boundary character class
+const DEVANAGARI_BOUNDARY = '(?:^|[\\s.,!?-।॥])';
+const hindiVerbRegex = new RegExp(`${DEVANAGARI_BOUNDARY}(किया|कहा|बोले|उठे|बजाया|दिये|देखा|हुए|है|था|थी|थे|होता|होते|सकते|चाहिए|लगे|पड़े|गये)${DEVANAGARI_BOUNDARY}`, 'u');
+
+// Pattern 2: Lookbehind and Lookahead (ES2018+)
+const safeWordRegex = /(?<=^|[\s.,!?-।॥])(कहा|बोले|उठे|बजाया)(?=$|[\s.,!?-।॥])/gu;
+```
 
 ---
 
@@ -175,82 +269,171 @@ For students, pujaris, and liturgical practitioners, Granth supports interactive
 
 ## 5. Algorithmic Implementation in TypeScript
 
-The proofreading engine implements these rules using non-word-boundary Devanagari regexes (avoiding the JavaScript `\b` ASCII bug):
+---
+
+## 5. Canonical Verse Numbering & Recension Authority Standards
+
+### 5.1 The Zero-Arbitrary-Numbering Axiom (प्रमाणीकृत श्लोक संख्याङ्कन नियम)
+In sacred literature, verse numbers are not decorative indices—they are liturgical coordinates and theological anchors referenced across millennia of commentaries (*Bhashyas* by Adi Shankara, Ramanuja, Madhva, Abhinavagupta, etc.).
+- **STRICT PROTOCOL:** **NEVER invent, skip, or guess verse numbering arbitrarily ("अपने हिसाब से नंबरिंग नहीं करना").**
+- Verse numbering must always be cross-verified against authoritative recensions (SanskritDocuments.org, VedicScriptures API, Gita Press Gorakhpur, Mahabharata Critical Edition).
+
+### 5.2 Canonical Recension Benchmark: Śrīmad Bhagavad Gītā (700 Verses)
+Every authentic recension of the Bhagavad Gita contains exactly **700 verses** distributed across 18 Adhyayas (Mahabharata Bhishma Parva, chapters 25–42):
+
+| Adhyaya | Yoga / Chapter Title | Canonical Verse Count | Canonical End Verse Marker |
+|---|---|---|---|
+| **1** | अर्जुनविषादयोग | **47** | `॥ ४७ ॥` |
+| **2** | सांख्ययोग | **72** | `॥ ७२ ॥` |
+| **3** | कर्मयोग | **43** | `॥ ४३ ॥` |
+| **4** | ज्ञानकर्मसंन्यासयोग | **42** | `॥ ४२ ॥` |
+| **5** | कर्मसंन्यासयोग | **29** | `॥ २९ ॥` |
+| **6** | आत्मसंयमयोग (ध्यानयोग) | **47** | `॥ ४७ ॥` |
+| **7** | ज्ञानविज्ञानयोग | **30** | `॥ ३० ॥` |
+| **8** | अक्षरब्रह्मयोग | **28** | `॥ २८ ॥` |
+| **9** | राजविद्याराजगुह्ययोग | **34** | `॥ ३४ ॥` |
+| **10** | विभूतियोग | **42** | `॥ ४२ ॥` |
+| **11** | विश्वरूपदर्शनयोग | **55** | `॥ ५५ ॥` |
+| **12** | भक्तियोग | **20** | `॥ २० ॥` |
+| **13** | क्षेत्रक्षेत्रज्ञविभागयोग | **35** (or 34 without opening query) | `॥ ३५ ॥` |
+| **14** | गुणत्रयविभागयोग | **27** | `॥ २७ ॥` |
+| **15** | पुरुषोत्तमयोग | **20** | `॥ २० ॥` |
+| **16** | दैवासुरसम्पद्विभागयोग | **24** | `॥ २४ ॥` |
+| **17** | श्रद्धात्रयविभागयोग | **28** | `॥ २८ ॥` |
+| **18** | मोक्षसंन्यासयोग | **78** | `॥ ७८ ॥` |
+| **Total** | **सकल श्रीमद्भगवद्गीता** | **700** | **सप्तशती पूर्णम्** |
+
+### 5.3 Verse-Translation Number Synchronization (श्लोक-अनुवाद संख्याङ्कन सामञ्जस्य)
+Traditional Indian prints (especially Gita Press editions) format shlokas with interleaved Hindi translation, often splitting a verse across paragraphs:
+1. **The Scanned Layout Pattern:**
+   ```text
+   धृतराष्ट्र उवाच
+   धर्मक्षेत्रे कुरुक्षेत्रे समवेता युयुत्सवः ।
+   मामकाः पाण्डवाश्चैव किमकुर्वत सञ्जय ॥
+   धृतराष्ट्र बोले—हे सञ्जय! धर्मभूमि कुरुक्षेत्रमें एकत्रित, युद्धकी इच्छावाले मेरे और पाण्डुके पुत्रोंने क्या किया? ॥ १ ॥
+   ```
+2. **The Digitizer / Shaper Problem:**
+   The Sanskrit verse terminates with an open danda (`॥`) without a verse number, while the verse number (`॥ १ ॥`) is placed at the end of the Hindi translation.
+3. **Canonical Synchronization Protocol:**
+   - The engine must extract the verified verse number from the Hindi line (e.g. `॥ १ ॥`) and attach it to the Sanskrit verse:
+     `धर्मक्षेत्रे कुरुक्षेत्रे समवेता युयुत्सवः । मामकाः पाण्डवाश्चैव किमकुर्वत सञ्जय ॥ १ ॥`
+   - The Hindi translation retains its number or is synchronized cleanly:
+     `धृतराष्ट्र बोले—हे सञ्जय! धर्मभूमि कुरुक्षेत्रमें एकत्रित, युद्धकी इच्छावाले मेरे और पाण्डुके पुत्रोंने क्या किया? ॥ १ ॥`
+   - If a multi-verse group occurs (e.g. verses 4–6 spoken together), number the group canonically: `॥ ४-६ ॥`.
+
+---
+
+## 6. Algorithmic Implementation in TypeScript
+
+The proofreading engine implements these rules with complete DTP font healing, illegal vowel normalization, and boundary-safe regexes:
 
 ```typescript
-export function proofreadSanskritPage(rawText: string, pageNum: number): string {
-  // Never alter hand-verified folios
-  if (pageNum === 1 || pageNum === 2) return rawText.trim();
+/**
+ * Canonical Devanagari Normalization Engine
+ * Eliminates DTP font artifacts, resolves dotted circles, and repairs ligatures.
+ */
+export function normalizeDevanagariUnicode(text: string): string {
+  if (!text) return '';
+  let s = text;
 
-  let s = rawText;
+  // 1. DTP Illegal Vowel Combinations (Eliminating Dotted Circle \u25CC artifacts)
+  s = s.replace(/अ\s*ों/gu, 'ओं');
+  s = s.replace(/अ\s*ो/gu, 'ओ');
+  s = s.replace(/अ\s*ौ/gu, 'औ');
+  s = s.replace(/अ\s*ै/gu, 'ऐ');
+  s = s.replace(/अ\s*े/gu, 'ए');
+  s = s.replace(/अ\s*ा/gu, 'आ');
+  s = s.replace(/अ\s*ी/gu, 'ई');
+  s = s.replace(/अ\s*ि/gu, 'इ');
+  s = s.replace(/अ\s*ू/gu, 'ऊ');
+  s = s.replace(/अ\s*ु/gu, 'उ');
+  s = s.replace(/अ\s*ृ/gu, 'ऋ');
 
-  // 1. Remove publisher, phone, foundation, and author strings strictly
-  s = s.replace(/मानव\s*ववकास\s*फाउन्?डेशन\s*[-–]?\s*मुम्?\s*बई/gu, '');
-  s = s.replace(/मानव\s*विकास\s*फाउ[न्ण्ड]ेशन\s*[-–]?\s*मुम्बई/gu, '');
-  s = s.replace(/आचायय\s*अवखलेश\s*(विवेदी|द्विवेदी)\s*[-–]?\s*9820611270/gu, '');
-  s = s.replace(/आचार्य\s*अखिलेश\s*(त्रिवेदी|द्विवेदी)\s*[-–]?\s*9820611270/gu, '');
-  s = s.replace(/वैशाख\s*शुक्\s*ल\s*तृतीया\s*[-–]?\s*26\.\s*4\s*\.2020/gu, '');
-  s = s.replace(/9820611270/g, '');
+  // 2. Double Vocalic R Ligatures (ृृ -> ॄ)
+  s = s.replace(/ृ\s*ृ/gu, 'ॄ');
+  s = s.replace(/भ[˝]?ातृ\s*ृन्/gu, 'भ्रातॄन्');
+  s = s.replace(/पितृ\s*ृन्/gu, 'पितॄन्');
+  s = s.replace(/पितृ\s*ृनथ/gu, 'पितॄनथ');
 
-  // 2. Remove running headers
-  s = s.replace(/^(?:`\s*)?(?:गृहप्रवेश\s*\/\s*वास्तु\s*शान्ति\s*पूजनम्[‌\s]*|जि\s*\/\s*वास्तु\s*शान्ति\s*पूजनम्[‌\s]*|॥\s*\|\s*\/\s*वास्तु\s*शान्ति\s*पूजनम्[‌\s]*)\n?/gmi, '');
-  s = s.replace(/^(?:वास्तु\s*मण्डल\s*देवता\s*स्थापनम्[‌\s]*)\n?/gmi, '');
+  // 3. Unmapped Chanakya DTP Font Ligatures
+  s = s.replace(/÷˝/gu, 'भ्र');
+  s = s.replace(/dंसते/gu, 'स्रंसते');
+  s = s.replace(/(?:^|\s)d(?=[ािीुूेैोौंः])/gu, 'स्र');
+  s = s.replace(/रोमा@/gu, 'रोमाञ्च');
+  s = s.replace(/@/gu, 'ञ्च');
+  s = s.replace(/àSÕ/gu, 'त्स्थ');
+  s = s.replace(/ÁˇÊ/gu, 'क्षि');
+  s = s.replace(/NU/gu, 'हृ');
+  s = s.replace(/ÛÊ/gu, 'न्न');
+  s = s.replace(/•Ù[¥¢]|•Ê¥/gu, 'ओं');
+  s = s.replace(/•Ù/gu, 'ओ');
+  s = s.replace(/•ı/gu, 'औ');
 
-  // 3. Normalize OCR noise bullets
-  s = s.replace(/^[»*°"=~]\s*/gmu, '• ');
-  s = s.replace(/^०\.\s*/gmu, '• ');
-  s = s.replace(/^०\s+/gmu, '• ');
-  s = s.replace(/^\*\.\s*/gmu, '▪ ');
-  s = s.replace(/^=\s*/gmu, '▪ ');
-  s = s.replace(/^--?\s*/gmu, '▪ ');
+  // 4. Trailing ra-phala healing (e.g. भ˝ातृ -> भ्रातृ)
+  s = s.replace(/([क-ह])\s*˝/gu, '$1्र');
 
-  // 4. Remove orphan spaces before matras and Vedic accents
-  // Note: Preserve Vedic accents: \u0951 (Svarita), \u0952 (Anudatta), \u1CDA (Dvisvarita)
-  s = s.replace(/([क-ह]़?)\s+([ािीुूृेैोौँंः\u0951\u0952\u1CDA])/gu, '$1$2');
-  s = s.replace(/\s+([ािीुूृेैोौँंः\u0951\u0952\u1CDA])/gu, '$1');
-  s = s.replace(/\u094D\s+/gu, '\u094D');
-
-  // 5. Apply Ulrich Stiehl's SanskritWeb Ligature Corrections
-  // Ha-conjuncts
-  s = s.replace(/ह़्न|ह\s*्न/gu, 'ह्न');
-  s = s.replace(/ह़्म|ह\s*्म/gu, 'ह्म');
-  s = s.replace(/ह़्य|ह\s*्य/gu, 'ह्य');
-  s = s.replace(/ह़्ल|ह\s*्ल/gu, 'ह्ल');
-  s = s.replace(/ह़्व|ह\s*्व/gu, 'ह्व');
-  s = s.replace(/ह़ृ|ह\s*ृ/gu, 'हृ');
-
-  // Guttural Nasal Conjuncts
-  s = s.replace(/ड\.्ग|ङ्\s*ग/gu, 'ङ्ग');
-  s = s.replace(/ड\.्क|ङ्\s*क/gu, 'ङ्क');
-  s = s.replace(/ड\.्ख|ङ्\s*ख/gu, 'ङ्ख');
-  s = s.replace(/ड\.्घ|ङ्\s*घ/gu, 'ङ्घ');
-
-  // Retroflex Conjuncts
-  s = s.replace(/ष्\s*ट/gu, 'ष्ट');
-  s = s.replace(/ष्\s*ठ/gu, 'ष्ठ');
-  s = s.replace(/ष्\s*ण/gu, 'ष्ण');
-  s = s.replace(/द्\s*ध/gu, 'द्ध');
-  s = s.replace(/द्\s*द/gu, 'द्द');
-  s = s.replace(/द्\s*व/gu, 'द्व');
-
-  // 6. Apply Canonical Shastra Dictionary Replacements
-  for (const [regex, rep] of canonicalCorrections) {
-    s = s.replace(regex, rep);
-  }
-
-  // 7. Strip stray dotted circles
+  // 5. Strip any stray Dotted Circle characters directly
   s = s.replace(/[\u25CC\u25CB]/gu, '');
 
-  return s.trim();
+  return s;
+}
+
+/**
+ * Liturgical Line Separator: Distinguishes Sanskrit Shlokas from Hindi Anuvad
+ * Note:
+ * 1. Must use whole-word boundary wrappers so that Sanskrit words containing
+ *    syllables like 'था' (महारथाः, अश्वत्थामा), 'ते' (ब्रवीमि ते), or 'का' (नायका)
+ *    are NEVER falsely flagged as Hindi!
+ * 2. 'ये' (\u092F\u0947) is a fundamental SANSKRIT relative pronoun (यद्: यः यौ ये,
+ *    e.g. 'मामेव ये प्रपद्यन्ते', 'यतन्ति ये', 'ये विदुः'). It must NEVER be treated as Hindi!
+ * 3. Sanskrit locatives (लोके, नरके) and Atmanepada verbs (भाषसे, मन्यसे, लभसे)
+ *    must be protected from attached Hindi suffix matching.
+ * 4. Consonant-plus-matra ranges must use [\u0900-\u097F] instead of [क-ह] so
+ *    inflected nouns (रूपोंको, कर्मोके) are correctly recognized without breaking.
+ */
+export function isHindiAnuvadLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+
+  // Lines with question marks are Hindi translation/commentary
+  if (/[?？]/.test(trimmed)) return true;
+
+  // Complete Hindi verbs, copulas, and auxiliaries as distinct words
+  const HINDI_VERB_BOUNDARY = /(?:^|[\s.,!?—–\-])(?:किया|किये|किए|कहा|कहते|बोले|बोला|बोली|उठे|उठा|बजाया|बजाये|बजाए|दिये|दिया|दिए|लिये|लिया|लिए|देखा|देखते|हुए|हुआ|हुई|है|हैं|हूँ|था|थी|थे|होता|होते|होती|सकते|सकता|सकती|चाहिए|लगे|लगा|लगी|पड़े|पड़ा|पड़ी|गये|गया|गयी|गए|गई|बतलाता|बतलाते|बतलाती)(?:$|[\s.,!?—–।॥\-])/u;
+  if (HINDI_VERB_BOUNDARY.test(trimmed)) return true;
+
+  // Distinct Hindi interrogative words
+  const HINDI_INTERROGATIVE = /(?:^|[\s.,!?—–\-])(?:क्या|क्यों|कैसे|किसने|किसको|किसके|कहाँ|कब)(?:$|[\s.,!?—–।॥\-])/u;
+  if (HINDI_INTERROGATIVE.test(trimmed)) return true;
+
+  // Plural Hindi oblique postposition suffixes with full Unicode range
+  const HINDI_OBLIQUE_PLURAL = /[\u0900-\u097F]+(?:ोंमें|ोंने|ोंको|ोंके|ोंकी|ोंपर|ोंसे|ोंवाले)(?:$|[\s.,!?—–।॥\-])/u;
+  if (HINDI_OBLIQUE_PLURAL.test(trimmed)) return true;
+
+  // Attached Hindi postposition suffixes (protecting Sanskrit: लोके, नरके, भाषसे, etc.)
+  const HINDI_ATTACHED_SUFFIX = /(?<!\b(?:लो|नर|वृ|बाल|पुस्त))[\u0900-\u097F]{2,}(?:में|ने|को|का|की|के)(?:$|[\s.,!?—–।॥\-])/u;
+  const HINDI_ATTACHED_SE = /(?<!\b(?:भाष|मन्य|लभ|अर्ह|य))[\u0900-\u097F]{2,}से(?:$|[\s.,!?—–।॥\-])/u;
+  if (HINDI_ATTACHED_SUFFIX.test(trimmed) || HINDI_ATTACHED_SE.test(trimmed)) return true;
+
+  // Obvious Hindi narrative openers
+  if (/^(?:इसके\s*(?:बाद|अनन्तर|पश्चात्)|संजय\s*बोले|अर्जुन\s*बोले|श्रीभगवान्\s*बोले|धृतराष्ट्र\s*बोले|कौरवोंमें|भीष्मपितामहद्वारा|इसलिये|और\s*भी|आप-)/u.test(trimmed)) {
+    return true;
+  }
+
+  return false;
 }
 ```
 
 ---
 
-## 6. Quality & Verification Protocol
+## 7. Quality & Verification Protocol
 
-A scripture page is verified **ONLY** if:
-1. **Zero Commercial Noise:** Completely free of compiler names, phone numbers, and modern publication dates.
-2. **Conjunct Integrity:** Complex Devanagari ligatures (`क्ष`, `ज्ञ`, `त्र`, `ह्न`, `ह्म`, `ह्य`, `द्व`, `ष्ट्र`) display with clean Unicode representation without dotted circles (`◌`).
-3. **Vedic Accent Fidelity:** All Svarita (`॑`) and Anudatta (`॒`) accents stay unified with their respective vowels.
-4. **Liturgical Layout:** Structural headings use traditional marks (`【 ... 】`), invocations use double dandas (`॥ ... ॥`), and bullets are clean sacred symbols (`•`, `▪`).
+A scripture folio or digital edition is certified **GOLD STANDARD** only when:
+1. **Recension Integrity Verified:** Verse counts strictly match canonical standards (e.g. Gita 700 verses across 18 chapters) without arbitrary numbering.
+2. **Zero Dotted Circles (`◌` U+25CC):** No illegal combining vowel sequences (`अों`, `अो`, `अै`, etc.) exist anywhere in the text.
+3. **Conjunct & Ligature Fidelity:**
+   - Double vocalic R (`ॄ`) correctly normalized (e.g. `भ्रातॄन्`, `पितॄन्`).
+   - Legacy DTP ligatures (`भ्र`, `स्र`, `ञ्च`, `त्स्थ`, `क्षि`, `हृ`, `न्न`) fully restored.
+4. **Zero Commercial Noise:** Completely purged of modern publisher names, telephone numbers, and publication dates.
+5. **Vedic Accent Integrity:** Svarita (`॑`), Anudatta (`॒`), and Dvisvarita (`᳚`) remain correctly unified with their base syllables.
+6. **Liturgical Formatting:** Speaker attributions (`... उवाच`) are badged, sacred invocations (`ॐ`, `॥ श्रीपरमात्मने नमः ॥`) are centered headlines, and verses and translations have synchronized canonical numbers.
