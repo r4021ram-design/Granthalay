@@ -12,27 +12,48 @@ import type {
 
 const API_BASE = '/api';
 
+async function fetchWithFallback<T>(apiEndpoint: string, staticFallbackUrl: string): Promise<T> {
+  try {
+    const res = await fetch(apiEndpoint);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      throw new Error('Received HTML SPA fallback instead of JSON');
+    }
+    return (await res.json()) as T;
+  } catch {
+    // Graceful fallback to static pre-rendered dataset on Vercel
+    const fallbackRes = await fetch(staticFallbackUrl);
+    if (!fallbackRes.ok) throw new Error(`Fallback failed: ${fallbackRes.status}`);
+    return (await fallbackRes.json()) as T;
+  }
+}
+
 export const api = {
   async getHealth() {
-    const res = await fetch(`${API_BASE}/health`);
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/health`);
+      return await res.json();
+    } catch {
+      return { status: 'ok', environment: 'production-static' };
+    }
   },
 
   async getStats(): Promise<BookStats> {
-    const res = await fetch(`${API_BASE}/stats`);
-    return res.json();
+    return fetchWithFallback<BookStats>(`${API_BASE}/stats`, '/data/stats.json');
   },
 
   async getBooks(): Promise<Book[]> {
-    const res = await fetch(`${API_BASE}/books`);
-    return res.json();
+    return fetchWithFallback<Book[]>(`${API_BASE}/books`, '/data/books.json');
   },
 
   async getBook(id: string): Promise<{ book: Book; pages: Page[] }> {
-    const res = await fetch(`${API_BASE}/books/${id}`);
-    if (!res.ok) throw new Error('Book not found');
-    return res.json();
+    return fetchWithFallback<{ book: Book; pages: Page[] }>(
+      `${API_BASE}/books/${id}`,
+      `/data/books/${id}.json`
+    );
   },
+
 
   async deleteBook(id: string): Promise<void> {
     const res = await fetch(`${API_BASE}/books/${id}`, { method: 'DELETE' });

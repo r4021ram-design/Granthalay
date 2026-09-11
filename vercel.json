@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/api/stats", "destination": "/data/stats.json" },
+    { "source": "/api/books", "destination": "/data/books.json" },
+    { "source": "/api/books/:id", "destination": "/data/books/:id.json" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
