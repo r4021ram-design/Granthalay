@@ -8,6 +8,9 @@ export type ScriptureBlockType =
   | 'PAURANIK_SHLOKA'
   | 'NAMAVALI'
   | 'VIDHI_INSTRUCTION'
+  | 'RITUAL_STEP_HEADER'
+  | 'SAMARPANA_MANTRA'
+  | 'SANKALPA'
   | 'SECTION_HEADING'
   | 'INVOCATION_HEADING'
   | 'REGULAR_TEXT';
@@ -24,29 +27,117 @@ export interface ScriptureBlockConfig {
 
 // Canonical Vedic Hymn and Mantra patterns
 const VEDIC_INCIPITS: RegExp[] = [
+  // Swasti Vachan & Shanti Path (Rigveda 1.89 / Shukla Yajurveda 25 & 36)
+  /आ\s*नो\s*भद्राः\s*क्रतवो/u,
+  /देवा\s*नो\s*यथा\s*सदमिद्वृधे/u,
+  /देवानां\s*भद्रा\s*सुमति/u,
+  /देवानाꣳ\s*सख्य/u,
+  /तान्\s*पूर्वया\s*निविदा/u,
+  /अर्यमणं\s*वरुणं/u,
+  /तन्नो\s*वातो/u,
+  /तद्ग्रावाणः\s*सोमसुतो/u,
+  /तमीशानं\s*जगत/u,
+  /पूषा\s*नो\s*यथा/u,
   /स्वस्ति\s*न\s*इन्द्रो/u,
   /स्वस्ति\s*नः\s*पूषा/u,
   /स्वस्तिनस्तार्क्ष्यो/u,
   /स्वस्ति\s*नो\s*बृहस्पति/u,
+  /पृषदश्वा\s*मरुतः/u,
+  /अग्निजिह्वा\s*मनवः/u,
   /भद्रं\s*कर्णेभिः/u,
   /भद्रं\s*पश्येमाक्षभि/u,
   /स्थिरैरङ्गै/u,
   /व्यशेम\s*देवहितं/u,
-  /तन्मामवतु/u,
-  /तद्वक्तारमवतु/u,
-  /अवतु\s*माम्/u,
-  /अवतु\s*वक्तारम्/u,
-  /ॐ\s*शान्तिः\s*शान्तिः\s*शान्तिः/u,
-  /द्यौः\s*शान्ति/u,
-  /यतो\s*यतः\s*समीहसे/u,
-  /तन्नो\s*वातो/u,
-  /तमीशानं\s*जगतस्तस्थुषस्पतिं/u,
-  /अग्निमीळे/u,
-  /पृषदश्वा\s*मरुतः/u,
   /शतमिन्नु\s*शरदो/u,
+  /पुत्रासो\s*यत्र\s*पितरो/u,
   /अदितिर्द्यौ/u,
+  /विश्वे\s*देवा\s*अदितिः/u,
+  /द्यौः\s*शान्ति/u,
+  /वनस्पतयः\s*शान्ति/u,
+  /शान्तिः\s*सा\s*मा\s*शान्तिरेधि/u,
+  /यतो\s*यतः\s*समीहसे/u,
+  /शं\s*नः\s*कुरु\s*प्रजाभ्यो/u,
+  /ॐ\s*शान्तिः\s*शान्तिः\s*शान्तिः/u,
+
+  // Atharvashirsha Upanishad (Atharvaveda - all sections)
+  /हरिः\s*ॐ\s*नमस्ते\s*गणपतये/u,
+  /त्वमेव\s*प्रत्यक्षं\s*तत्त्वमसि/u,
+  /त्वमेव\s*केवलं\s*कर्ता/u,
+  /त्वमेव\s*केवलं\s*धर्ता/u,
+  /त्वमेव\s*केवलं\s*हर्ता/u,
+  /त्वमेव\s*सर्वं\s*खल्विदं/u,
+  /त्वं\s*साक्षादात्मा/u,
+  /ऋतं\s*वच्मि/u,
+  /सत्यं\s*वच्मि/u,
+  /अव\s*त्वं\s*माम्/u,
+  /अव\s*वक्तारम्/u,
+  /अव\s*श्रोतारम्/u,
+  /अव\s*दातारम्/u,
+  /अवानूचानमव/u,
+  /अव\s*पश्चात्तात्/u,
+  /अव\s*पुरस्तात्/u,
+  /अव\s*दक्षिणात्तात्/u,
+  /अवोत्तरात्तात्/u,
+  /अव\s*चोध्वात्तात्/u,
+  /अवाधरात्तात्/u,
+  /सर्वतो\s*मां\s*पाहि/u,
+  /त्वं\s*वाङ्मयस्त्वं/u,
+  /त्वमानन्दमयस्त्वं/u,
+  /त्वं\s*प्रत्यक्षं\s*ब्रह्मासि/u,
+  /त्वं\s*ज्ञानमयो/u,
+  /सर्वं\s*जगदिदं/u,
+  /त्वं\s*भूमिरापो/u,
+  /त्वं\s*गुणत्रयातीतः/u,
+  /त्वमवस्थात्रयातीतः/u,
+  /त्वं\s*देहत्रयातीतः/u,
+  /त्वं\s*कालत्रयातीतः/u,
+  /त्वं\s*मूलाधारस्थितोऽसि/u,
+  /त्वं\s*शक्तित्रयात्मकः/u,
+  /त्वां\s*योगिनो\s*ध्यायन्ति/u,
+  /त्वं\s*ब्रह्मा\s*त्वं\s*विष्णु/u,
+  /गणादिं\s*पूर्वमुच्चार्य/u,
+  /वर्णादिं\s*तदनन्तरम्/u,
+  /अनुस्वारः\s*परतरः/u,
+  /अर्धेन्दुलसितम्/u,
+  /तारेण\s*ऋद्धम्/u,
+  /एतत्तव\s*मनुस्वरूपम्/u,
+  /गकारः\s*पूर्वरूपम्/u,
+  /अकारो\s*मध्यमरूपम्/u,
+  /बिन्दुरुत्तररूपम्/u,
+  /नादः\s*सन्धानम्/u,
+  /संहिता\s*सन्धिः/u,
+  /सैषा\s*गणेशविद्या/u,
+  /गणक\s*ऋषिः/u,
+  /निचृद्गायत्रीच्छन्दः/u,
+  /गणपतिर्देवता/u,
+  /ॐ\s*गं\s*गणपतये\s*नमः/u,
+  /एकदन्ताय\s*विद्महे/u,
+  /वक्रतुण्डाय\s*धीमहि/u,
+  /तन्नो\s*दन्ती\s*प्रचोदयात्/u,
+  /एकदन्तं\s*चतुर्हस्तं/u,
+  /पाशमङ्कुशधारिणम्/u,
+  /रदं\s*च\s*वरदं/u,
+  /रक्तं\s*लम्बोदरं/u,
+  /शूर्पकर्णकं/u,
+  /रक्तवाससम्/u,
+  /रक्तगन्धानुलिप्ताङ्ग/u,
+  /रक्तपुष्पैः\s*सुपूजितम्/u,
+  /भक्तानुकम्पिनं\s*देवं/u,
+  /जगत्कारणमच्युतम्/u,
+  /आविर्भूतं\s*च\s*सृष्ट्यादौ/u,
+  /प्रकृतेः\s*पुरुषात्परम्/u,
+  /एवं\s*ध्यायति\s*यो\s*नित्यं/u,
+  /स\s*योगी\s*योगिनां\s*वरः/u,
+  /नमो\s*व्रातपतये/u,
+  /नमो\s*गणपतये/u,
+  /नमः\s*प्रमथपतये/u,
+  /नमस्तेऽस्तु\s*लम्बोदराय/u,
+  /विघ्ननाशिने\s*शिवसुताय/u,
+  /श्रीवरदमूर्तये\s*नमो\s*नमः/u,
+
+  // Vedic Samhita Hymns in Karmakanda
   /सहस्रशीर्षा\s*पुरुषः/u,
-  /हिरण्यगर्भः\s*समवर्तताग्रे/u,
+  /हिरण्यगर्भः/u,
   /जातवेदसे\s*सुनवाम/u,
   /नमस्ते\s*रुद्र\s*मन्यव/u,
   /ईशा\s*वास्यमिदं/u,
@@ -54,7 +145,47 @@ const VEDIC_INCIPITS: RegExp[] = [
   /त्र्यम्बकं\s*यजामहे/u,
   /शं\s*नो\s*मित्रः/u,
   /मधु\s*वाता\s*ऋतायते/u,
+  /वरुणस्योत्तम्भनमसि/u,
+  /भूरसि\s*भूमिरस्यदितिरसि/u,
+  /ओषधयः\s*संवदन्ते/u,
+  /आ\s*जिघ्र\s*कलशं/u,
+  /पवित्रे\s*स्त्थो/u,
+  /पयः\s*पृथिव्यां/u,
+  /दधिक्राव्णो\s*अकारिषं/u,
+  /घृतं\s*घृतपावानः/u,
+  /स्वादुः\s*पवस्व/u,
+  /पञ्च\s*नद्यः\s*सरस्वती/u,
+  /आपो\s*हि\s*ष्ठा/u,
+  /युवा\s*सुवासाः/u,
+  /बृहस्पते\s*अति\s*यदर्यो/u,
+  /नमो\s*बिल्मिने\s*च/u,
+  /नाभ्या\s*आसीदन्तरिक्ष/u,
+  /यज्ञेन\s*यज्ञमयजन्त/u,
+  /ते\s*ह\s*नाकं\s*महिमानः/u,
+  /राजाधिराजाय\s*प्रसह्यसाहिने/u,
+  /स\s*मे\s*कामान्/u,
+  /कुबेराय\s*वैश्रवणाय/u,
+  /साम्राज्यं\s*भौज्यं/u,
+  /श्रीर्वर्चस्वमायुष्यम्/u,
+  /सफलाः\s*सन्तु\s*पूर्णाः/u,
+  /मनो\s*जूतिर्जुषताम्/u,
+  /तत्त्वा\s*यामि\s*ब्रह्मणा/u,
+  /तत्वा\s*यामि/u,
+  /अस्यै\s*प्राणाः\s*प्रतिष्ठन्तु/u,
+  /रसस्तं\s*वो\s*गृह्णामि/u,
+  /समन्तपर्यायी\s*स्यात्/u,
+  /अनुष्वधमा\s*वह/u,
+  /सरस्वती\s*तु\s*पञ्चधा/u,
+  /अम्बे\s*अम्बिके/u,
+  /स्योना\s*पृथिवि|श्योना\s*पृथिवि/u,
+  /काण्डात्काण्डात्/u,
+  /याः\s*फलिनीर्या/u,
+  /अपाꣳ\s*रस/u,
+  /ये\s*तीर्थानि\s*प्रचरन्ति/u,
+  /तेषाꣳ\s*सहस्र/u,
 ];
+
+
 
 // Pauranika & Classical Stotra markers
 const PAURANIK_MARKERS: RegExp[] = [
@@ -74,18 +205,34 @@ const PAURANIK_MARKERS: RegExp[] = [
 ];
 
 // Karmakanda liturgical Hindi action verbs
-const VIDHI_VERBS: RegExp[] = [
-  /करें[।\s]?$/u,
-  /रखें[।\s]?$/u,
-  /छोड़ें[।\s]?$/u,
-  /लगावें[।\s]?$/u,
+const VIDHI_ACTION_VERBS: RegExp[] = [
+  /करें[\s।॥\)]*$/u,
+  /रखें[\s।॥\)]*$/u,
+  /रख\s*दें[\s।॥\)]*$/u,
+  /छोड़ें[\s।॥\)]*$/u,
+  /लगावें[\s।॥\)]*$/u,
+  /लगायें[\s।॥\)]*$/u,
+  /लगाएँ[\s।॥\)]*$/u,
+  /चढ़ावें[\s।॥\)]*$/u,
+  /चढ़ाएँ[\s।॥\)]*$/u,
+  /छिड़कें[\s।॥\)]*$/u,
+  /फेंकें[\s।॥\)]*$/u,
+  /घुमाएँ[\s।॥\)]*$/u,
+  /दिखाएँ[\s।॥\)]*$/u,
+  /दिखावें[\s।॥\)]*$/u,
+  /पहनें[\s।॥\)]*$/u,
+  /पूजा\s*करें/u,
+  /पूजन\s*करें/u,
   /अर्पण\s*करें/u,
   /आवाहन\s*करें/u,
   /हाथ\s*में\s*लेकर/u,
-  /पूजन\s*करें/u,
   /आचमन\s*करें/u,
-  /तिलक\s*लगायें/u,
+  /तिलक\s*लगा/u,
   /चावल\s*भर\s*कर/u,
+  /प्रणाम\s*करें/u,
+  /स्पर्श\s*करें/u,
+  /जल\s*(?:छोड़ें|डालें|छिड़कें)/u,
+  /मुद्रा\s*से/u,
 ];
 
 /**
@@ -100,32 +247,85 @@ export function classifyScriptureLine(rawLine: string): ScriptureBlockType {
     return 'SECTION_HEADING';
   }
 
-  // 2. Sacred Invocations: ॥ श्री... ॥
-  if (line.startsWith('॥') && line.endsWith('॥') && line.length < 55) {
+  // 2. Sacred Invocations & Chapter Titles: ॥ श्री... ॥
+  if (
+    line.startsWith('॥') &&
+    line.endsWith('॥') &&
+    line.length < 75 &&
+    !/^[॥\s]*[०-९\d\-]+[॥\s]*$/u.test(line)
+  ) {
     return 'INVOCATION_HEADING';
   }
 
-  // 3. Devata Namavali: 1. ॐ ... नमः । or १. ॐ ... नमः ।
-  if (/^[०-९0-9]+\.\s*ॐ?.+नम[ः:]?\s*[।॥]?$/u.test(line)) {
-    return 'NAMAVALI';
+  // 3. Stage directions: * नारद उवाच *
+  if (/^\*\s*[^\*]+\s*\*$/u.test(line)) {
+    return 'RITUAL_STEP_HEADER';
   }
 
-  // 4. Karmakanda Vidhi Instructions (Hindi ritual directives)
-  if (VIDHI_VERBS.some(v => v.test(line)) || (/^[•▪\*\-]\s*/.test(line) && (line.includes('करें') || line.includes('रखें') || line.includes('बनाकर')))) {
+  // 4. Ritual Step Headers: • पवित्रीकरणम्: or • आचम्य (आचमन करें):
+  if (/^[•▪]\s*[^:—–]+[:—–]/u.test(line)) {
+    return 'RITUAL_STEP_HEADER';
+  }
+
+  // 5. Sankalpa (Living Cosmic GPS)
+  if (
+    line.startsWith('ॐ विष्णुर्विष्णुर्विष्णुः') ||
+    /पूजनमहं\s*करिष्ये/u.test(line) ||
+    /कृतस्य\s*गणेशपूजनकर्मणः/u.test(line)
+  ) {
+    return 'SANKALPA';
+  }
+
+  // 6. Parenthetical Karmakanda Vidhi Directives: (हाथ धो लें): or (पीली सरसों लेकर...)
+  if (
+    /^\([^\)]+\)[:]?$/u.test(line) ||
+    (/^\([^\)]+\)/u.test(line) &&
+      (line.includes('करें') ||
+        line.includes('रखें') ||
+        line.includes('लगायें') ||
+        line.includes('मुद्रा') ||
+        line.includes('जल')))
+  ) {
     return 'VIDHI_INSTRUCTION';
   }
 
-  // 5. Vedic Mantra (Svara accents or Canonical Vedic Hymns)
-  // Check for Vedic Svara Unicode range: \u0951 (Svarita), \u0952 (Anudatta), \u1CDA (Dirgha Svarita), \uA8E0-\uA8F1 (Vedic tones)
-  const hasVedicAccents = /[\u0951\u0952\u1CDA\uA8E0-\uA8F1\u0933\u0934]/u.test(line);
+  // 7. Karmakanda Vidhi Instructions by action verbs
+  if (VIDHI_ACTION_VERBS.some(v => v.test(line))) {
+    return 'VIDHI_INSTRUCTION';
+  }
+
+  // 8. Devata Namavali & List Items:
+  if (/^[०-९0-9]+\.\s*ॐ?.+[।॥]?$/u.test(line) && line.length < 80) {
+    return 'NAMAVALI';
+  }
+
+  // 9. Upachara Samarpana Mantras (Liturgical offerings):
+  if (
+    /(?:समर्पयामि|प्रतिगृह्यताम्|आवाहयामि\s*स्थापयामि|पूजयामि\s*मम\s*पूजां|दर्शयामि|निवेदयामि|अर्घ्यं\s*समर्पयामि|पाद्यं\s*समर्पयामि|पुष्पं\s*समर्पयामि|चन्दनं\s*समर्पयामि|स्वाहाकृतं|स्वाहा\s*[।॥])/u.test(
+      line
+    )
+  ) {
+    return 'SAMARPANA_MANTRA';
+  }
+
+  // 10. Vedic Mantras (Explicit Svara accents, Gomukha nasal ꣳ, or canonical incipits)
+  // Check for Vedic Svara Unicode range: \u0951 (Svarita), \u0952 (Anudatta), \u1CDA (Dirgha Svarita), \uA8E0-\uA8F1 (Vedic tones), ꣳ (Gomukha)
+  const hasVedicAccents = /[\u0951\u0952\u1CDA\uA8E0-\uA8F1\u0933\u0934ꣳ]/u.test(line);
   const isVedicIncipit = VEDIC_INCIPITS.some(re => re.test(line));
 
   if (hasVedicAccents || isVedicIncipit) {
     return 'VEDIC_MANTRA';
   }
 
-  // 6. Pauranika Shloka & Classical Stotra
-  if (PAURANIK_MARKERS.some(re => re.test(line)) || (line.includes('॥') && !hasVedicAccents && !isVedicIncipit)) {
+  // 11. Pauranika Shloka, Classical Stotra, Aartis & Stutis
+  if (
+    PAURANIK_MARKERS.some(re => re.test(line)) ||
+    /[।॥]/.test(line) ||
+    /^[•▪\*]\s*/.test(line) ||
+    line.startsWith('जय देव') ||
+    line.startsWith('जय गणेश') ||
+    line.length > 10
+  ) {
     return 'PAURANIK_SHLOKA';
   }
 
@@ -146,9 +346,9 @@ export function getScriptureBlockConfig(type: ScriptureBlockType): ScriptureBloc
         badgeLabel: 'वैदिक सस्वर मन्त्र',
         badgeIcon: '🕉️',
         containerClass:
-          'relative my-3.5 px-4 py-3 rounded-2xl bg-[#8C2D19]/[0.06] dark:bg-amber-950/20 border-l-4 border-sacred-600 shadow-sm transition-all hover:bg-[#8C2D19]/[0.09]',
+          'relative my-3.5 px-4 py-3 rounded-2xl bg-[#8C2D19]/[0.06] border-l-4 border-sacred-600 shadow-sm transition-all hover:bg-[#8C2D19]/[0.09]',
         textClass:
-          'font-tiro text-center font-medium select-text font-feature-settings-vedic text-[#261208] dark:text-amber-100',
+          'font-tiro text-center font-medium select-text font-feature-settings-vedic text-[#261208]',
       };
 
     case 'PAURANIK_SHLOKA':
@@ -159,9 +359,9 @@ export function getScriptureBlockConfig(type: ScriptureBlockType): ScriptureBloc
         badgeLabel: 'पौराणिक स्तोत्र / ध्यान',
         badgeIcon: '📿',
         containerClass:
-          'my-3 px-4 py-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-amber-900/10 dark:border-amber-500/15',
+          'my-3 px-4 py-2.5 rounded-xl bg-black/[0.03] border border-amber-900/10',
         textClass:
-          'font-notoSerif text-center select-text text-[#2A150A] dark:text-amber-200',
+          'font-notoSerif text-center select-text text-[#7A1505] font-bold',
       };
 
     case 'NAMAVALI':
@@ -172,9 +372,9 @@ export function getScriptureBlockConfig(type: ScriptureBlockType): ScriptureBloc
         badgeLabel: 'देवता नमस्कार',
         badgeIcon: '🙏',
         containerClass:
-          'px-3 py-1.5 rounded-xl bg-amber-500/[0.08] dark:bg-amber-400/[0.07] border border-amber-600/20 flex items-center shadow-xs transition-transform hover:scale-[1.01]',
+          'px-3 py-1.5 rounded-xl bg-amber-500/[0.08] border border-amber-600/20 flex items-center shadow-xs transition-transform hover:scale-[1.01]',
         textClass:
-          'font-tiro text-xs sm:text-sm font-semibold text-[#6E2211] dark:text-sacred-300 w-full text-left',
+          'font-tiro text-xs sm:text-sm font-semibold text-[#7A1505] w-full text-left',
       };
 
     case 'VIDHI_INSTRUCTION':
@@ -185,9 +385,48 @@ export function getScriptureBlockConfig(type: ScriptureBlockType): ScriptureBloc
         badgeLabel: 'विधि निर्देश',
         badgeIcon: '📜',
         containerClass:
-          'my-2 px-3.5 py-1.5 rounded-lg bg-neutral-500/[0.05] dark:bg-neutral-400/[0.05] border-l-2 border-neutral-400/40 text-left',
+          'my-2 px-3.5 py-1.5 rounded-lg bg-neutral-500/[0.05] border-l-2 border-neutral-400/40 text-left',
         textClass:
-          'font-devanagari text-xs sm:text-sm text-neutral-700 dark:text-neutral-300 italic',
+          'font-devanagari text-xs sm:text-sm text-[#8C2D19] italic',
+      };
+
+    case 'RITUAL_STEP_HEADER':
+      return {
+        type,
+        fontFamily: '"Rozha One", "Noto Serif Devanagari", serif',
+        lineHeightClass: 'leading-snug',
+        badgeLabel: 'पूजा उपचार क्रम',
+        badgeIcon: '🪔',
+        containerClass:
+          'my-3 px-4 py-2 rounded-2xl bg-amber-500/[0.08] border border-amber-600/25 shadow-2xs text-center select-none',
+        textClass:
+          'font-serifDevanagari font-bold text-sm sm:text-base text-[#8C2D19] tracking-wide',
+      };
+
+    case 'SAMARPANA_MANTRA':
+      return {
+        type,
+        fontFamily: '"Tiro Devanagari Sanskrit", "Noto Serif Devanagari", serif',
+        lineHeightClass: 'leading-[2.0]',
+        badgeLabel: 'उपचार समर्पण',
+        badgeIcon: '🌸',
+        containerClass:
+          'my-2 px-3.5 py-2 rounded-xl bg-amber-500/[0.06] border border-amber-600/20 text-center shadow-2xs transition-all hover:bg-amber-500/[0.1]',
+        textClass:
+          'font-tiro font-semibold text-sm sm:text-base text-[#7A1505]',
+      };
+
+    case 'SANKALPA':
+      return {
+        type,
+        fontFamily: '"Tiro Devanagari Sanskrit", "Noto Serif Devanagari", serif',
+        lineHeightClass: 'leading-[2.0]',
+        badgeLabel: 'सङ्कल्प विधान',
+        badgeIcon: '🧭',
+        containerClass:
+          'my-3.5 p-4 rounded-2xl bg-amber-500/[0.07] border border-amber-600/30 text-center shadow-xs',
+        textClass:
+          'font-tiro font-medium text-xs sm:text-sm text-[#261208]',
       };
 
     case 'SECTION_HEADING':
@@ -196,7 +435,7 @@ export function getScriptureBlockConfig(type: ScriptureBlockType): ScriptureBloc
         fontFamily: '"Rozha One", "Noto Serif Devanagari", serif',
         lineHeightClass: 'leading-tight',
         containerClass: 'my-4 text-center select-none',
-        textClass: 'font-serifDevanagari font-bold text-xs sm:text-sm text-sacred-700 dark:text-sacred-300',
+        textClass: 'font-serifDevanagari font-bold text-xs sm:text-sm text-[#8C2D19]',
       };
 
     case 'INVOCATION_HEADING':
@@ -205,7 +444,7 @@ export function getScriptureBlockConfig(type: ScriptureBlockType): ScriptureBloc
         fontFamily: '"Tiro Devanagari Sanskrit", "Noto Serif Devanagari", serif',
         lineHeightClass: 'leading-tight',
         containerClass: 'my-3 text-center select-none',
-        textClass: 'font-tiro font-bold text-sm sm:text-base text-[#8C2D19] dark:text-sacred-400 tracking-wider',
+        textClass: 'font-tiro font-bold text-sm sm:text-base text-[#7A1505] tracking-wider',
       };
 
     case 'REGULAR_TEXT':
@@ -215,7 +454,7 @@ export function getScriptureBlockConfig(type: ScriptureBlockType): ScriptureBloc
         fontFamily: '"Noto Serif Devanagari", serif',
         lineHeightClass: 'leading-[1.7]',
         containerClass: 'my-1 text-center',
-        textClass: 'font-notoSerif text-[#2C1810] dark:text-amber-100',
+        textClass: 'font-notoSerif text-[#1C120C]',
       };
   }
 }
@@ -233,6 +472,9 @@ export function groupScriptureFolio(rawText: string): GroupedScriptureUnit[] {
   const units: GroupedScriptureUnit[] = [];
   let pendingNamavali: string[] = [];
 
+  let isVedicSection = false;
+  let inVedicCouplet = false;
+
   const flushNamavali = () => {
     if (pendingNamavali.length > 0) {
       units.push({ kind: 'namavali_grid', items: [...pendingNamavali] });
@@ -244,7 +486,67 @@ export function groupScriptureFolio(rawText: string): GroupedScriptureUnit[] {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    const type = classifyScriptureLine(trimmed);
+    let type = classifyScriptureLine(trimmed);
+
+    // Track header boundaries and set Vedic context accordingly
+    if (
+      type === 'SECTION_HEADING' ||
+      type === 'RITUAL_STEP_HEADER' ||
+      type === 'INVOCATION_HEADING'
+    ) {
+      if (
+        trimmed.includes('स्वस्ति वाचन') ||
+        trimmed.includes('स्वस्तिवाचन') ||
+        trimmed.includes('शान्ति पाठ') ||
+        trimmed.includes('शान्तिपाठ') ||
+        trimmed.includes('गणपत्यथर्वशीर्ष') ||
+        trimmed.includes('मन्त्रपुष्पाञ्जलि')
+      ) {
+        isVedicSection = true;
+      } else {
+        isVedicSection = false;
+      }
+      inVedicCouplet = false;
+    }
+
+    // Apply Vedic section inheritance to verses inside a Vedic hymn/section
+    if (isVedicSection) {
+      if (
+        type !== 'SECTION_HEADING' &&
+        type !== 'RITUAL_STEP_HEADER' &&
+        type !== 'INVOCATION_HEADING' &&
+        type !== 'VIDHI_INSTRUCTION' &&
+        type !== 'NAMAVALI'
+      ) {
+        type = 'VEDIC_MANTRA';
+      }
+    }
+
+
+    // Apply Vedic Couplet continuity (Rigvedic/Yajurvedic couplet where line 1 is Vedic and line 2 completes it)
+    if (type === 'VEDIC_MANTRA') {
+      // If line ends with double danda ॥, couplet ends here
+      if (/[॥]\s*(?:[०-९\d\-]+[॥\s]*)?$/u.test(trimmed)) {
+        inVedicCouplet = false;
+      } else {
+        inVedicCouplet = true;
+      }
+    } else if (inVedicCouplet) {
+      if (
+        type !== 'SECTION_HEADING' &&
+        type !== 'RITUAL_STEP_HEADER' &&
+        type !== 'INVOCATION_HEADING' &&
+        type !== 'VIDHI_INSTRUCTION' &&
+        type !== 'NAMAVALI'
+      ) {
+        type = 'VEDIC_MANTRA';
+        if (/[॥]\s*(?:[०-९\d\-]+[॥\s]*)?$/u.test(trimmed)) {
+          inVedicCouplet = false;
+        }
+      } else {
+        inVedicCouplet = false;
+      }
+    }
 
     if (type === 'NAMAVALI') {
       pendingNamavali.push(trimmed);
@@ -257,6 +559,7 @@ export function groupScriptureFolio(rawText: string): GroupedScriptureUnit[] {
   flushNamavali();
   return units;
 }
+
 
 // ---------------------------------------------------------------------------
 // Comprehensive Sanskrit vs Hindi Liturgical Engine (Gita & Commentary Folios)
@@ -305,8 +608,8 @@ export const EXCLUSIVE_HINDI_VOCABULARY = new Set([
   'क्या', 'क्यों', 'कहाँ', 'कब', 'कैसे', 'कैसा', 'कैसी',
   'यहाँ', 'वहाँ', 'जहाँ', 'तहाँ', 'इधर', 'उधर',
   'जो', 'सो', 'कोई', 'कुछ', 'सबके', 'सबको', 'सबका', 'सबकी', 'सबमें', 'सबसे',
-  // Exclusively Hindi Postpositions & Connectives
-  'में', 'ने', 'को', 'से', 'पर', 'लिये', 'लिए', 'तक', 'द्वारा',
+  // Exclusively Hindi Postpositions & Connectives (standalone 'को' is excluded as it is the Sanskrit interrogative pronoun 'कः' in Visarga Sandhi e.g. 'को धर्मः')
+  'में', 'ने', 'से', 'पर', 'लिये', 'लिए', 'तक', 'द्वारा',
   'और', 'भी', 'ही', 'तो', 'कि', 'क्योंकि', 'नहीं', 'नही',
   'समान', 'तरह', 'जैसा', 'जैसे', 'जैसी', 'वैसा', 'वैसे', 'वैसी',
   'बड़ा', 'बड़े', 'बड़ी', 'बहुत', 'ओर', 'तरफ'
@@ -318,7 +621,7 @@ const HINDI_OBLIQUE_PLURAL_REGEX = /[\u0900-\u097F]+(?:ोंमें|ोंन
 // 2. Attached locative 'में' (with bindu: बीचमें, हृदयमें, लोकमें, रणभूमिमें, सेनामें, मुकाबलेमें)
 const HINDI_ATTACHED_MEIN_REGEX = /[\u0900-\u097F]+में$/u;
 
-// 3. Ergative 'ने' attached to agent names in Gita Press (महाराजने, अर्जुनने, भीष्मने, श्रीकृष्णने, युधिष्ठिरने)
+// 3. Ergative 'ने' attached to agent names in traditional Hindi translations (महाराजने, अर्जुनने, भीष्मने, श्रीकृष्णने, युधिष्ठिरने)
 const HINDI_ATTACHED_NE_REGEX = /(?:अर्जुन|भीष्म|श्रीकृष्ण|कृष्ण|महाराज|भगवान्?|संजय|सञ्जय|धृतराष्ट्र|युधिष्ठिर|भीमसेन|भीम|द्रोण|नकुल|सहदेव|राजा|पितामह)ने$/u;
 
 // 4. Attached possessive/qualifier '-वाला / -वाले / -पूर्वक' (धनुषोंवाले, इच्छावाले, करनेवाले, प्रेमपूर्वक, अन्तःकरणवाला)
@@ -336,7 +639,7 @@ const HINDI_PRONOUNS_ADVERBS_REGEX = /(?:^|[\s.,!?—–:;।॥\-()])(?:यह|
 export function isHindiScriptureLine(trimmed: string): boolean {
   if (!trimmed) return false;
 
-  // 1. Commas in Gita Press are strictly in Hindi prose translations, NEVER in classical Sanskrit shlokas
+  // 1. Commas in traditional scripture editions are strictly in vernacular prose translations, NEVER in classical Sanskrit shlokas
   if (trimmed.includes(',')) {
     return true;
   }
@@ -414,25 +717,39 @@ export function isHindiScriptureLine(trimmed: string): boolean {
 /**
  * Classifies an individual line within a Gita folio
  */
+/**
+ * Classifies an individual line within a Gita / Vishnu Sahasranama / bilingual folio
+ */
 export function classifyGitaScriptureLine(line: string): 'HEADER' | 'SPEAKER' | 'HEADING' | 'HINDI' | 'SANSKRIT' {
-  const trimmed = line.trim();
+  const trimmed = line.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
   if (!trimmed) return 'HEADER';
 
-  // 1. Running headers & folio numbers
+  // 0. Standalone Dandās, OCR punctuation remnants, or solitary punctuation noise
+  if (/^[।॥\s]+$/.test(trimmed) || /^विन[\s.]*लि$/u.test(trimmed)) {
+    return 'HEADER';
+  }
+
+  // 1. Running headers & folio numbers (Gita, Vishnu Sahasranama, etc.)
   if (
-    /^\*?\s*श्रीमद्भगवद्गीता\s*\d*\s*\*?$/u.test(trimmed) ||
-    /^श्रीमद्भगवद्गीता\s+\d+$/u.test(trimmed) ||
-    /^\d+\s*श्रीमद्भगवद्गीता/u.test(trimmed) ||
-    /^अध्याय\s*\d+$/u.test(trimmed) ||
-    /^[\\/\s]+$/.test(trimmed)
+    /(?:श्रीमद्भगवद्गीता|(?:श्री|भ्री)?\s*विष्णु.*नाम|सह[स्श].*नाम)/u.test(trimmed) &&
+    trimmed.length < 60 &&
+    !/^[॥\s]*(?:अथ\s+|इति\s+|ॐ\s*तत्सदिति)/u.test(trimmed)
   ) {
     return 'HEADER';
   }
 
-  // 2. Speaker tags (सञ्जय उवाच, अर्जुन उवाच, श्रीभगवानुवाच)
+  if (
+    /^अध्याय\s*[०-९\d]+$/u.test(trimmed) ||
+    /^[\\/\s_—\-]+$/.test(trimmed) ||
+    /^[०-९\d\s\._—\-~*]*म[ययो०\.\s]+$/u.test(trimmed)
+  ) {
+    return 'HEADER';
+  }
+
+  // 2. Speaker tags (सञ्जय उवाच, अर्जुन उवाच, श्रीभगवानुवाच, भीष्म उवाच, युधिष्ठिर उवाच, वैशम्पायन उवाच)
   if (
     /(?:[उु]वाच|ऊचु[ः:]?)[॥ः:\s]*$/u.test(trimmed) ||
-    /^[॥\s]*(?:धृतराष्ट्र|सञ्जय|संजय|अर्जुन|श्रीभगवान्?|भगवान्?)\s*[उु]?वाच[॥ः:\s]*$/u.test(trimmed)
+    /^[॥\s]*(?:धृतराष्ट्र|सञ्जय|संजय|अर्जुन|श्रीभगवान्?|भगवान्?|भीष्म|युधिष्ठिर|वैशम्पायन)\s*[उु]?वाच[॥ः:\s]*$/u.test(trimmed)
   ) {
     return 'SPEAKER';
   }
@@ -445,9 +762,9 @@ export function classifyGitaScriptureLine(line: string): 'HEADER' | 'SPEAKER' | 
   // 3. Sacred Invocations, Section Titles & Colophons
   if (
     trimmed === 'ॐ' ||
-    /^[॥\s]*(?:ॐ\s*)?(?:श्रीपरमात्मने\s*नमः|अथ\s*[^\n]+ध्याय[ः:]?|इति\s*[^\n]+ध्याय[ः:]?|ॐ\s*तत्सदिति)[॥\s]*/u.test(trimmed) ||
+    /^[॥\s]*(?:ॐ\s*)?(?:श्रीपरमात्मने\s*नमः|अथ\s*[^\n]+|इति\s*[^\n]+|ॐ\s*तत्सदिति)[॥\s]*/u.test(trimmed) ||
     /^(?:योगशास्त्रे|नाम\s*[^\n]+ऽध्यायः)/u.test(trimmed) ||
-    (trimmed.startsWith('॥') && trimmed.endsWith('॥') && trimmed.length < 65 && !/[०-९\d]/.test(trimmed))
+    (trimmed.startsWith('॥') && trimmed.endsWith('॥') && trimmed.length < 65 && trimmed.length > 2 && !/[०-९\d]/.test(trimmed))
   ) {
     return 'HEADING';
   }
@@ -467,8 +784,9 @@ export function classifyGitaScriptureLine(line: string): 'HEADER' | 'SPEAKER' | 
 }
 
 export function isGenuineSanskritShlokaCandidate(line: string): boolean {
-  const trimmed = line.trim();
+  const trimmed = line.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
   if (!trimmed) return false;
+  if (/^[।॥\s]+$/.test(trimmed)) return false;
   if (isHindiScriptureLine(trimmed)) return false;
   if (trimmed.endsWith('-') || /[।॥]/.test(trimmed) || /ः$/.test(trimmed)) return true;
   const devCount = (trimmed.match(/[\u0900-\u097F]/g) || []).length;
@@ -477,13 +795,17 @@ export function isGenuineSanskritShlokaCandidate(line: string): boolean {
 }
 
 /**
- * Parses and groups a full Srimad Bhagavad Gita folio into structured liturgical blocks:
+ * Parses and groups a full Srimad Bhagavad Gita / Vishnu Sahasranama folio into structured liturgical blocks:
  * Headings, Speakers, multi-line Sanskrit Shlokas (Anustubh & Tristup), and Hindi Anuvad.
  * Uses robust state-machine tracking to guarantee that Hindi translation paragraphs
  * and footnotes are never split into fake shlokas.
  */
 export function parseGitaFolio(cleanedText: string): GitaFolioBlock[] {
-  const rawLines = cleanedText.split('\n').map(l => l.trim()).filter(Boolean);
+  const rawLines = cleanedText
+    .split('\n')
+    .map(l => l.replace(/[\u200B-\u200D\uFEFF]/g, '').trim())
+    .filter(l => Boolean(l) && !/^[।॥\s]+$/.test(l));
+
   const blocks: GitaFolioBlock[] = [];
   let currentShloka: string[] = [];
   let currentAnuvad: string[] = [];
@@ -548,8 +870,29 @@ export function parseGitaFolio(cleanedText: string): GitaFolioBlock[] {
         }
       }
     } else if (state === 'IN_ANUVAD') {
-      // While in Hindi translation, only a genuine Sanskrit candidate line AFTER verse completion can start a new Shloka
-      if (anuvadCompletedVerse && isGenuineSanskritShlokaCandidate(line)) {
+      const isCandidate = isGenuineSanskritShlokaCandidate(line);
+      const isHindi = isHindiScriptureLine(line);
+
+      // Kulaka handling: If no translation lines have accumulated yet in currentAnuvad
+      // and this line is genuine Sanskrit, it is a consecutive shloka in a Kulaka (e.g. verses 10, 11, 12)
+      if (currentAnuvad.length === 0 && isCandidate && !isHindi) {
+        currentShloka.push(line);
+        state = 'IN_SHLOKA';
+        if (/॥\s*[०-९\d\-]*\s*॥/.test(line) || line.endsWith('॥')) {
+          flushShloka();
+          state = 'IN_ANUVAD';
+          anuvadCompletedVerse = false;
+        }
+        continue;
+      }
+
+      // While in Hindi translation, a genuine Sanskrit candidate line starts a new Shloka if:
+      // 1) The previous verse completed with a verse number (anuvadCompletedVerse === true), OR
+      // 2) The previous translation line completed a sentence with punctuation (। / ॥ / . / ! / —)
+      const lastAnuvadLine = currentAnuvad.length > 0 ? currentAnuvad[currentAnuvad.length - 1] : '';
+      const prevAnuvadEndedSentence = /[।॥.!?—–\s]$/.test(lastAnuvadLine);
+
+      if ((anuvadCompletedVerse && isCandidate) || (prevAnuvadEndedSentence && isCandidate && !isHindi)) {
         flushAnuvad();
         currentShloka.push(line);
         state = 'IN_SHLOKA';
@@ -587,7 +930,7 @@ export function parseGitaFolio(cleanedText: string): GitaFolioBlock[] {
   flushShloka();
   flushAnuvad();
 
-  // Synchronize canonical verified verse numbers to Sanskrit Shloka blocks if present in accompanying anuvad
+  // Synchronize and canonicalize verse numbers for Sanskrit Shloka blocks
   let lastKnownVerseNumber = 0;
   for (let i = 0; i < blocks.length; i++) {
     const curBlock = blocks[i];
@@ -595,13 +938,18 @@ export function parseGitaFolio(cleanedText: string): GitaFolioBlock[] {
       const lastLineIdx = curBlock.lines.length - 1;
       const lastLine = curBlock.lines[lastLineIdx];
 
-      const matchNum = lastLine.match(/॥\s*([०-९\d\-]+)\s*॥/);
-      if (matchNum) {
-        const parsed = parseInt(matchNum[1].replace(/[०-९]/g, d => '०१२३४५६७८९'.indexOf(d).toString()), 10);
+      // 1. If lastLine already has verse number at the end (e.g. "। ४ ।", "॥ ४ ॥", "। ४ ॥", "॥ ४")
+      const existingNumMatch = lastLine.match(/[।॥]\s*([०-९\d\-]+)\s*[।॥]?\s*$/);
+      if (existingNumMatch) {
+        const rawNum = existingNumMatch[1];
+        const devNum = rawNum.replace(/\d/g, (d: string) => ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'][parseInt(d, 10)]);
+        curBlock.lines[lastLineIdx] = lastLine.replace(/[।॥]\s*[०-९\d\-]+\s*[।॥]?\s*$/, `॥ ${devNum} ॥`);
+        const parsed = parseInt(devNum.replace(/[०-९]/g, d => '०१२३४५६७८९'.indexOf(d).toString()), 10);
         if (!isNaN(parsed) && parsed > 0) {
           lastKnownVerseNumber = parsed;
         }
       } else {
+        // 2. Look for verse number in the following translation block
         const nextBlock = i + 1 < blocks.length ? blocks[i + 1] : null;
         let synced = false;
         if (nextBlock && nextBlock.type === 'ANUVAD') {
@@ -610,7 +958,7 @@ export function parseGitaFolio(cleanedText: string): GitaFolioBlock[] {
           if (match) {
             const rawNum = match[1].replace(/वेंका[^\n]*/g, '').trim();
             const devNum = rawNum.replace(/\d/g, (d: string) => ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'][parseInt(d, 10)]);
-            curBlock.lines[lastLineIdx] = lastLine.replace(/[।॥]+$/, '').trim() + ` ॥ ${devNum} ॥`;
+            curBlock.lines[lastLineIdx] = lastLine.replace(/[।॥\s]+$/, '').trim() + ` ॥ ${devNum} ॥`;
             const parsed = parseInt(devNum.replace(/[०-९]/g, d => '०१२३४५६७८९'.indexOf(d).toString()), 10);
             if (!isNaN(parsed) && parsed > 0) lastKnownVerseNumber = parsed;
             synced = true;
@@ -623,7 +971,7 @@ export function parseGitaFolio(cleanedText: string): GitaFolioBlock[] {
         if (!synced && lastKnownVerseNumber > 0 && curBlock.lines.length >= 2 && totalDevanagari >= 30 && endsWithDoubleDanda) {
           const nextNum = lastKnownVerseNumber + 1;
           const devNum = nextNum.toString().replace(/\d/g, (d: string) => ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'][parseInt(d, 10)]);
-          curBlock.lines[lastLineIdx] = lastLine.replace(/[।॥]+$/, '').trim() + ` ॥ ${devNum} ॥`;
+          curBlock.lines[lastLineIdx] = lastLine.replace(/[।॥\s]+$/, '').trim() + ` ॥ ${devNum} ॥`;
           lastKnownVerseNumber = nextNum;
         }
       }

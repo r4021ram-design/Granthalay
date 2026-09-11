@@ -55,6 +55,36 @@ describe('Scripture Typography & Classification Standard', () => {
       expect(classifyScriptureLine('【 प्रधान देवता नमस्कार 】')).toBe('SECTION_HEADING');
       expect(classifyScriptureLine('【 शान्ति पाठः 】')).toBe('SECTION_HEADING');
       expect(classifyScriptureLine('॥ श्रीगणेशाय नमः ॥')).toBe('INVOCATION_HEADING');
+      expect(classifyScriptureLine('॥ कलश पूजनम् ॥')).toBe('INVOCATION_HEADING');
+    });
+
+    it('accurately identifies Ritual Step Headers and stage directions', () => {
+      expect(classifyScriptureLine('• पवित्रीकरणम्:')).toBe('RITUAL_STEP_HEADER');
+      expect(classifyScriptureLine('• आचम्य (आचमन करें):')).toBe('RITUAL_STEP_HEADER');
+      expect(classifyScriptureLine('• सप्तधान्य प्रक्षेप (भूमि पर सप्तधान्य रखें):')).toBe('RITUAL_STEP_HEADER');
+      expect(classifyScriptureLine('• दुग्ध स्नानम्:')).toBe('RITUAL_STEP_HEADER');
+      expect(classifyScriptureLine('* नारद उवाच *')).toBe('RITUAL_STEP_HEADER');
+    });
+
+    it('accurately identifies Upachara Samarpana Mantras', () => {
+      expect(classifyScriptureLine('▪ ॐ भूर्भुवः स्वः गणेशाय नमः । दुग्धस्नानं समर्पयामि ।')).toBe('SAMARPANA_MANTRA');
+      expect(classifyScriptureLine('ॐ अपां पतये वरुणाय नमः । सर्वोपचारार्थे गन्धाक्षत पुष्पाणि समर्पयामि । नमस्करोमि ।')).toBe('SAMARPANA_MANTRA');
+      expect(classifyScriptureLine('दध्यानीतं मया देव स्नानार्थं प्रतिगृह्यताम् ॥')).toBe('SAMARPANA_MANTRA');
+    });
+
+    it('accurately identifies canonical Vedic prose without explicit accents', () => {
+      expect(classifyScriptureLine('ॐ वरुणस्योत्तम्भनमसि वरुणस्य स्कम्भसर्जनीस्थो वरुणस्य ऋतसदन्न्यसि')).toBe('VEDIC_MANTRA');
+      expect(classifyScriptureLine('ॐ भूरसि भूमिरस्यदितिरसि विश्वधाया विश्वस्य भुवनस्य धर्त्री ।')).toBe('VEDIC_MANTRA');
+      expect(classifyScriptureLine('हरिः ॐ नमस्ते गणपतये । त्वमेव प्रत्यक्षं तत्त्वमसि ।')).toBe('VEDIC_MANTRA');
+    });
+
+    it('accurately identifies Sankalpa GPS text', () => {
+      expect(classifyScriptureLine('ॐ विष्णुर्विष्णुर्विष्णुः, ॐ तत्सत् श्रीमद्भगवतो महापुरुषस्य... ध्यान आवाहनादि षोडशोपचार पूजनमहं करिष्ये ।')).toBe('SANKALPA');
+    });
+
+    it('accurately classifies single-danda odd shloka lines as PAURANIK_SHLOKA', () => {
+      expect(classifyScriptureLine('प्रणम्य शिरसा देवं गौरीपुत्रं विनायकम् ।')).toBe('PAURANIK_SHLOKA');
+      expect(classifyScriptureLine('ॐ अपवित्रः पवित्रो वा सर्वावस्थां गतोऽपि वा ।')).toBe('PAURANIK_SHLOKA');
     });
   });
 
@@ -82,7 +112,51 @@ describe('Scripture Typography & Classification Standard', () => {
         expect(units[2].type).toBe('PAURANIK_SHLOKA');
       }
     });
+
+    it('classifies all lines under Swasti Vachan as VEDIC_MANTRA with couplet continuity', () => {
+      const swastiFolio = [
+        '• स्वस्ति वाचन:',
+        'ॐ आ नो भद्राः क्रतवो यन्तु विश्वतोऽदब्धासो अपरीतास उद्भिदः ।',
+        'देवा नो यथा सदमिद्वृधे असन्नप्रायुवो रक्षितारो दिवे दिवे ॥ १ ॥',
+        '▪ देवानां भद्रा सुमतिर्ऋजूयतां देवानाꣳ रातिरभिनो निवर्तताम् ।',
+        'देवानाꣳ सख्यमुपसेदिमा वयं देवा न आयुः प्र तिरन्तु जीवसे ॥ २ ॥',
+        '▪ तान् पूर्वया निविदा हूमहे वयं भगं मित्रमदितिं दक्षमस्रिधम् ।',
+        'अर्यमणं वरुणं सोममश्विना सरस्वती नः सुभगा मयस्करत् ॥ ३ ॥',
+      ].join('\n');
+
+      const units = groupScriptureFolio(swastiFolio);
+      expect(units[0]).toEqual({ kind: 'single', line: '• स्वस्ति वाचन:', type: 'RITUAL_STEP_HEADER' });
+      // All verses must be VEDIC_MANTRA
+      for (let i = 1; i < units.length; i++) {
+        const u = units[i];
+        expect(u.kind).toBe('single');
+        if (u.kind === 'single') {
+          expect(u.type).toBe('VEDIC_MANTRA');
+        }
+      }
+    });
+
+    it('classifies all lines in Ganapatyatharvashirsha as VEDIC_MANTRA', () => {
+      const atharvaFolio = [
+        '॥ गणपत्यथर्वशीर्ष स्तोत्रम् ॥',
+        'हरिः ॐ नमस्ते गणपतये । त्वमेव प्रत्यक्षं तत्त्वमसि ।',
+        'त्वं साक्षादात्माऽसि नित्यम् ॥ १ ॥',
+        'ऋतं वच्मि । सत्यं वच्मि ॥ २ ॥',
+        'एवं ध्यायति यो नित्यं स योगी योगिनां वरः ॥ ९ ॥',
+      ].join('\n');
+
+      const units = groupScriptureFolio(atharvaFolio);
+      expect(units[0]).toEqual({ kind: 'single', line: '॥ गणपत्यथर्वशीर्ष स्तोत्रम् ॥', type: 'INVOCATION_HEADING' });
+      for (let i = 1; i < units.length; i++) {
+        const u = units[i];
+        expect(u.kind).toBe('single');
+        if (u.kind === 'single') {
+          expect(u.type).toBe('VEDIC_MANTRA');
+        }
+      }
+    });
   });
+
 
   describe('getScriptureBlockConfig', () => {
     it('provides Tiro Sanskrit with loose leading for Vaidika Mantras', () => {

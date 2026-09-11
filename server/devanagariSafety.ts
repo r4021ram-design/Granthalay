@@ -27,7 +27,7 @@ export function analyzeDevanagariText(text: string): DevanagariAnalysisResult {
   let match: RegExpExecArray | null;
 
   // 1. Check for Latin characters erroneously interspersed in Devanagari text (CRITICAL)
-  const latinRegex = /[\p{Script=Devanagari}][a-zA-Z0-9]+|([a-zA-Z]+)[\p{Script=Devanagari}]/gu;
+  const latinRegex = /[\p{Script=Devanagari}][a-zA-Z]+|([a-zA-Z]+)[\p{Script=Devanagari}]/gu;
   while ((match = latinRegex.exec(text)) !== null) {
     issues.push({
       issue_type: 'latin_character',
@@ -90,8 +90,13 @@ export function analyzeDevanagariText(text: string): DevanagariAnalysisResult {
   // 4. Check for un-halanted duplicated base consonants followed by another consonant (CRITICAL)
   // e.g. "ततत्व" in "ततत्वमसि" where OCR failed to produce conjunct "त्त"
   const dupConsonantRegex = /([\u0915-\u0939])\1(?=[\u0915-\u0939])/gu;
+  const VALID_DUP_CONSONANT_PATTERNS = /(?:अव्यय|व्यय|प्यय|अप्यय|शश|जनन|धर्ममय|आनन्दमय|चिन्मय|स्ववश|नैककर्म|सहित|पाण्डववधू|धर्ममर्थ|कलङ्ककल|ससहित)/u;
   while ((match = dupConsonantRegex.exec(text)) !== null) {
     const char = match[1];
+    const surrounding = text.substring(Math.max(0, match.index - 8), Math.min(text.length, match.index + 12));
+    if (VALID_DUP_CONSONANT_PATTERNS.test(surrounding)) {
+      continue; // Skip legitimate Sanskrit/Hindi words
+    }
     issues.push({
       issue_type: 'duplicated_character',
       character_offset: match.index,
