@@ -53,7 +53,7 @@ export const Repository = {
         (SELECT COUNT(*) FROM issues i JOIN pages p ON i.page_id = p.id WHERE p.book_id = b.id AND i.status = 'OPEN') as total_issues,
         (SELECT COUNT(*) FROM issues i JOIN pages p ON i.page_id = p.id WHERE p.book_id = b.id AND i.status = 'OPEN' AND i.severity = 'CRITICAL') as critical_issues
       FROM books b
-      WHERE b.title NOT LIKE '%Test%' AND b.title NOT LIKE '%परीक्षण%' AND b.author != 'Author'
+      WHERE b.id LIKE 'granth-%'
       ORDER BY b.created_at DESC
     `).all() as any[];
 
@@ -372,12 +372,12 @@ export const Repository = {
   getBookStats(): BookStats {
     const counts = db.prepare(`
       SELECT
-        (SELECT COUNT(*) FROM books) as total_books,
-        (SELECT COUNT(*) FROM pages) as total_pages,
-        (SELECT COUNT(*) FROM pages WHERE status = 'VERIFIED') as verified_pages,
-        (SELECT COUNT(*) FROM issues WHERE status = 'OPEN') as unresolved_issues,
-        (SELECT COUNT(*) FROM issues WHERE status = 'OPEN' AND severity = 'CRITICAL') as critical_issues,
-        (SELECT AVG(ocr_confidence) FROM pages WHERE ocr_confidence > 0) as avg_confidence
+        (SELECT COUNT(*) FROM books WHERE id LIKE 'granth-%') as total_books,
+        (SELECT COUNT(*) FROM pages WHERE book_id LIKE 'granth-%') as total_pages,
+        (SELECT COUNT(*) FROM pages WHERE book_id LIKE 'granth-%' AND status = 'VERIFIED') as verified_pages,
+        (SELECT COUNT(*) FROM issues WHERE page_id IN (SELECT id FROM pages WHERE book_id LIKE 'granth-%') AND status = 'OPEN') as unresolved_issues,
+        (SELECT COUNT(*) FROM issues WHERE page_id IN (SELECT id FROM pages WHERE book_id LIKE 'granth-%') AND status = 'OPEN' AND severity = 'CRITICAL') as critical_issues,
+        (SELECT AVG(ocr_confidence) FROM pages WHERE book_id LIKE 'granth-%' AND ocr_confidence > 0) as avg_confidence
     `).get() as any;
 
     const totalPages = counts.total_pages || 0;

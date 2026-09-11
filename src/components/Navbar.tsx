@@ -1,5 +1,6 @@
 import React from 'react';
 import { BookOpen, Search, Upload, History, Moon, Sun, Scroll, ShieldCheck } from 'lucide-react';
+import { HinduGranthalayLogo } from './HinduGranthalayLogo.js';
 import type { BookStats } from '../../shared/types.js';
 
 interface NavbarProps {
@@ -26,23 +27,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand */}
         <div
-          className="flex items-center space-x-3 cursor-pointer select-none group"
+          className="cursor-pointer select-none"
           onClick={() => setCurrentView('library')}
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sacred-600 to-maroon-700 flex items-center justify-center shadow-lg shadow-sacred-900/30 border border-sacred-400/40 group-hover:scale-105 transition-transform">
-            <span className="text-2xl font-serifDevanagari font-bold text-amber-200">ॐ</span>
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="font-bold text-lg tracking-wide text-neutral-100 font-devanagari">
-                पूजा ग्रन्थ डिजिटाइज़र
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-sacred-950 text-sacred-400 border border-sacred-800/80 font-mono font-medium">
-                v1.0
-              </span>
-            </div>
-            <p className="text-xs text-neutral-400">Puja Granth Digitizer • Sanskrit & Hindi Scripture Fidelity</p>
-          </div>
+          <HinduGranthalayLogo size={42} showText={true} />
         </div>
 
         {/* Navigation Actions */}
@@ -122,38 +110,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </nav>
       </div>
-
-      {/* Global Scripture Fidelity Status Banner */}
-      {stats && (
-        <div className="bg-neutral-950/60 border-t border-neutral-800/60 px-4 py-1.5 text-xs text-neutral-400 flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center space-x-4">
-            <span className="flex items-center text-emerald-400 space-x-1">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>प्रमाणित स्रोत सत्यता (Source Authority Active)</span>
-            </span>
-            <span className="hidden sm:inline text-neutral-600">•</span>
-            <span className="hidden sm:inline">
-              कुल ग्रन्थ: <strong className="text-neutral-200">{stats.total_books}</strong>
-            </span>
-            <span className="hidden sm:inline">
-              कुल पृष्ठ: <strong className="text-neutral-200">{stats.total_pages}</strong>
-            </span>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-1.5">
-              <span>सत्यापन प्रगति:</span>
-              <span className="font-semibold text-sacred-400">{stats.verification_percentage}%</span>
-              <span className="text-neutral-500 text-[11px]">({stats.verified_pages}/{stats.total_pages})</span>
-            </div>
-            {stats.critical_issues > 0 && (
-              <span className="px-1.5 py-0.5 rounded bg-red-950 text-red-400 border border-red-800 text-[11px] font-medium">
-                {stats.critical_issues} गंभीर समीक्षा
-              </span>
-            )}
-          </div>
-        </div>
-      )}
     </header>
   );
 };

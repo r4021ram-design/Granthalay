@@ -5,6 +5,9 @@ import {
   BookOpen,
   Type,
   Maximize2,
+  Minimize2,
+  Eye,
+  EyeOff,
   CheckCircle2,
   AlertCircle,
   Sun,
@@ -33,8 +36,12 @@ import {
 import { parseKarmakandaSegment } from '../utils/karmakandaParser.js';
 import { GitaTableOfContents } from './GitaTableOfContents.js';
 import { VsnTableOfContents } from './VsnTableOfContents.js';
+import { GaneshPujanTableOfContents } from './GaneshPujanTableOfContents.js';
+import { BrihatStotraTableOfContents } from './BrihatStotraTableOfContents.js';
+import { UniversalTableOfContents } from './UniversalTableOfContents.js';
 import { GITA_SECTIONS, GitaChapter } from '../data/bhagavadGitaIndex.js';
 import { VSN_SECTIONS, VsnSection } from '../data/vishnuSahasranamaIndex.js';
+import { BRIHAT_STOTRAS, BRIHAT_CATEGORIES, BrihatStotraItem } from '../data/brihatStotraRatnakarIndex.js';
 import type { Book, Page } from '../../shared/types.js';
 
 interface ReadingModeProps {
@@ -60,16 +67,63 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   const [fontFamily, setFontFamily] = useState<ScriptureFont>('harmonized');
   const [readingTheme, setReadingTheme] = useState<ReadingTheme>('bhojpatra');
   const [scriptMode, setScriptMode] = useState<'devanagari' | 'iast'>('devanagari');
-  const [viewMode, setViewMode] = useState<'text' | 'split' | 'scan'>('text');
+  const [viewMode, setViewMode] = useState<'text' | 'split' | 'scan'>(() => {
+    return bookId === 'granth-brihat-stotra-ratnakar' ? 'scan' : 'text';
+  });
   const [isPadachhedaMode, setIsPadachhedaMode] = useState<boolean>(false);
   const [isKarmakandaMode, setIsKarmakandaMode] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [jumpPageInput, setJumpPageInput] = useState<string>('1');
   const [isTocOpen, setIsTocOpen] = useState<boolean>(false);
   const [activeChapterScope, setActiveChapterScope] = useState<GitaChapter | null>(null);
+  const [isHeaderHidden, setIsHeaderHidden] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   const isGitaBook = Boolean(book?.id === 'granth-bhagavad-gita' || (book?.title?.includes('गीता') && !book?.title?.includes('सहस्रनाम')));
   const isVsnBook = Boolean(book?.id?.includes('sahasranama') || book?.title?.includes('सहस्रनाम'));
+  const isGaneshPujanBook = Boolean(book?.id === 'granth-ganesh-pujan-paddhati' || (book?.title?.includes('गणेश') && book?.title?.includes('पूजन')));
+  const isBrihatStotraBook = Boolean(book?.id === 'granth-brihat-stotra-ratnakar' || book?.title?.includes('बृहत्स्तोत्ररत्नाकर'));
+
+  // Native Fullscreen API sync
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(err => {
+        console.warn('Fullscreen request failed:', err);
+      });
+    } else {
+      document.exitFullscreen?.().catch(err => {
+        console.warn('Exit fullscreen failed:', err);
+      });
+    }
+  };
+
+  // Keyboard hotkeys for immersive reading: F (fullscreen), H (hide/show top bar), Escape (exit hide)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+        return;
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      } else if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        setIsHeaderHidden(prev => !prev);
+      } else if (e.key === 'Escape' && isHeaderHidden) {
+        setIsHeaderHidden(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isHeaderHidden]);
 
   // Derive current chapter from current page strictly for Gita books
   const currentChapter = useMemo(() => {
@@ -85,6 +139,14 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
     const pageNum = currentPageIndex + 1;
     return VSN_SECTIONS.find(s => pageNum >= s.startPage && pageNum <= s.endPage) || null;
   }, [isVsnBook, currentPageIndex]);
+
+  // Derive current Brihat Stotra from current page
+  const currentBrihatStotra = useMemo(() => {
+    if (!isBrihatStotraBook) return null;
+    const pageNum = currentPageIndex + 1;
+    const matching = BRIHAT_STOTRAS.filter(s => s.pdfPage <= pageNum);
+    return matching.length > 0 ? matching[matching.length - 1] : null;
+  }, [isBrihatStotraBook, currentPageIndex]);
 
   useEffect(() => {
     if (activeChapterScope) {
@@ -102,6 +164,9 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
         const data = await api.getBook(bookId);
         setBook(data.book);
         setPages(data.pages);
+        if (data.book.id === 'granth-brihat-stotra-ratnakar') {
+          setViewMode('scan');
+        }
         setIsLoading(false);
       } catch (err) {
         console.error(err);
@@ -224,6 +289,52 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   const sanitizeScriptureText = (text: string): string => {
     if (!text) return '';
     let s = text;
+
+    // Strip duplicate scripture preamble headers if present
+    s = s.replace(/^\s*॥\s*बृहत्स्तोत्ररत्नाकरः\s*॥\s*(?:\n*【[^】]+】\s*)?/u, '');
+
+    // Common Sanskrit OCR Ligature & Conjunct Healing
+    s = s.replace(/श्नीगेशाय/gu, 'श्रीगणेशाय');
+    s = s.replace(/श्रीगुरुभ्यो\s*नसः/gu, 'श्रीगुरुभ्यो नमः');
+    s = s.replace(/पसिुरवदनो/gu, 'सिन्दूरवदनो');
+    s = s.replace(/यत्यादयंकजस्मरणम्/gu, 'यत्पादपङ्कजस्मरणम्');
+    s = s.replace(/राशील्लाशयति/gu, 'राशीन्नाशयति');
+    s = s.replace(/सुमुखश्चेकदंतश्च/gu, 'सुमुखश्चैकदन्तश्च');
+    s = s.replace(/संबोदरश्च/gu, 'लम्बोदरश्च');
+    s = s.replace(/धूख्रकेतु्गणाध्यक्चो/gu, 'धूम्रकेतुर्गणाध्यक्षो');
+    s = s.replace(/पडेच्छणुखादपि/gu, 'पठेच्छृणुयादपि');
+    s = s.replace(/हादशेतानि/gu, 'द्वादशैतानि');
+    s = s.replace(/स्वंविष्नोषशांतये/gu, 'सर्वविघ्नोपशान्तये');
+    s = s.replace(/शशिवर्णं\s*चतुभुजम्/gu, 'शशिवर्णं चतुर्भुजम्');
+    s = s.replace(/नमो\s*वे\s*ब्रह्मनिधये/gu, 'नमो वै ब्रह्मनिधये');
+    s = s.replace(/द्वि्ाहुरपरो/gu, 'द्विबाहुरपरो');
+    s = s.replace(/अचतुवंदनो/gu, 'अचतुर्वदनो');
+    s = s.replace(/प्राणायामं\s*हृत्वा/gu, 'प्राणायामं कृत्वा');
+    s = s.replace(/शूषंकर्णाय/gu, 'शूर्पकर्णाय');
+    s = s.replace(/विध्नशाय/gu, 'विघ्ननाशाय');
+    s = s.replace(/चितामणये/gu, 'चिन्तामणये');
+    s = s.replace(/आशापुरकाय/gu, 'आशापूरकाय');
+    s = s.replace(/धूं\s*स्रकंतवे|धू\s*स्रकंतवे/gu, 'धूम्रकेतवे');
+    s = s.replace(/वानबाहौ/gu, 'वामबाहौ');
+    s = s.replace(/गौयुंवाच/gu, 'गौर्युवाच');
+    s = s.replace(/क्म॑कर्तेति/gu, 'कर्म कर्तेति');
+    s = s.replace(/सयूरवाहनमम्‌ं|सयूरवाहनममुं/gu, 'मयूरवाहनममुं');
+    s = s.replace(/दिग्बाहुमाये/gu, 'दिग्बाहुमाद्ये');
+    s = s.replace(/ध्रूयुगं/gu, 'भ्रूयुगं');
+    s = s.replace(/भालचंगरस्तु/gu, 'भालचन्द्रस्तु');
+    s = s.replace(/पाशपणिस्तु/gu, 'पाशपाणिस्तु');
+    s = s.replace(/चितिता्थंदः/gu, 'चिन्तिताथप्रदः');
+    s = s.replace(/गणंजयः/gu, 'गणञ्जयः');
+    s = s.replace(/विष्नहरः/gu, 'विघ्नहरः');
+    s = s.replace(/क्षप्रप्रसादनो/gu, 'क्षिप्रप्रसादनो');
+    s = s.replace(/जआशाप्रपुरकः/gu, 'आशाप्रपूरकः');
+    s = s.replace(/सर्वागाणि/gu, 'सर्वाङ्गानि');
+    s = s.replace(/राक्तसासुर/gu, 'राक्षसासुर');
+    s = s.replace(/निविष्नेन/gu, 'निर्विघ्नेन');
+    s = s.replace(/भरणोच्चाटनाकर्ष/gu, 'मारणोच्चाटनाकर्ष');
+    s = s.replace(/विच्नेशवीर्याणि/gu, 'विघ्नेशवीर्याणि');
+    s = s.replace(/बंदीजन्मागिधकंः/gu, 'वन्दिजन्मागधकैः');
+    s = s.replace(/शरुत्वा/gu, 'श्रुत्वा');
 
     // 1. Kruti-Dev legacy font fixes (where 'र्' was exported for 'त' and 'व' for chhoti 'i' matra)
     s = s.replace(/र्\s*ौर/gu, 'तौर');
@@ -1046,9 +1157,46 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-200 ${getOuterThemeClass()} flex flex-col justify-between`}>
+    <div className={`min-h-screen transition-colors duration-200 ${getOuterThemeClass()} flex flex-col justify-between relative`}>
+      {/* Floating Pill when Top Bar is Hidden */}
+      {isHeaderHidden && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-3 duration-300">
+          <div className="flex items-center space-x-2 bg-black/85 backdrop-blur-md border border-amber-500/50 shadow-2xl rounded-full px-4 py-1.5 text-amber-200 text-xs font-devanagari">
+            <button
+              onClick={() => setIsHeaderHidden(false)}
+              className="flex items-center space-x-1.5 hover:text-amber-100 font-bold transition-all cursor-pointer"
+              title="शीर्ष बार पुनः दिखाएं (H या Esc)"
+            >
+              <Eye className="w-4 h-4 text-amber-400 animate-pulse" />
+              <span>शीर्ष बार दिखाएं</span>
+              <span className="text-[10px] text-amber-400/60 font-mono">(H)</span>
+            </button>
+            <span className="text-amber-600">|</span>
+            <button
+              onClick={toggleFullscreen}
+              className="flex items-center space-x-1 hover:text-amber-100 transition-all cursor-pointer"
+              title="पूर्ण स्क्रीन बदलें (F)"
+            >
+              {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 text-amber-400" /> : <Maximize2 className="w-3.5 h-3.5 text-amber-400" />}
+              <span>{isFullscreen ? 'स्क्रीन सामान्य' : 'पूर्ण स्क्रीन'}</span>
+              <span className="text-[10px] text-amber-400/60 font-mono">(F)</span>
+            </button>
+            <span className="text-amber-600">|</span>
+            <button
+              onClick={() => setIsTocOpen(true)}
+              className="flex items-center space-x-1 hover:text-amber-100 transition-all cursor-pointer"
+              title="अनुक्रमणिका खोलें"
+            >
+              <Layers className="w-3.5 h-3.5 text-amber-400" />
+              <span>अनुक्रमणिका</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top Reading Controls Header */}
-      <header className="sticky top-0 z-40 border-b border-black/20 bg-black/40 backdrop-blur-md px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-neutral-100 shadow-lg">
+      {!isHeaderHidden && (
+        <header className="sticky top-0 z-40 border-b border-black/20 bg-black/40 backdrop-blur-md px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-neutral-100 shadow-lg">
         <div className="flex items-center space-x-3">
           <button
             onClick={onBack}
@@ -1092,6 +1240,14 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
                     </span>
                   </>
                 )}
+                {isBrihatStotraBook && currentBrihatStotra && (
+                  <>
+                    <span className="text-amber-500 font-serif text-sm opacity-80">•</span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-sacred-500/20 to-amber-500/20 border border-amber-500/40 text-amber-300 text-xs sm:text-sm font-devanagari font-bold shadow-xs">
+                      <span>📖 #{currentBrihatStotra.stotraNumber} {currentBrihatStotra.title}</span>
+                    </span>
+                  </>
+                )}
               </h1>
             </div>
             <p className="text-[11px] text-neutral-400 font-devanagari flex items-center space-x-2 mt-0.5">
@@ -1105,6 +1261,11 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
               ) : isVsnBook && currentVsnSection ? (
                 <span className="text-amber-300/90 font-medium">
                   {currentVsnSection.nameHi}
+                  <span className="text-neutral-500 font-mono ml-1.5">(पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
+                </span>
+              ) : isBrihatStotraBook && currentBrihatStotra ? (
+                <span className="text-amber-300/90 font-medium">
+                  स्तोत्र #{currentBrihatStotra.stotraNumber} {currentBrihatStotra.title} (मूल पृष्ठ {currentBrihatStotra.bookPage})
                   <span className="text-neutral-500 font-mono ml-1.5">(पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
                 </span>
               ) : (
@@ -1297,16 +1458,32 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             <span>{isKarmakandaMode ? 'क्रिया-कार्ड सक्रिय' : 'क्रिया-कार्ड'}</span>
           </button>
 
-          {/* Quick Verify Button */}
+          {/* Fullscreen Toggle */}
           <button
-            onClick={() => onOpenVerification(book.id)}
-            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-sacred-600 to-amber-600 hover:from-sacred-500 hover:to-amber-500 text-white text-xs font-bold shadow-md shadow-sacred-950 transition-all active:scale-95 font-devanagari"
-            title="सत्यापन कार्यपीठ में खोलें"
+            onClick={toggleFullscreen}
+            className={`px-2.5 py-1 rounded-xl border text-xs font-semibold transition-all flex items-center space-x-1 cursor-pointer ${
+              isFullscreen
+                ? 'bg-amber-600/80 border-amber-400 text-white shadow-md'
+                : 'bg-white/10 hover:bg-white/20 border-white/20 text-amber-200'
+            }`}
+            title="पूर्ण स्क्रीन (Fullscreen - F)"
           >
-            सत्यापन
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">{isFullscreen ? 'सामान्य' : 'पूर्ण स्क्रीन'}</span>
+          </button>
+
+          {/* Hide Top Bar / Focus Mode */}
+          <button
+            onClick={() => setIsHeaderHidden(true)}
+            className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-neutral-200 hover:text-white transition-all flex items-center space-x-1 cursor-pointer"
+            title="शीर्ष बार छिपाएं / स्वाध्याय मोड (H)"
+          >
+            <EyeOff className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline font-devanagari">बार छिपाएं</span>
           </button>
         </div>
       </header>
+      )}
 
       {/* Chapter Focus Scope Banner */}
       {activeChapterScope && (
@@ -1362,26 +1539,81 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
       <main className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-10 w-full flex-grow flex flex-col items-center justify-center">
         {viewMode === 'scan' ? (
           /* Pure Manuscript Scan View */
-          <div className="w-full max-w-4xl bg-neutral-900/60 p-4 sm:p-6 rounded-3xl border border-neutral-800 shadow-2xl space-y-4 text-center">
-            <div className="flex items-center justify-between text-xs font-devanagari text-neutral-300 border-b border-neutral-800 pb-3">
+          <div className="w-full max-w-5xl bg-neutral-900/80 p-4 sm:p-6 rounded-3xl border border-neutral-800 shadow-2xl space-y-4 text-center backdrop-blur-md">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-devanagari text-neutral-300 border-b border-neutral-800 pb-3">
               <span className="flex items-center space-x-1.5 text-amber-400 font-semibold">
                 <Scroll className="w-4 h-4" />
                 <span>मूल भोजपत्र पाण्डुलिपि स्कैन (Original Bhojpatra Scan)</span>
               </span>
+              {isBrihatStotraBook && currentBrihatStotra && (
+                <div className="flex items-center space-x-2 bg-gradient-to-r from-amber-950/70 to-sacred-950/70 border border-amber-500/40 px-3 py-1 rounded-xl shadow-inner">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                  <span className="text-amber-200 font-bold">
+                    स्तोत्र #{currentBrihatStotra.stotraNumber} : {currentBrihatStotra.title}
+                  </span>
+                  <span className="text-amber-400/80 text-[11px]">({currentBrihatStotra.category} • मूल पृष्ठ {currentBrihatStotra.bookPage})</span>
+                </div>
+              )}
               <span className="font-mono text-neutral-400">
                 पत्रम् {currentPage?.page_number} / {pages.length}
               </span>
             </div>
+
+            {/* Main Manuscript Folio Scan Image */}
             {currentPage?.original_image_path ? (
-              <div className="relative overflow-hidden rounded-2xl border-4 border-[#8C2D19] shadow-2xl bg-black">
+              <div className="relative overflow-hidden rounded-2xl border-4 border-[#8C2D19] shadow-2xl bg-black/90 group">
                 <img
                   src={currentPage.original_image_path}
                   alt={`Manuscript page ${currentPage.page_number}`}
-                  className="w-full h-auto max-h-[75vh] object-contain mx-auto"
+                  className="w-full h-auto max-h-[82vh] object-contain mx-auto transition-transform duration-300"
                 />
               </div>
             ) : (
               <p className="text-neutral-500 py-12">स्कैन छवि उपलब्ध नहीं है</p>
+            )}
+
+            {/* Quick Navigation for Brihat Stotra in Scan Mode */}
+            {isBrihatStotraBook && (
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-800/80">
+                {(() => {
+                  const currentIndex = BRIHAT_STOTRAS.findIndex(s => s.pdfPage === currentBrihatStotra?.pdfPage);
+                  const prevStotra = currentIndex > 0 ? BRIHAT_STOTRAS[currentIndex - 1] : null;
+                  const nextStotra = currentIndex >= 0 && currentIndex < BRIHAT_STOTRAS.length - 1 ? BRIHAT_STOTRAS[currentIndex + 1] : null;
+                  return (
+                    <>
+                      {prevStotra ? (
+                        <button
+                          onClick={() => setCurrentPageIndex(prevStotra.pdfPage - 1)}
+                          className="px-3 py-1.5 rounded-xl bg-neutral-800/90 hover:bg-neutral-700 text-amber-300 border border-neutral-700 text-xs font-devanagari flex items-center space-x-1.5 transition-all shadow-sm"
+                          title={`पिछले स्तोत्र (${prevStotra.title}) पर जाएँ`}
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                          <span>#{prevStotra.stotraNumber} {prevStotra.title}</span>
+                        </button>
+                      ) : <div />}
+
+                      <button
+                        onClick={() => setIsTocOpen(true)}
+                        className="px-4 py-1.5 rounded-xl bg-sacred-600/30 hover:bg-sacred-600/50 text-amber-200 border border-amber-500/50 text-xs font-devanagari font-bold flex items-center space-x-2 transition-all shadow-md"
+                      >
+                        <BookOpen className="w-4 h-4 text-amber-400" />
+                        <span>२२४ स्तोत्र अनुक्रमणिका खोलें</span>
+                      </button>
+
+                      {nextStotra ? (
+                        <button
+                          onClick={() => setCurrentPageIndex(nextStotra.pdfPage - 1)}
+                          className="px-3 py-1.5 rounded-xl bg-neutral-800/90 hover:bg-neutral-700 text-amber-300 border border-neutral-700 text-xs font-devanagari flex items-center space-x-1.5 transition-all shadow-sm"
+                          title={`अगले स्तोत्र (${nextStotra.title}) पर जाएँ`}
+                        >
+                          <span>#{nextStotra.stotraNumber} {nextStotra.title}</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      ) : <div />}
+                    </>
+                  );
+                })()}
+              </div>
             )}
           </div>
         ) : viewMode === 'split' ? (
@@ -1433,7 +1665,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
                 )}
               </div>
 
-              {/* Formatted Text */}
+              {/* Formatted Scripture Text */}
               {currentPage && renderFormattedScripture(currentPage.verified_text || currentPage.ocr_text || '')}
             </div>
           </div>
@@ -1482,6 +1714,23 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
               </div>
             )}
 
+            {/* Brihat Stotra Header Badge in Text Mode */}
+            {isBrihatStotraBook && currentBrihatStotra && (
+              <div className="bg-gradient-to-r from-amber-950/30 via-[#8C2D19]/15 to-amber-950/30 border border-[#8C2D19]/30 rounded-2xl p-3 sm:p-4 text-center shadow-sm mb-4">
+                <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-devanagari text-[#8C2D19] dark:text-amber-300 font-bold mb-1">
+                  <Sparkles className="w-3.5 h-3.5 text-sacred-600 dark:text-amber-400 animate-pulse" />
+                  <span>स्तोत्र #{currentBrihatStotra.stotraNumber}</span>
+                  <span>•</span>
+                  <span>{BRIHAT_CATEGORIES.find(c => c.id === currentBrihatStotra.category)?.name || 'स्तोत्र संग्रह'}</span>
+                  <span>•</span>
+                  <span>मूल ग्रन्थ पृष्ठ {currentBrihatStotra.bookPage}</span>
+                </div>
+                <h3 className="text-lg sm:text-2xl font-serifDevanagari font-bold text-[#8C2D19] dark:text-sacred-300">
+                  ॥ {currentBrihatStotra.title} ॥
+                </h3>
+              </div>
+            )}
+
             {/* Core Scripture Body */}
             {currentPage ? (
               (currentPage.verified_text || currentPage.ocr_text) ? (
@@ -1513,21 +1762,64 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
                       <span>मूल पोथी स्कैन देखें</span>
                     </button>
                   </div>
-                  {currentPage.original_image_path && (
-                    <div className="mt-4 pt-4 border-t border-[#8C2D19]/20 max-w-sm mx-auto">
-                      <img
-                        src={currentPage.original_image_path}
-                        alt={`Scan ${currentPage.page_number}`}
-                        className="w-full h-auto rounded-xl border border-[#8C2D19]/30 shadow-lg object-contain max-h-56 mx-auto cursor-pointer"
-                        onClick={() => setViewMode('scan')}
-                        title="बड़ा स्कैन देखने हेतु क्लिक करें"
-                      />
-                    </div>
-                  )}
                 </div>
               )
             ) : (
               <p className="text-center opacity-60">कोई पृष्ठ नहीं मिला।</p>
+            )}
+
+            {/* Stotra Quick Navigator (Previous / Next Stotra) */}
+            {isBrihatStotraBook && (
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-4 mt-6 border-t border-[#8C2D19]/20">
+                {(() => {
+                  const currentIndex = BRIHAT_STOTRAS.findIndex(s => s.pdfPage === currentBrihatStotra?.pdfPage);
+                  const prevStotra = currentIndex > 0 ? BRIHAT_STOTRAS[currentIndex - 1] : null;
+                  const nextStotra = currentIndex >= 0 && currentIndex < BRIHAT_STOTRAS.length - 1 ? BRIHAT_STOTRAS[currentIndex + 1] : null;
+                  return (
+                    <>
+                      {prevStotra ? (
+                        <button
+                          onClick={() => setCurrentPageIndex(prevStotra.pdfPage - 1)}
+                          className="px-3 py-1.5 rounded-xl bg-[#8C2D19]/10 hover:bg-[#8C2D19]/20 text-[#8C2D19] dark:text-sacred-300 border border-[#8C2D19]/30 text-xs font-devanagari flex items-center space-x-1 transition-all"
+                          title={`पिछला स्तोत्र (${prevStotra.title})`}
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                          <span>#{prevStotra.stotraNumber} {prevStotra.title}</span>
+                        </button>
+                      ) : <div />}
+
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setViewMode('split')}
+                          className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 text-xs font-devanagari flex items-center space-x-1 transition-all"
+                          title="उभय दर्शन (स्कैन + पाठ)"
+                        >
+                          <Split className="w-3.5 h-3.5 text-sacred-400" />
+                          <span>उभय दर्शन</span>
+                        </button>
+                        <button
+                          onClick={() => setIsTocOpen(true)}
+                          className="px-3.5 py-1.5 rounded-xl bg-sacred-600/20 hover:bg-sacred-600/30 text-[#8C2D19] dark:text-amber-200 border border-[#8C2D19]/40 text-xs font-devanagari font-bold flex items-center space-x-1.5 transition-all"
+                        >
+                          <BookOpen className="w-3.5 h-3.5 text-sacred-600 dark:text-amber-400" />
+                          <span>२२४ स्तोत्र सूची</span>
+                        </button>
+                      </div>
+
+                      {nextStotra ? (
+                        <button
+                          onClick={() => setCurrentPageIndex(nextStotra.pdfPage - 1)}
+                          className="px-3 py-1.5 rounded-xl bg-[#8C2D19]/10 hover:bg-[#8C2D19]/20 text-[#8C2D19] dark:text-sacred-300 border border-[#8C2D19]/30 text-xs font-devanagari flex items-center space-x-1 transition-all"
+                          title={`अगला स्तोत्र (${nextStotra.title})`}
+                        >
+                          <span>#{nextStotra.stotraNumber} {nextStotra.title}</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      ) : <div />}
+                    </>
+                  );
+                })()}
+              </div>
             )}
 
             {/* Pothi Manuscript Folio Number */}
@@ -1635,7 +1927,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
         </button>
       </footer>
 
-      {/* Table of Contents Drawers: Gita vs Vishnu Sahasranama */}
+      {/* Table of Contents Drawers: Gita vs Vishnu Sahasranama vs Ganesh Pujan vs Universal */}
       {isGitaBook ? (
         <GitaTableOfContents
           isOpen={isTocOpen}
@@ -1657,10 +1949,39 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             setActiveChapterScope(null);
           }}
         />
-      ) : (
+      ) : isVsnBook ? (
         <VsnTableOfContents
           isOpen={isTocOpen}
           onClose={() => setIsTocOpen(false)}
+          currentPageNumber={currentPageIndex + 1}
+          onJumpToPage={(pageNum) => {
+            setCurrentPageIndex(pageNum - 1);
+          }}
+        />
+      ) : isGaneshPujanBook ? (
+        <GaneshPujanTableOfContents
+          isOpen={isTocOpen}
+          onClose={() => setIsTocOpen(false)}
+          currentPageNumber={currentPageIndex + 1}
+          onJumpToPage={(pageNum) => {
+            setCurrentPageIndex(pageNum - 1);
+          }}
+        />
+      ) : isBrihatStotraBook ? (
+        <BrihatStotraTableOfContents
+          isOpen={isTocOpen}
+          onClose={() => setIsTocOpen(false)}
+          currentPageNumber={currentPageIndex + 1}
+          onJumpToPage={(pageNum) => {
+            setCurrentPageIndex(pageNum - 1);
+          }}
+        />
+      ) : (
+        <UniversalTableOfContents
+          isOpen={isTocOpen}
+          onClose={() => setIsTocOpen(false)}
+          book={book}
+          pages={pages}
           currentPageNumber={currentPageIndex + 1}
           onJumpToPage={(pageNum) => {
             setCurrentPageIndex(pageNum - 1);

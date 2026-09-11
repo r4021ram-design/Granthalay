@@ -1,8 +1,8 @@
 {
   "totalBooks": 20,
-  "totalPages": 484,
-  "verifiedPages": 396,
+  "totalPages": 774,
+  "verifiedPages": 686,
   "totalIssues": 421,
   "criticalIssues": 0,
-  "accuracyPercentage": 82
+  "accuracyPercentage": 89
 }

@@ -5,9 +5,7 @@ import {
   AlertTriangle,
   FileText,
   Download,
-  Trash2,
   Eye,
-  Edit3,
   Calendar,
   Layers,
   Sparkles,
@@ -19,6 +17,7 @@ import {
   Shield,
   Scroll,
 } from 'lucide-react';
+import { HinduGranthalayLogo } from './HinduGranthalayLogo.js';
 import type { Book, BookStats } from '../../shared/types.js';
 
 interface LibraryViewProps {
@@ -256,57 +255,46 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     });
   }, [books, searchTerm, selectedCategory, selectedDeity]);
 
+  const sanitizeDescription = (desc: string): string => {
+    if (!desc) return '';
+    return desc
+      .replace(/\(SanskritDocuments\.org[^)]*\)/gi, '')
+      .replace(/SanskritDocuments\.org/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Hero Header & Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-sacred-950 via-neutral-900 to-maroon-950 border border-sacred-800/60 p-6 sm:p-8 shadow-2xl">
-        <div className="absolute -right-10 -bottom-10 opacity-10 text-[180px] select-none pointer-events-none font-serifDevanagari text-sacred-400">
+      {/* Pristine Hindu Granthalay Welcome Hero */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1C0A04] via-[#120602] to-[#0D0401] border border-amber-600/30 p-8 sm:p-10 shadow-2xl text-center flex flex-col items-center justify-center space-y-5">
+        <div className="absolute -right-16 -bottom-16 opacity-5 text-[220px] select-none pointer-events-none font-serifDevanagari text-amber-500">
           ॐ
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-sacred-950 border border-sacred-700/80 text-sacred-300 text-xs font-semibold tracking-wide font-devanagari">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>सत्यापित सनातन शास्त्र भण्डार • SanskritDocuments.org Standard</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-neutral-100 font-serifDevanagari tracking-wide">
-              सनातन प्रामाणिक पूजा ग्रन्थालय
-            </h1>
-            <p className="text-sm sm:text-base text-neutral-300 font-devanagari leading-relaxed">
-              सत्यापित वैदिक सूक्त, उपनिषद्, स्तोत्र, पूजापद्धति एवं नित्य कर्मकाण्ड मन्त्र संग्रह — मूल पाण्डुलिपि एवं अक्षर-सत्यता के साथ।
-            </p>
-          </div>
+        {/* Consecrated Hindu Granthalay Logo */}
+        <HinduGranthalayLogo size={76} />
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <button
-              onClick={onOpenUpload}
-              className="flex items-center justify-center space-x-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-sacred-600 via-sacred-500 to-amber-600 hover:from-sacred-500 hover:to-amber-500 text-white font-bold shadow-xl shadow-sacred-950/80 border border-sacred-300/40 transition-all hover:scale-[1.03] active:scale-[0.98] font-devanagari text-sm"
-            >
-              <Upload className="w-4 h-4" />
-              <span>नया ग्रन्थ / PDF जोड़ें</span>
-            </button>
-          </div>
+        <div className="space-y-2 max-w-3xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-amber-100 font-serifDevanagari tracking-wide drop-shadow-md">
+            हिन्दू ग्रन्थालय
+          </h1>
+          <p className="text-sm sm:text-base text-amber-200/80 font-devanagari leading-relaxed max-w-2xl mx-auto">
+            सम्पूर्ण सनातन धर्मशास्त्र, वैदिक संहिता, उपनिषद्, स्तोत्र एवं प्रामाणिक पूजापद्धति संग्रह
+          </p>
         </div>
 
-        {/* Quick Grantha Count Strip */}
-        <div className="mt-6 pt-6 border-t border-neutral-800/80 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-devanagari text-neutral-300">
-          <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span><strong>{filteredBooks.length}</strong> पावन ग्रन्थ उपलब्ध</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-sacred-400" />
-            <span><strong>{stats?.total_pages || 0}</strong> मन्त्र पृष्ठ</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
-            <span><strong>{stats?.verification_percentage || 0}%</strong> अक्षर शुद्धता प्रमाणित</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-sky-400" />
-            <span>वैदिक सस्वर पाठ समर्थित</span>
-          </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <span className="px-3.5 py-1.5 rounded-full bg-amber-950/60 border border-amber-600/30 text-amber-300 text-xs font-devanagari font-medium shadow-inner">
+            📖 <strong>{filteredBooks.length}</strong> पावन ग्रन्थ उपलब्ध
+          </span>
+          <button
+            onClick={onOpenUpload}
+            className="flex items-center space-x-2 px-5 py-2 rounded-xl bg-gradient-to-r from-sacred-600 to-amber-600 hover:from-sacred-500 hover:to-amber-500 text-white font-bold shadow-lg shadow-sacred-950/60 border border-amber-400/30 transition-all hover:scale-105 active:scale-95 font-devanagari text-xs cursor-pointer"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>नया ग्रन्थ / PDF जोड़ें</span>
+          </button>
         </div>
       </div>
 
@@ -466,125 +454,81 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 
                   {/* Grantha Description */}
                   {book.description && (
-                    <p className="text-xs text-neutral-400/90 mt-2.5 font-devanagari line-clamp-2 leading-relaxed bg-neutral-950/40 p-2 rounded-xl border border-neutral-800/60">
-                      {book.description}
+                    <p className="text-xs text-neutral-400/90 mt-2.5 font-devanagari line-clamp-3 leading-relaxed bg-neutral-950/40 p-2.5 rounded-xl border border-neutral-800/60">
+                      {sanitizeDescription(book.description)}
                     </p>
                   )}
 
-                  {/* Verification Status & Progress Strip */}
-                  <div className="mt-4 p-3 rounded-2xl bg-neutral-950/70 border border-neutral-800/80 space-y-2">
-                    <div className="flex items-center justify-between text-xs text-neutral-400 font-devanagari">
-                      <span className="flex items-center space-x-1 text-emerald-400 font-medium">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>पूर्ण प्रमाणित (Verified)</span>
-                      </span>
-                      <span className="font-mono text-neutral-200">
-                        {book.page_count} पृष्ठ ({progressPct}%)
-                      </span>
-                    </div>
-
-                    <div className="w-full bg-neutral-800 rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className="bg-gradient-to-r from-sacred-500 to-emerald-400 h-1.5 rounded-full"
-                        style={{ width: `${progressPct}%` }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] text-neutral-500 font-devanagari pt-1">
-                      <span className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>{new Date(book.created_at).toLocaleDateString('hi-IN')}</span>
-                      </span>
-                      <span className="text-sacred-400/80 font-medium">
-                        ✓ विनियोग • न्यास • ध्यानम्
-                      </span>
-                    </div>
+                  {/* Clean Folio & Date Meta */}
+                  <div className="mt-3 flex items-center justify-between text-[11px] text-neutral-400 font-devanagari px-1">
+                    <span className="flex items-center space-x-1.5 font-mono text-amber-300/80">
+                      <BookOpen className="w-3 h-3 text-amber-400" />
+                      <span>{book.page_count} पत्र (Folios)</span>
+                    </span>
+                    <span className="text-sacred-400/80 font-medium">
+                      ✓ प्रामाणिक पाठ
+                    </span>
                   </div>
                 </div>
 
                 {/* Card Action Buttons */}
                 <div className="mt-5 pt-4 border-t border-neutral-800/80 flex items-center justify-between gap-2">
-                  <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => onSelectBookForReading(book.id)}
+                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sacred-600 to-amber-600 hover:from-sacred-500 hover:to-amber-500 text-white text-xs font-bold shadow-md shadow-sacred-950 transition-all font-devanagari active:scale-95 cursor-pointer"
+                    title="पावन ग्रन्थ पठन प्रारम्भ करें"
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>पठन मोड (Read)</span>
+                  </button>
+
+                  {/* Export Dropdown */}
+                  <div className="relative">
                     <button
-                      onClick={() => onSelectBookForReading(book.id)}
-                      className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-sacred-600 hover:bg-sacred-500 text-white text-xs font-bold shadow-md shadow-sacred-950 transition-all font-devanagari active:scale-95"
-                      title="स्वच्छ सुपाठ्य ग्रन्थ पठन मोड"
+                      onClick={() => setExportDropdown(exportDropdown === book.id ? null : book.id)}
+                      className="p-2.5 rounded-xl text-neutral-300 hover:text-white hover:bg-neutral-800 bg-neutral-900 border border-neutral-700/80 transition-all cursor-pointer"
+                      title="ग्रन्थ निर्यात (Export)"
                     >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>पठन मोड (Read)</span>
+                      <Download className="w-4 h-4" />
                     </button>
 
-                    <button
-                      onClick={() => onSelectBookForVerification(book.id)}
-                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium border border-neutral-700 transition-all font-devanagari"
-                      title="मूल स्कैन एवं पाठ सत्यापन कार्यपीठ"
-                    >
-                      <Shield className="w-3.5 h-3.5 text-sacred-400" />
-                      <span>सत्यापन</span>
-                    </button>
-                  </div>
-
-                  {/* Export & Delete Dropdown */}
-                  <div className="flex items-center space-x-1 relative">
-                    <div className="relative">
-                      <button
-                        onClick={() => setExportDropdown(exportDropdown === book.id ? null : book.id)}
-                        className="p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 border border-neutral-800 transition-colors"
-                        title="ग्रन्थ निर्यात (Export)"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
-
-                      {exportDropdown === book.id && (
-                        <div className="absolute right-0 bottom-full mb-2 w-52 bg-neutral-900 border border-neutral-700 rounded-2xl shadow-2xl py-2 z-30 font-devanagari animate-in fade-in zoom-in-95">
-                          <div className="px-3 py-1 text-[11px] font-semibold text-sacred-400 border-b border-neutral-800">
-                            निर्यात प्रारूप चुनें:
-                          </div>
-                          <button
-                            onClick={() => {
-                              onExport(book.id, 'txt');
-                              setExportDropdown(null);
-                            }}
-                            className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 flex items-center space-x-2"
-                          >
-                            <FileText className="w-3.5 h-3.5 text-amber-400" />
-                            <span>Plain Text (Unicode UTF-8)</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              onExport(book.id, 'docx');
-                              setExportDropdown(null);
-                            }}
-                            className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 flex items-center space-x-2"
-                          >
-                            <FileText className="w-3.5 h-3.5 text-blue-400" />
-                            <span>Word Document (.DOCX)</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              onExport(book.id, 'pdf');
-                              setExportDropdown(null);
-                            }}
-                            className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 flex items-center space-x-2"
-                          >
-                            <Download className="w-3.5 h-3.5 text-red-400" />
-                            <span>Preservation PDF (सस्वर)</span>
-                          </button>
+                    {exportDropdown === book.id && (
+                      <div className="absolute right-0 bottom-full mb-2 w-52 bg-neutral-900 border border-neutral-700 rounded-2xl shadow-2xl py-2 z-30 font-devanagari animate-in fade-in zoom-in-95">
+                        <div className="px-3 py-1 text-[11px] font-semibold text-sacred-400 border-b border-neutral-800">
+                          निर्यात प्रारूप चुनें:
                         </div>
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        if (confirm(`क्या आप सचमुच "${book.title}" को हटाना चाहते हैं?`)) {
-                          onDeleteBook(book.id);
-                        }
-                      }}
-                      className="p-2 rounded-xl text-neutral-500 hover:text-red-400 hover:bg-neutral-800 border border-neutral-800 transition-colors"
-                      title="ग्रन्थ हटाएं"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                        <button
+                          onClick={() => {
+                            onExport(book.id, 'txt');
+                            setExportDropdown(null);
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 flex items-center space-x-2 cursor-pointer"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Plain Text (Unicode UTF-8)</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            onExport(book.id, 'docx');
+                            setExportDropdown(null);
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 flex items-center space-x-2 cursor-pointer"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-blue-400" />
+                          <span>Word Document (.DOCX)</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            onExport(book.id, 'pdf');
+                            setExportDropdown(null);
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-neutral-800 flex items-center space-x-2 cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5 text-red-400" />
+                          <span>Preservation PDF (सस्वर)</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

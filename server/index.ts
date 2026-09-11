@@ -24,6 +24,26 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
+// Fallback on-demand renderer for storage page images if not yet pre-rendered on disk
+app.get('/storage/pages/:bookId/page-:pageNumber.png', async (req, res, next) => {
+  try {
+    const { bookId, pageNumber } = req.params;
+    const pageNum = parseInt(pageNumber, 10);
+    const diskPath = path.join(PAGES_DIR, bookId, `page-${pageNum}.png`);
+    if (fs.existsSync(diskPath)) {
+      return res.sendFile(path.resolve(diskPath));
+    }
+    const book = Repository.getBookById(bookId);
+    if (!book || !fs.existsSync(book.original_file_path)) {
+      return next();
+    }
+    const outputPath = await DocumentProcessor.renderPdfPageToDisk(bookId, book.original_file_path, pageNum);
+    return res.sendFile(path.resolve(outputPath));
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Serve storage directory statically for image access
 app.use('/storage', express.static(STORAGE_ROOT));
 
