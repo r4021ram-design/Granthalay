@@ -1103,59 +1103,38 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             );
           }
 
-          // In standard Reading Mode (ग्रन्थ पाठ): Render pure, authentic book typography
-          if (karmakanda.type === 'VINIYOGA' && karmakanda.viniyogaData) {
-            const v = karmakanda.viniyogaData;
+          // In standard Reading Mode (ग्रन्थ पाठ): Render pure, authentic scripture typography without intrusive UI boxes or auto-injected instructions
+          if (unit.type === 'SANKALPA' || karmakanda.type === 'SANKALPA') {
             return (
-              <div key={idx} className="my-3 text-center select-text">
-                <p
-                  className={`font-tiro font-semibold text-center leading-relaxed select-text ${
-                    isDarkSlate ? 'text-white' : 'text-[#110A05]'
-                  }`}
-                  style={{ fontSize: `${fontSize}px` }}
-                >
-                  {formatLineText(v.fullText)}
-                </p>
-                <div className={`mt-1 text-xs font-devanagari flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 ${
-                  isDarkSlate ? 'text-neutral-200' : 'text-[#661203]'
-                }`}>
-                  <span>(ऋषि: <strong>{v.rishi?.name || 'गणक'}</strong> [{v.rishi?.touchPoint || 'शिरसि'}]</span>
-                  <span>• छन्द: <strong>{v.chhandas?.name || 'निचृद्गायत्री'}</strong> [{v.chhandas?.touchPoint || 'मुखे'}]</span>
-                  <span>• देवता: <strong>{v.devata?.name || 'श्रीमहागणपति'}</strong> [{v.devata?.touchPoint || 'हृदये'}]</span>
-                  {v.bija && <span>• बीज: <strong>{v.bija.name}</strong></span>}
-                  {v.shakti && <span>• शक्ति: <strong>{v.shakti.name}</strong></span>}
-                  {v.kilaka && <span>• कीलक: <strong>{v.kilaka.name}</strong></span>}
-                  <span>• विनियोग: <strong>जल-त्याग</strong>)</span>
-                </div>
-              </div>
+              <p
+                key={idx}
+                className={`text-center tracking-wide leading-relaxed select-text my-1 sm:my-1.5 font-medium ${
+                  isDarkSlate ? 'text-white font-bold' : 'text-[#1C120C]'
+                } ${isPadachhedaMode ? 'padachheda-mode-container' : ''}`}
+                style={{
+                  fontSize: `${fontSize}px`,
+                  ...getFontFamilyStyle('PAURANIK_SHLOKA'),
+                }}
+              >
+                {formatLineText(trimmed.replace(/^[•▪\*]\s*/, ''))}
+              </p>
             );
           }
 
-          if ((karmakanda.type === 'SANKALPA' && karmakanda.sankalpaData) || unit.type === 'SANKALPA') {
-            const s = karmakanda.sankalpaData;
-            const fullSankalpa = s ? s.fullText : trimmed;
+          if (karmakanda.type === 'VINIYOGA') {
             return (
-              <div key={idx} className="my-3.5 mx-auto max-w-2xl p-4 rounded-2xl bg-black/[0.04] dark:bg-neutral-900/80 border border-neutral-700/60 shadow-xs select-text text-center">
-                <div className="flex items-center justify-center space-x-1.5 mb-2 text-xs font-bold font-devanagari tracking-widest text-[#661203] dark:text-white">
-                  <span>🧭</span>
-                  <span>महा-सङ्कल्प विधान</span>
-                </div>
-                <p
-                  className={`font-tiro text-center leading-relaxed select-text ${
-                    isDarkSlate ? 'text-white' : 'text-[#110A05]'
-                  }`}
-                  style={{ fontSize: `${fontSize}px` }}
-                >
-                  {formatLineText(fullSankalpa)}
-                </p>
-                {s?.actionInstruction && (
-                  <p className={`mt-2 text-xs sm:text-sm font-devanagari italic ${
-                    isDarkSlate ? 'text-neutral-200' : 'text-[#661203]'
-                  }`}>
-                    (💧 {s.actionInstruction})
-                  </p>
-                )}
-              </div>
+              <p
+                key={idx}
+                className={`text-center tracking-normal leading-[1.9] select-text my-1 sm:my-1.5 font-semibold ${
+                  isDarkSlate ? 'text-white font-bold' : 'text-[#8C2D19]'
+                } ${isPadachhedaMode ? 'padachheda-mode-container' : ''}`}
+                style={{
+                  fontSize: `${fontSize}px`,
+                  ...getFontFamilyStyle('PAURANIK_SHLOKA'),
+                }}
+              >
+                {formatLineText(trimmed.replace(/^[•▪\*]\s*/, ''))}
+              </p>
             );
           }
 
