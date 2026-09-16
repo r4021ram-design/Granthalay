@@ -247,6 +247,16 @@ export function classifyScriptureLine(rawLine: string): ScriptureBlockType {
     return 'SECTION_HEADING';
   }
 
+  // 1b. Numbered Stotra Titles: e.g. "१. गणेशन्यासः" or "४. गणेशबाह्यपूजा" or "५. गणेशमहिम्नः स्तोत्रम्"
+  if (
+    /^[०-९0-9]+\.\s*[^।॥\n]+$/u.test(line) &&
+    (/(?:स्तोत्रम्|कवचम्|न्यासः|पूजा|अष्टकम्|शतकम्|पद्धति|माहात्म्य|सहस्रनाम|हृदयम्|वर्णनम्|महिम्न)/u.test(line) ||
+      !line.includes('नमः')) &&
+    line.length < 80
+  ) {
+    return 'SECTION_HEADING';
+  }
+
   // 2. Sacred Invocations & Chapter Titles: ॥ श्री... ॥
   if (
     line.startsWith('॥') &&
@@ -294,8 +304,12 @@ export function classifyScriptureLine(rawLine: string): ScriptureBlockType {
     return 'VIDHI_INSTRUCTION';
   }
 
-  // 8. Devata Namavali & List Items:
-  if (/^[०-९0-9]+\.\s*ॐ?.+[।॥]?$/u.test(line) && line.length < 80) {
+  // 8. Devata Namavali & List Items (Must contain ॐ, नमः, or स्वाहा):
+  if (
+    /^[०-९0-9]+\.\s*ॐ?.+[।॥]?$/u.test(line) &&
+    (line.includes('नमः') || line.includes('ॐ') || line.includes('स्वाहा')) &&
+    line.length < 80
+  ) {
     return 'NAMAVALI';
   }
 
@@ -477,7 +491,12 @@ export function groupScriptureFolio(rawText: string): GroupedScriptureUnit[] {
 
   const flushNamavali = () => {
     if (pendingNamavali.length > 0) {
-      units.push({ kind: 'namavali_grid', items: [...pendingNamavali] });
+      if (pendingNamavali.length >= 2) {
+        units.push({ kind: 'namavali_grid', items: [...pendingNamavali] });
+      } else {
+        // A single isolated line is NOT a namavali list/grid; keep as clean single line
+        units.push({ kind: 'single', line: pendingNamavali[0], type: 'SECTION_HEADING' });
+      }
       pendingNamavali = [];
     }
   };

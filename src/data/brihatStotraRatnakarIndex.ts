@@ -28,8 +28,8 @@ export const BRIHAT_CATEGORIES: BrihatStotraCategory[] = [
   { id: 'vishnu', name: 'विष्णुस्तोत्राणि', icon: '🪷', count: 28 },
   { id: 'shiva', name: 'शिवस्तोत्राणि', icon: '🔱', count: 30 },
   { id: 'surya', name: 'सूर्यस्तोत्राणि', icon: '☀️', count: 8 },
-  { id: 'devi', name: 'देवीस्तोत्राणि', icon: '🌺', count: 27 },
-  { id: 'avatara', name: 'अवतार व गुरु स्तोत्राणि', icon: '✨', count: 15 },
+  { id: 'devi', name: 'देवीस्तोत्राणि', icon: '🌺', count: 26 },
+  { id: 'avatara', name: 'अवतार व गुरु स्तोत्राणि', icon: '✨', count: 16 },
   { id: 'rama', name: 'रामस्तोत्राणि', icon: '🏹', count: 13 },
   { id: 'maruti', name: 'मारुतिस्तोत्राणि', icon: '🚩', count: 5 },
   { id: 'krishna', name: 'कृष्णस्तोत्राणि', icon: '🦚', count: 26 },
@@ -64,7 +64,7 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
     "title": "गणेशमानसपूजा",
     "category": "ganesha",
     "bookPage": 9,
-    "pdfPage": 3
+    "pdfPage": 4
   },
   {
     "id": 4,
@@ -112,7 +112,7 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
     "title": "एकदन्तस्तोत्रम्",
     "category": "ganesha",
     "bookPage": 25,
-    "pdfPage": 19
+    "pdfPage": 18
   },
   {
     "id": 10,
@@ -176,7 +176,7 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
     "title": "विष्णुस्तोत्रम्",
     "category": "vishnu",
     "bookPage": 35,
-    "pdfPage": 29
+    "pdfPage": 30
   },
   {
     "id": 18,
@@ -256,7 +256,7 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
     "title": "विष्णुपादादिकेशान्तवर्णनस्तोत्रम्",
     "category": "vishnu",
     "bookPage": 46,
-    "pdfPage": 40
+    "pdfPage": 41
   },
   {
     "id": 28,
@@ -352,7 +352,7 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
     "title": "शिवकवचम्",
     "category": "shiva",
     "bookPage": 72,
-    "pdfPage": 66
+    "pdfPage": 65
   },
   {
     "id": 40,
@@ -861,8 +861,8 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
   {
     "id": 103,
     "stotraNumber": 103,
-    "title": "कालीस्तोत्रम्",
-    "category": "devi",
+    "title": "दत्तात्रेयानन्दलहरी",
+    "category": "avatara",
     "bookPage": 151,
     "pdfPage": 145
   },

@@ -35,19 +35,19 @@ export const LivingSankalpaCard: React.FC<LivingSankalpaCardProps> = ({ sankalpa
       {/* Top Banner */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#8C2D19]/25 pb-4">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#8C2D19]/15 text-lg text-[#8C2D19] dark:text-amber-300 ring-1 ring-[#8C2D19]/30">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#8C2D19]/15 text-lg text-[#8C2D19] dark:text-sacred-300 ring-1 ring-[#8C2D19]/30">
             📜
           </span>
           <div>
-            <h3 className="font-serifDevanagari text-lg font-bold tracking-wide text-[#7A2814] dark:text-amber-200">
+            <h3 className="font-serifDevanagari text-lg font-bold tracking-wide text-[#7A2814] dark:text-white">
               ॥ सङ्कल्प विधानम् (Living Cosmic Sankalpa) ॥
             </h3>
-            <p className="text-xs text-[#8C2D19]/80 dark:text-amber-400/70 font-devanagari">
+            <p className="text-xs text-[#8C2D19]/80 dark:text-neutral-300 font-devanagari">
               काल-देश-पञ्चाङ्ग एवं यजमान प्रतिज्ञा सूत्र
             </p>
           </div>
         </div>
-        <span className="rounded-full border border-amber-600/40 bg-amber-600/10 px-3 py-1 text-xs font-semibold text-[#8C2D19] dark:text-amber-300">
+        <span className="rounded-full border border-sacred-700 bg-sacred-950/60 px-3 py-1 text-xs font-semibold text-[#8C2D19] dark:text-white">
           अपरिवर्तनीय शास्त्रीय क्रम
         </span>
       </div>
@@ -58,9 +58,9 @@ export const LivingSankalpaCard: React.FC<LivingSankalpaCardProps> = ({ sankalpa
           <div
             key={i}
             onClick={() => setEditingKey(v.label)}
-            className="group cursor-pointer rounded-xl border border-amber-600/25 bg-white/70 dark:bg-black/30 p-2.5 transition-all duration-200 hover:border-amber-600 hover:bg-white/95 dark:hover:bg-black/50 shadow-2xs"
+            className="group cursor-pointer rounded-xl border border-neutral-700 bg-white/70 dark:bg-black/40 p-2.5 transition-all duration-200 hover:border-sacred-500 hover:bg-white/95 dark:hover:bg-black/60 shadow-2xs"
           >
-            <div className="text-[11px] font-bold text-amber-800 dark:text-amber-300">
+            <div className="text-[11px] font-bold text-[#8C2D19] dark:text-white">
               {v.label}
             </div>
             {editingKey === v.label ? (
@@ -70,12 +70,12 @@ export const LivingSankalpaCard: React.FC<LivingSankalpaCardProps> = ({ sankalpa
                 value={customVars[v.label] || ''}
                 onChange={e => handleVariableChange(v.label, e.target.value)}
                 onBlur={() => setEditingKey(null)}
-                className="mt-1 w-full rounded border border-amber-500 bg-white dark:bg-neutral-950 px-1.5 py-0.5 text-xs text-[#7A2814] dark:text-amber-200 outline-none focus:ring-1 focus:ring-amber-400"
+                className="mt-1 w-full rounded border border-sacred-500 bg-white dark:bg-neutral-950 px-1.5 py-0.5 text-xs text-[#7A2814] dark:text-white outline-none focus:ring-1 focus:ring-sacred-400"
               />
             ) : (
-              <div className="mt-0.5 truncate font-serifDevanagari text-sm font-bold text-[#7A2814] dark:text-amber-100 group-hover:text-sacred-700">
+              <div className="mt-0.5 truncate font-serifDevanagari text-sm font-bold text-[#7A2814] dark:text-neutral-100 group-hover:text-sacred-600">
                 {customVars[v.label] || v.value}
-                <span className="ml-1 text-[10px] text-amber-600/80 opacity-0 group-hover:opacity-100">
+                <span className="ml-1 text-[10px] text-sacred-600/80 opacity-0 group-hover:opacity-100">
                   ✏️
                 </span>
               </div>
@@ -85,7 +85,7 @@ export const LivingSankalpaCard: React.FC<LivingSankalpaCardProps> = ({ sankalpa
       </div>
 
       {/* Sankalpa Text Body */}
-      <div className="rounded-2xl border border-[#8C2D19]/20 bg-white/70 dark:bg-neutral-950/70 p-4 font-tiro text-base leading-relaxed text-[#2C1810] dark:text-amber-50/90 shadow-inner">
+      <div className="rounded-2xl border border-[#8C2D19]/20 bg-white/70 dark:bg-neutral-950/70 p-4 font-tiro text-base leading-relaxed text-[#2C1810] dark:text-white shadow-inner">
         <p className="whitespace-pre-line text-justify select-text">
           {sankalpa.fullText}
         </p>
@@ -132,25 +132,25 @@ export const ViniyogaCard: React.FC<ViniyogaCardProps> = ({ viniyoga }) => {
   const [activeComponent, setActiveComponent] = useState<number | null>(null);
 
   return (
-    <div className="relative my-5 rounded-3xl border-2 border-amber-600/35 bg-gradient-to-br from-[#FBF6EB] via-[#F4E8D1] to-[#EBD8B8] dark:from-neutral-900 dark:via-amber-950/30 dark:to-neutral-900 p-5 md:p-6 shadow-md shadow-[#8C2D19]/10 transition-all">
+    <div className="relative my-5 rounded-3xl border-2 border-sacred-700/40 bg-gradient-to-br from-[#FBF6EB] via-[#F4E8D1] to-[#EBD8B8] dark:from-neutral-900 dark:via-neutral-950 dark:to-neutral-900 p-5 md:p-6 shadow-md shadow-[#8C2D19]/10 transition-all">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[#8C2D19]/25 pb-3">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#8C2D19]/15 text-[#8C2D19] dark:text-amber-300 font-bold">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#8C2D19]/15 text-[#8C2D19] dark:text-sacred-400 font-bold">
             🕉️
           </span>
-          <h3 className="font-serifDevanagari text-base sm:text-lg font-bold text-[#7A2814] dark:text-amber-200 tracking-wide">
+          <h3 className="font-serifDevanagari text-base sm:text-lg font-bold text-[#7A2814] dark:text-white tracking-wide">
             ॥ ऋष्यादि विनियोग सूत्रम् ॥
           </h3>
         </div>
-        <span className="rounded-full bg-[#8C2D19]/10 dark:bg-amber-500/10 px-3 py-1 text-xs font-semibold text-[#8C2D19] dark:text-amber-300 border border-[#8C2D19]/25">
+        <span className="rounded-full bg-[#8C2D19]/10 dark:bg-sacred-950/80 px-3 py-1 text-xs font-semibold text-[#8C2D19] dark:text-white border border-[#8C2D19]/25">
           ५ अनिवार्य अङ्ग
         </span>
       </div>
 
       {/* Raw Sanskrit Text with Tiro Sanskrit typography */}
-      <div className="mt-3.5 rounded-xl border border-[#8C2D19]/15 bg-white/60 dark:bg-black/30 p-3.5 text-center">
-        <p className="font-tiro text-sm sm:text-base leading-relaxed text-[#2C1810] dark:text-amber-100 select-text">
+      <div className="mt-3.5 rounded-xl border border-[#8C2D19]/15 bg-white/60 dark:bg-black/40 p-3.5 text-center">
+        <p className="font-tiro text-sm sm:text-base leading-relaxed text-[#2C1810] dark:text-white select-text">
           {viniyoga.fullText}
         </p>
       </div>
@@ -165,25 +165,25 @@ export const ViniyogaCard: React.FC<ViniyogaCardProps> = ({ viniyoga }) => {
               onClick={() => setActiveComponent(isActive ? null : idx)}
               className={`cursor-pointer rounded-xl border p-3 transition-all duration-200 select-none ${
                 isActive
-                  ? 'border-amber-600 bg-amber-100/90 dark:bg-amber-900/50 shadow-md ring-2 ring-amber-500/40'
-                  : 'border-amber-600/25 bg-white/70 dark:bg-neutral-900/60 hover:border-amber-500 hover:bg-white/95 dark:hover:bg-neutral-900'
+                  ? 'border-sacred-600 bg-sacred-100/90 dark:bg-sacred-950/80 shadow-md ring-2 ring-sacred-500/40'
+                  : 'border-neutral-700/60 bg-white/70 dark:bg-neutral-900/80 hover:border-sacred-500 hover:bg-white/95 dark:hover:bg-neutral-900'
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xl">{comp.icon}</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C2D19] dark:text-white">
                   {comp.label}
                 </span>
               </div>
-              <div className="mt-1.5 font-serifDevanagari text-base font-bold text-[#7A2814] dark:text-amber-100">
+              <div className="mt-1.5 font-serifDevanagari text-base font-bold text-[#7A2814] dark:text-white">
                 {comp.name}
               </div>
-              <div className="mt-1 flex items-center gap-1.5 text-xs text-[#8C2D19] dark:text-amber-300 font-medium">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#8C2D19] dark:bg-amber-400" />
+              <div className="mt-1 flex items-center gap-1.5 text-xs text-[#8C2D19] dark:text-neutral-300 font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#8C2D19] dark:bg-sacred-400" />
                 <span>स्थान: {comp.touchPoint}</span>
               </div>
               {isActive && (
-                <div className="mt-2 rounded-lg bg-[#8C2D19]/10 dark:bg-amber-950/80 p-2 text-xs font-devanagari text-[#6E2211] dark:text-amber-200 border border-[#8C2D19]/20">
+                <div className="mt-2 rounded-lg bg-[#8C2D19]/10 dark:bg-neutral-950 p-2 text-xs font-devanagari text-[#6E2211] dark:text-white border border-[#8C2D19]/20">
                   👉 <strong>क्रिया:</strong> {comp.gesture}
                 </div>
               )}
@@ -368,7 +368,7 @@ export const UpacharaCard: React.FC<UpacharaCardProps> = ({
                       {item.name}
                     </span>
                     {item.bija && (
-                      <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-xs font-bold text-amber-300">
+                      <span className="rounded bg-sacred-950 border border-sacred-700 px-1.5 py-0.5 text-xs font-bold text-white">
                         {item.bija}
                       </span>
                     )}
@@ -379,7 +379,7 @@ export const UpacharaCard: React.FC<UpacharaCardProps> = ({
                     )}
                   </div>
                   {item.dravya && (
-                    <div className="text-xs text-amber-300/80 mt-0.5">
+                    <div className="text-xs text-neutral-200 mt-0.5">
                       <strong>द्रव्य:</strong> {item.dravya}
                     </div>
                   )}
@@ -389,7 +389,7 @@ export const UpacharaCard: React.FC<UpacharaCardProps> = ({
                     </div>
                   )}
                   {item.mantrantaPada && (
-                    <div className="mt-1 font-serif text-xs text-amber-400 font-semibold">
+                    <div className="mt-1 font-serif text-xs text-white font-semibold">
                       ॥ {item.mantrantaPada} ॥
                     </div>
                   )}

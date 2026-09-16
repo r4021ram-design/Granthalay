@@ -18,6 +18,7 @@ interface BrihatStotraTableOfContentsProps {
   onClose: () => void;
   currentPageNumber: number; // 1-based PDF page number
   onJumpToPage: (pageNumber: number) => void;
+  onSelectStotra?: (stotra: BrihatStotraItem) => void;
 }
 
 export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsProps> = ({
@@ -25,6 +26,7 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
   onClose,
   currentPageNumber,
   onJumpToPage,
+  onSelectStotra,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,17 +60,17 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="relative z-10 w-full max-w-lg sm:max-w-2xl h-full bg-[#1A1009] text-amber-100 border-l border-amber-900/60 shadow-2xl flex flex-col overflow-hidden animate-slideLeft">
+      <div className="relative z-10 w-full max-w-lg sm:max-w-2xl h-full bg-neutral-950 text-neutral-100 border-l border-neutral-800 shadow-2xl flex flex-col overflow-hidden animate-slideLeft">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-amber-900/40 bg-gradient-to-b from-[#2D1409] to-[#1A1009] flex items-center justify-between shrink-0">
+        <div className="p-4 sm:p-5 border-b border-neutral-800 bg-gradient-to-b from-neutral-900 to-neutral-950 flex items-center justify-between shrink-0">
           <div className="space-y-0.5">
             <div className="flex items-center space-x-2">
-              <span className="text-2xl text-amber-400">📖</span>
-              <h2 className="text-lg sm:text-xl font-bold font-serifDevanagari text-amber-200">
+              <span className="text-2xl text-sacred-400">📖</span>
+              <h2 className="text-lg sm:text-xl font-bold font-serifDevanagari text-white">
                 बृहत्स्तोत्ररत्नाकरः • २२४ स्तोत्र अनुक्रमणिका
               </h2>
             </div>
-            <p className="text-xs text-amber-400/80 font-devanagari">
+            <p className="text-xs text-neutral-300 font-devanagari">
               सचित्र पारम्परिक महास्तोत्र संग्रह • प्रामाणिक पाठ
             </p>
           </div>
@@ -83,18 +85,18 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
 
         {/* Current Active Stotra Notice if Reading */}
         {currentStotra && (
-          <div className="px-4 py-2 bg-sacred-950/80 border-b border-sacred-800/40 flex items-center justify-between shrink-0">
+          <div className="px-4 py-2 bg-sacred-950/90 border-b border-sacred-800/60 flex items-center justify-between shrink-0">
             <div className="flex items-center space-x-2 text-xs text-sacred-200 font-devanagari">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+              <Sparkles className="w-3.5 h-3.5 text-sacred-400 animate-pulse" />
               <span>वर्तमान स्तोत्र:</span>
-              <strong className="text-amber-300">
+              <strong className="text-white font-bold">
                 #{currentStotra.stotraNumber} {currentStotra.title}
               </strong>
-              <span className="text-neutral-400 text-[11px]">(पृष्ठ {currentStotra.bookPage})</span>
+              <span className="text-neutral-300 text-[11px]">(पृष्ठ {currentStotra.bookPage})</span>
             </div>
             <button
               onClick={() => onJumpToPage(currentStotra.pdfPage)}
-              className="text-[11px] text-amber-300 hover:underline flex items-center gap-1 font-devanagari cursor-pointer"
+              className="text-[11px] text-sacred-300 hover:text-white hover:underline flex items-center gap-1 font-devanagari cursor-pointer font-semibold"
             >
               <span>प्रारम्भ पर जाएँ</span>
               <ArrowRight className="w-3 h-3" />
@@ -103,16 +105,16 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
         )}
 
         {/* Search & Category Tabs */}
-        <div className="p-3 bg-black/40 border-b border-amber-900/30 space-y-2.5 shrink-0">
+        <div className="p-3 bg-neutral-900/90 border-b border-neutral-800 space-y-2.5 shrink-0">
           {/* Search Box */}
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-amber-500/70" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
               type="text"
               placeholder="स्तोत्र का नाम, संख्या या पृष्ठ खोजें (उदा. 'रामरक्षा', 'दामोदर', 'शिव')..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 bg-black/50 border border-amber-900/40 rounded-xl text-xs font-devanagari text-amber-100 placeholder:text-amber-500/50 focus:outline-none focus:border-amber-500/80 focus:ring-1 focus:ring-amber-500/50"
+              className="w-full pl-9 pr-8 py-2 bg-black/60 border border-neutral-700 rounded-xl text-xs font-devanagari text-white placeholder:text-neutral-500 focus:outline-none focus:border-sacred-500 focus:ring-1 focus:ring-sacred-500"
             />
             {searchQuery && (
               <button
@@ -125,7 +127,7 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
           </div>
 
           {/* Category Filter Pills (Horizontal Scroll) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-amber-900/40">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-neutral-700">
             {BRIHAT_CATEGORIES.map((cat) => {
               const isSelected = selectedCategory === cat.id;
               return (
@@ -134,8 +136,8 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-devanagari transition-all flex items-center space-x-1.5 cursor-pointer ${
                     isSelected
-                      ? 'bg-gradient-to-r from-sacred-700 to-amber-700 text-white shadow-md border border-amber-500/50 font-semibold'
-                      : 'bg-white/5 hover:bg-white/10 text-amber-200/70 hover:text-amber-100 border border-white/5'
+                      ? 'bg-sacred-700 text-white shadow-md border border-sacred-500/50 font-bold'
+                      : 'bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/5'
                   }`}
                 >
                   <span>{cat.icon}</span>
@@ -151,8 +153,8 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 divide-y divide-white/5">
           {filteredStotras.length === 0 ? (
             <div className="p-8 text-center text-neutral-400 font-devanagari space-y-2">
-              <BookOpen className="w-8 h-8 mx-auto text-amber-500/40" />
-              <p className="text-sm">कोई स्तोत्र प्राप्त नहीं हुआ</p>
+              <BookOpen className="w-8 h-8 mx-auto text-neutral-600" />
+              <p className="text-sm text-neutral-300">कोई स्तोत्र प्राप्त नहीं हुआ</p>
               <p className="text-xs text-neutral-500">कृपया अन्य खोज शब्द या श्रेणी का चयन करें</p>
             </div>
           ) : (
@@ -162,13 +164,17 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
                 <div
                   key={item.id}
                   onClick={() => {
-                    onJumpToPage(item.pdfPage);
+                    if (onSelectStotra) {
+                      onSelectStotra(item);
+                    } else {
+                      onJumpToPage(item.pdfPage);
+                    }
                     onClose();
                   }}
                   className={`pt-2 first:pt-0 group p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
                     isCurrent
-                      ? 'bg-amber-950/40 border-amber-500/60 shadow-lg shadow-amber-950/50'
-                      : 'bg-white/[0.02] hover:bg-white/[0.06] border-white/5 hover:border-amber-900/50'
+                      ? 'bg-sacred-950/80 border-sacred-600/70 shadow-lg'
+                      : 'bg-white/[0.02] hover:bg-white/[0.06] border-white/5 hover:border-neutral-700'
                   }`}
                 >
                   <div className="flex items-center space-x-3 min-w-0">
@@ -176,8 +182,8 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
                     <div
                       className={`w-9 h-9 rounded-lg flex items-center justify-center font-mono text-xs font-bold shrink-0 ${
                         isCurrent
-                          ? 'bg-amber-500 text-black shadow'
-                          : 'bg-amber-900/30 text-amber-300 border border-amber-700/30 group-hover:border-amber-500/50'
+                          ? 'bg-sacred-600 text-white shadow'
+                          : 'bg-neutral-800 text-neutral-200 border border-neutral-700 group-hover:border-neutral-500'
                       }`}
                     >
                       {item.stotraNumber}
@@ -189,25 +195,25 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
                         <h4
                           className={`text-sm font-devanagari font-medium truncate ${
                             isCurrent
-                              ? 'text-amber-200 font-bold'
-                              : 'text-neutral-200 group-hover:text-amber-200'
+                              ? 'text-white font-bold'
+                              : 'text-neutral-200 group-hover:text-white'
                           }`}
                         >
                           {item.title}
                         </h4>
                         {isCurrent && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-sacred-400 shrink-0" />
                         )}
                       </div>
                       <div className="flex items-center space-x-2 text-[11px] text-neutral-400 font-devanagari mt-0.5">
-                        <span className="text-amber-500/80">
+                        <span className="text-sacred-300 font-medium">
                           {BRIHAT_CATEGORIES.find(c => c.id === item.category)?.icon}{' '}
                           {BRIHAT_CATEGORIES.find(c => c.id === item.category)?.name}
                         </span>
                         <span>•</span>
                         <span>पुस्तक पृष्ठ: {item.bookPage}</span>
                         <span>•</span>
-                        <span className="text-neutral-500">फोलियो: {item.pdfPage}</span>
+                        <span className="text-neutral-500">पत्र: {item.pdfPage}</span>
                       </div>
                     </div>
                   </div>
@@ -217,10 +223,14 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onJumpToPage(item.pdfPage);
+                        if (onSelectStotra) {
+                          onSelectStotra(item);
+                        } else {
+                          onJumpToPage(item.pdfPage);
+                        }
                         onClose();
                       }}
-                      className="p-1.5 rounded-lg bg-white/5 group-hover:bg-amber-500/20 text-neutral-400 group-hover:text-amber-200 transition-all"
+                      className="p-1.5 rounded-lg bg-white/5 group-hover:bg-sacred-600/30 text-neutral-400 group-hover:text-white transition-all"
                       title="इस स्तोत्र पर जाएँ"
                     >
                       <ArrowRight className="w-4 h-4" />
@@ -233,8 +243,8 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-black/60 border-t border-amber-900/40 flex items-center justify-between text-xs text-amber-300/70 font-devanagari shrink-0">
-          <span>कुल २२४ स्तोत्र • २८४ पाण्डुलिपि फोलियो</span>
+        <div className="p-3 bg-black/70 border-t border-neutral-800 flex items-center justify-between text-xs text-neutral-300 font-devanagari shrink-0">
+          <span>कुल २२४ स्तोत्र • २८४ पाण्डुलिपि पत्र</span>
           <span className="text-[11px] text-neutral-400">पारम्परिक ऋषि-प्रणीत वाङ्मय</span>
         </div>
       </div>

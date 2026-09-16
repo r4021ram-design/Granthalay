@@ -55,6 +55,16 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 
   const getDeityTheme = (title: string, desc: string): DeityTheme => {
     const combined = `${title} ${desc}`.toLowerCase();
+    if (combined.includes('स्तोत्ररत्नाकर') || combined.includes('स्तोत्र संग्रह') || combined.includes('२२४ स्तोत्र')) {
+      return {
+        name: 'बृहत्स्तोत्ररत्नाकर (सर्वदेव स्तुति)',
+        gradient: 'from-amber-950/95 via-orange-950/70 to-neutral-900',
+        border: 'border-amber-600/70 hover:border-amber-400',
+        badge: 'bg-amber-950 text-amber-300 border-amber-800',
+        glyph: '🕉️',
+        mantra: '॥ स जयति सिन्दूरवदनो देवो यत्पादपङ्कजस्मरणम् ॥',
+      };
+    }
     if (combined.includes('वास्तु') || combined.includes('गृहप्रवेश') || combined.includes('नींव')) {
       return {
         name: 'वास्तु पुरुष / गृह',

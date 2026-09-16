@@ -10,14 +10,60 @@ import { api } from './api.js';
 import type { Book, BookStats } from '../shared/types.js';
 
 export function App() {
-  const [currentView, setCurrentView] = useState<'library' | 'workspace' | 'reader' | 'search'>('library');
-  const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+  // Initialize from URL params or default to Brihat Stotra Ratnakar
+  const getInitialState = () => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const book = params.get('book') || params.get('bookId');
+      const view = params.get('view') as 'library' | 'workspace' | 'reader' | 'search' | null;
+      if (book) {
+        return {
+          bookId: book,
+          view: (view && ['library', 'workspace', 'reader', 'search'].includes(view)) ? view : 'reader'
+        };
+      }
+      if (view === 'library') {
+        return { bookId: null, view: 'library' as const };
+      }
+      if (view && ['workspace', 'reader', 'search'].includes(view)) {
+        return { bookId: 'granth-brihat-stotra-ratnakar', view };
+      }
+    }
+    // Default directly to Brihat Stotra Ratnakar
+    return {
+      bookId: 'granth-brihat-stotra-ratnakar',
+      view: 'reader' as const
+    };
+  };
+
+  const initial = getInitialState();
+  const [currentView, setCurrentView] = useState<'library' | 'workspace' | 'reader' | 'search'>(initial.view);
+  const [selectedBookId, setSelectedBookId] = useState<string | null>(initial.bookId);
   const [books, setBooks] = useState<Book[]>([]);
   const [stats, setStats] = useState<BookStats | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light' | 'sepia'>('dark');
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isAuditOpen, setIsAuditOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
+
+  // Synchronize state with URL search params for deep linking and seamless navigation
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (selectedBookId && currentView !== 'library') {
+        url.searchParams.set('book', selectedBookId);
+        url.searchParams.set('view', currentView);
+      } else {
+        url.searchParams.delete('book');
+        if (currentView === 'library') {
+          url.searchParams.set('view', 'library');
+        } else {
+          url.searchParams.set('view', currentView);
+        }
+      }
+      window.history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
+    }
+  }, [selectedBookId, currentView]);
 
   // Sync theme to root DOM
   useEffect(() => {
