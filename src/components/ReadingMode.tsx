@@ -43,6 +43,7 @@ import { GITA_SECTIONS, GitaChapter } from '../data/bhagavadGitaIndex.js';
 import { VSN_SECTIONS, VsnSection } from '../data/vishnuSahasranamaIndex.js';
 import { BRIHAT_STOTRAS, BRIHAT_CATEGORIES, BrihatStotraItem } from '../data/brihatStotraRatnakarIndex.js';
 import type { Book, Page } from '../../shared/types.js';
+import { ChhandasPaniniStudio } from './ChhandasPaniniStudio.js';
 
 interface ReadingModeProps {
   bookId: string;
@@ -64,12 +65,58 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
   const [fontSize, setFontSize] = useState<number>(22);
   const [lineHeight] = useState<LineHeightOption>('compact');
-  const [fontFamily, setFontFamily] = useState<ScriptureFont>('harmonized');
-  const [readingTheme, setReadingTheme] = useState<ReadingTheme>('bhojpatra');
+  const [fontFamily, setFontFamily] = useState<ScriptureFont>(() => {
+    try {
+      const saved = localStorage.getItem('granth_reader_font');
+      return (saved as ScriptureFont) || 'yatra';
+    } catch {
+      return 'yatra';
+    }
+  });
+  const [readingTheme, setReadingTheme] = useState<ReadingTheme>(() => {
+    try {
+      const saved = localStorage.getItem('granth_reader_theme');
+      return (saved as ReadingTheme) || 'bhojpatra';
+    } catch {
+      return 'bhojpatra';
+    }
+  });
   const [scriptMode, setScriptMode] = useState<'devanagari' | 'iast'>('devanagari');
   const [viewMode] = useState<'text'>('text');
-  const [isPadachhedaMode, setIsPadachhedaMode] = useState<boolean>(false);
+  const [isPadachhedaMode, setIsPadachhedaMode] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('granth_reader_padachheda');
+      return saved !== null ? saved === 'true' : true; // Default to true (काष्ठ पाण्डुलिपि + पदच्छेद)
+    } catch {
+      return true;
+    }
+  });
   const [isKarmakandaMode, setIsKarmakandaMode] = useState<boolean>(false);
+
+  // Sync reader liturgical preferences so any granth opened uses user preferences
+  useEffect(() => {
+    try {
+      localStorage.setItem('granth_reader_font', fontFamily);
+    } catch (e) {
+      console.warn('Failed to persist font', e);
+    }
+  }, [fontFamily]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('granth_reader_theme', readingTheme);
+    } catch (e) {
+      console.warn('Failed to persist theme', e);
+    }
+  }, [readingTheme]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('granth_reader_padachheda', String(isPadachhedaMode));
+    } catch (e) {
+      console.warn('Failed to persist padachheda mode', e);
+    }
+  }, [isPadachhedaMode]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [jumpPageInput, setJumpPageInput] = useState<string>('1');
   const [isTocOpen, setIsTocOpen] = useState<boolean>(false);
@@ -77,6 +124,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   const [activeStotraScope, setActiveStotraScope] = useState<BrihatStotraItem | null>(null);
   const [isHeaderHidden, setIsHeaderHidden] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isStudioModalOpen, setIsStudioModalOpen] = useState<boolean>(false);
 
   const isGitaBook = Boolean(book?.id === 'granth-bhagavad-gita' || (book?.title?.includes('गीता') && !book?.title?.includes('सहस्रनाम')));
   const isVsnBook = Boolean(book?.id?.includes('sahasranama') || book?.title?.includes('सहस्रनाम'));
@@ -1457,6 +1505,16 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             <span>{isKarmakandaMode ? 'क्रिया-कार्ड सक्रिय' : 'क्रिया-कार्ड'}</span>
           </button>
 
+          {/* Shastra-Shodhaka & Chhandas Studio Toggle */}
+          <button
+            onClick={() => setIsStudioModalOpen(true)}
+            className="px-3 py-1 rounded-xl border border-sacred-500/80 bg-sacred-800/90 hover:bg-sacred-700 text-white text-xs font-semibold transition-all flex items-center space-x-1.5 font-devanagari shadow-sm cursor-pointer"
+            title="छन्द व शास्त्र-शोधक: अक्षर-भार, लघु-गुरु गण एवं नामावली मन्त्र"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>छन्द व शास्त्र-शोधक</span>
+          </button>
+
           {/* Fullscreen Toggle */}
           <button
             onClick={toggleFullscreen}
@@ -1803,6 +1861,45 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             setCurrentPageIndex(pageNum - 1);
           }}
         />
+      )}
+
+      {/* Live Chhandas & Scripture Studio Modal */}
+      {isStudioModalOpen && currentPage && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fadeIn">
+          <div className="w-full max-w-4xl h-[88vh] bg-neutral-950 rounded-2xl border border-neutral-800 shadow-2xl flex flex-col overflow-hidden">
+            <div className="px-4 py-3 bg-neutral-900 border-b border-neutral-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span className="text-sm font-bold text-neutral-100 font-devanagari">
+                  छन्द व शास्त्र-शोधक प्रयोगशाला • पत्रम् {currentPage.page_number}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    setIsStudioModalOpen(false);
+                    onOpenVerification(bookId);
+                  }}
+                  className="px-3 py-1 rounded-lg bg-sacred-800 hover:bg-sacred-700 text-white text-xs font-devanagari font-bold flex items-center space-x-1 shadow transition-colors cursor-pointer"
+                  title="पूर्ण सम्पादक एवं छवि मिलान हेतु"
+                >
+                  <span>समीक्षा सम्पादक खोलें ➔</span>
+                </button>
+                <button
+                  onClick={() => setIsStudioModalOpen(false)}
+                  className="w-8 h-8 rounded-lg hover:bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-sm font-bold transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <ChhandasPaniniStudio
+                text={currentPage.verified_text || currentPage.ocr_text || ''}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

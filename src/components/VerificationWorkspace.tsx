@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { api } from '../api.js';
 import type { Book, Page, ScripturalIssue, PageRevision, CanonicalScripture } from '../../shared/types.js';
+import { ChhandasPaniniStudio } from './ChhandasPaniniStudio.js';
 
 const VEDIC_SYMBOLS = [
   { char: 'ॐ', name: 'प्रणव (Om)', desc: 'Sacred syllable Om' },
@@ -68,7 +69,7 @@ export const VerificationWorkspace: React.FC<VerificationWorkspaceProps> = ({
 
   // Text editor state
   const [editedText, setEditedText] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'editor' | 'issues' | 'revisions' | 'canonical'>('editor');
+  const [activeTab, setActiveTab] = useState<'editor' | 'issues' | 'revisions' | 'canonical' | 'chhandas'>('editor');
   const [selectedIssueIndex, setSelectedIssueIndex] = useState<number>(-1);
   const [editorTheme, setEditorTheme] = useState<'dark' | 'bhojpatra'>('bhojpatra');
   const [editorFont, setEditorFont] = useState<'tiro' | 'yatra' | 'notoSerif' | 'devanagari'>('tiro');
@@ -631,6 +632,18 @@ export const VerificationWorkspace: React.FC<VerificationWorkspaceProps> = ({
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="प्रामाणिक संदर्भ मिला" />
                 )}
               </button>
+
+              <button
+                onClick={() => setActiveTab('chhandas')}
+                className={`px-3 py-1 rounded-lg font-medium flex items-center space-x-1.5 transition-colors ${
+                  activeTab === 'chhandas'
+                    ? 'bg-sacred-600 text-white'
+                    : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>छन्द व शास्त्र-शोधक</span>
+              </button>
             </div>
 
             {/* Confidence & Page Status Badge */}
@@ -1002,6 +1015,16 @@ export const VerificationWorkspace: React.FC<VerificationWorkspaceProps> = ({
                 ))}
               </div>
             </div>
+          )}
+
+          {/* TAB 5: CHHANDAS & PANINIAN SCRIPTURE STUDIO */}
+          {activeTab === 'chhandas' && (
+            <ChhandasPaniniStudio
+              text={editedText}
+              onApplyFix={(fixedText) => {
+                setEditedText(fixedText);
+              }}
+            />
           )}
         </div>
       </div>
