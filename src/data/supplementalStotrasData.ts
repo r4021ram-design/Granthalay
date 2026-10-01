@@ -6,8 +6,9 @@
  */
 
 import { ScriptureItem } from './darshanTaxonomy.js';
+import { CANONICAL_PARAYANA_STOTRAS } from './canonicalParayanaStotras.js';
 
-export const SUPPLEMENTAL_CANONICAL_STOTRAS: ScriptureItem[] = [
+const BASE_SUPPLEMENTAL_STOTRAS: ScriptureItem[] = [
   // --------------------------------------------------------------------------
   // १. श्रीगणेशस्तोत्राणि (GANESHA)
   // --------------------------------------------------------------------------
@@ -1671,4 +1672,9 @@ export const SUPPLEMENTAL_CANONICAL_STOTRAS: ScriptureItem[] = [
 
 ॥ इति उपनिषद् शान्तिमन्त्राः सम्पूर्णाः ॥`,
   },
+];
+
+export const SUPPLEMENTAL_CANONICAL_STOTRAS: ScriptureItem[] = [
+  ...BASE_SUPPLEMENTAL_STOTRAS,
+  ...CANONICAL_PARAYANA_STOTRAS,
 ];

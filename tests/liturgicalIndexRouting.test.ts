@@ -36,13 +36,22 @@ describe('Liturgical Index Integrity & Scripture Isolation', () => {
   });
 
   it('should enforce strict identity isolation across scripture types', () => {
+    const isCustomOrSupp = (book: { id: string; title: string }) =>
+      Boolean(book.id.startsWith('supp-') || book.id.startsWith('custom-'));
+
     const isGitaBook = (book: { id: string; title: string }) =>
-      Boolean(book.id === 'granth-bhagavad-gita' || (book.title.includes('गीता') && !book.title.includes('सहस्रनाम')));
+      !isCustomOrSupp(book) &&
+      Boolean(book.id === 'granth-bhagavad-gita' || (book.title.includes('भगवद्गीता') && !book.title.includes('सहस्रनाम')));
 
     const isVsnBook = (book: { id: string; title: string }) =>
-      Boolean(book.id.includes('sahasranama') || book.title.includes('सहस्रनाम'));
+      !isCustomOrSupp(book) &&
+      Boolean(
+        book.id === 'granth-vishnu-sahasranama' ||
+        (book.title.includes('विष्णु') && book.title.includes('सहस्रनाम') && !book.title.includes('ललिता'))
+      );
 
     const isGaneshPujanBook = (book: { id: string; title: string }) =>
+      !isCustomOrSupp(book) &&
       Boolean(book.id === 'granth-ganesh-pujan-paddhati' || (book.title.includes('गणेश') && book.title.includes('पूजन')));
 
     // 1. Ganesh Pujan Paddhati test
@@ -72,7 +81,17 @@ describe('Liturgical Index Integrity & Scripture Isolation', () => {
     expect(isGitaBook(vsnBook)).toBe(false);
     expect(isGaneshPujanBook(vsnBook)).toBe(false);
 
-    // 4. Other General Scriptures test (Vastu Shanti, Rudri, Atharvashirsha)
+    // 4. Sri Lalita Sahasranama Stotram (Must NOT be flagged as VSN or Gita)
+    const lalitaBook = {
+      id: 'supp-devi-lalita-sahasranama',
+      title: 'श्रीललितासहस्रनामस्तोत्रम्'
+    };
+    expect(isCustomOrSupp(lalitaBook)).toBe(true);
+    expect(isVsnBook(lalitaBook)).toBe(false);
+    expect(isGitaBook(lalitaBook)).toBe(false);
+    expect(isGaneshPujanBook(lalitaBook)).toBe(false);
+
+    // 5. Other General Scriptures test (Vastu Shanti, Rudri)
     const vastuBook = {
       id: 'granth-vastu-shanti-grihapravesha',
       title: 'वास्तु शान्ति, गृहप्रवेश एवं नींव पूजन पद्धति'

@@ -139,7 +139,17 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
         mantra: '॥ ॐ नमः शिवाय ॥',
       };
     }
-    if (combined.includes('लक्ष्मी') || combined.includes('दुर्गा') || combined.includes('चण्डी') || combined.includes('कुञ्जिका') || combined.includes('सप्तशती')) {
+    if (combined.includes('सप्तशती') || combined.includes('चण्डीपाठ') || combined.includes('देवी माहात्म्यम्')) {
+      return {
+        name: 'भगवती जगदम्बा (दुर्गासप्तशती)',
+        gradient: 'from-rose-950/95 via-red-950/75 to-neutral-900',
+        border: 'border-rose-600/70 hover:border-amber-400',
+        badge: 'bg-rose-950 text-rose-300 border-rose-800',
+        glyph: '🔱',
+        mantra: '॥ ॐ ऐं ह्रीं क्लीं चामुण्डायै विच्चे ॥',
+      };
+    }
+    if (combined.includes('लक्ष्मी') || combined.includes('दुर्गा') || combined.includes('चण्डी') || combined.includes('कुञ्जिका')) {
       return {
         name: 'भगवती दुर्गा / लक्ष्मी',
         gradient: 'from-rose-950/90 via-red-950/60 to-neutral-900',
@@ -260,7 +270,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           b.title.includes('पद्धति') ||
           b.title.includes('वास्तु') ||
           b.title.includes('विधान') ||
-          b.title.includes('रुद्राष्टाध्यायी');
+          b.title.includes('रुद्राष्टाध्यायी') ||
+          b.title.includes('सप्तशती') ||
+          b.title.includes('चण्डी');
         if (!isPuja) return false;
       } else if (activeDarshan === 'tantra') {
         const isTantra =
@@ -268,7 +280,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           b.title.includes('तंत्र') ||
           b.title.includes('विद्यार्णव') ||
           b.title.includes('शाक्त') ||
-          b.title.includes('श्रीविद्या');
+          b.title.includes('श्रीविद्या') ||
+          b.title.includes('सप्तशती') ||
+          b.title.includes('कुञ्जिका');
         if (!isTantra) return false;
       } else if (activeDarshan === 'veda-purana') {
         const isVedaPurana =
@@ -276,7 +290,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           b.title.includes('उपनिषद्') ||
           b.title.includes('संहिता') ||
           b.title.includes('पुराण') ||
-          b.title.includes('सहस्रनाम');
+          b.title.includes('सहस्रनाम') ||
+          b.title.includes('सप्तशती') ||
+          b.title.includes('चण्डी');
         if (!isVedaPurana) return false;
       }
 
@@ -488,6 +504,47 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Mahagrantha Highlight: Srimad Durga Saptashati */}
+          {(stotraDeity === 'devi' || stotraDeity === 'all') && !stotraSearch.trim() && selectedGenre === 'all' && (
+            <div
+              onClick={() => onSelectBookForReading('granth-durga-saptashati', 1)}
+              className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-rose-950/90 via-red-950/70 to-neutral-900 border-2 border-rose-600/60 hover:border-amber-400 p-5 sm:p-6 shadow-2xl transition-all duration-300 hover:scale-[1.01] cursor-pointer group"
+            >
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-rose-900/40 border border-rose-500/40 flex items-center justify-center text-3xl shrink-0 group-hover:scale-110 transition-transform">
+                    🔱
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2.5 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-700/60 text-[11px] font-devanagari font-bold">
+                        महाग्रन्थ पारायण
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-700/60 text-[11px] font-devanagari font-bold">
+                        ७०० मन्त्र • १३ अध्याय
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 text-[11px] font-devanagari font-bold">
+                        पूर्वाङ्ग व उत्तराङ्ग सहित
+                      </span>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-bold font-serifDevanagari text-white group-hover:text-amber-200 transition-colors">
+                      श्रीदुर्गासप्तशती (चण्डीपाठ / देवी माहात्म्यम्)
+                    </h3>
+                    <p className="text-xs sm:text-sm text-neutral-300 font-devanagari">
+                      मार्कण्डेयपुराणान्तर्गत सम्पूर्ण ७०० मन्त्र, त्रिमूर्ति-चरित्र, कवच, अर्गला, कीलक, रात्रिसूक्त, नवार्ण मन्त्र, देव्यपराधक्षमापन एवं सिद्धकुञ्जिकास्तोत्रम्।
+                    </p>
+                  </div>
+                </div>
+                <div className="self-end sm:self-center shrink-0">
+                  <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 group-hover:bg-rose-500 text-white font-devanagari font-bold text-xs sm:text-sm shadow-lg group-hover:scale-105 transition-all">
+                    <span>सम्पूर्ण पाठ खोलें</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Stotras Content */}
           {stotrasList.length === 0 ? (

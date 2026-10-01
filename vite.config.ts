@@ -35,17 +35,38 @@ export default defineConfig({
     },
   },
   build: {
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
-              return 'vendor-react';
-            }
             if (id.includes('lucide-react')) {
               return 'vendor-icons';
             }
+            if (
+              id.includes('/react/') || id.includes('\\react\\') ||
+              id.includes('/react-dom/') || id.includes('\\react-dom\\') ||
+              id.includes('scheduler')
+            ) {
+              return 'vendor-react';
+            }
             return 'vendor';
+          }
+          if (
+            id.includes('supplementalStotrasData') ||
+            id.includes('canonicalParayanaStotras') ||
+            id.includes('brihatStotraRatnakarIndex') ||
+            id.includes('bhagavadGitaIndex') ||
+            id.includes('darshanTaxonomy')
+          ) {
+            return 'stotra-data';
+          }
+          if (
+            id.includes('chhandasEngine') ||
+            id.includes('karmakandaParser') ||
+            id.includes('scriptureTypography')
+          ) {
+            return 'sanskrit-linguistics';
           }
         },
       },

@@ -1,14 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Navbar } from './components/Navbar.js';
-import { LibraryView } from './components/LibraryView.js';
-import { VerificationWorkspace } from './components/VerificationWorkspace.js';
-import { ReadingMode } from './components/ReadingMode.js';
-import { SearchView } from './components/SearchView.js';
-import { UploadModal } from './components/UploadModal.js';
-import { AuditLogModal } from './components/AuditLogModal.js';
 import { api } from './api.js';
 import type { Book, BookStats } from '../shared/types.js';
-import type { ScriptureItem } from './data/darshanTaxonomy.js';
+import { findStotraById, type ScriptureItem } from './data/darshanTaxonomy.js';
+
+// Dynamic code-splitting for heavy views & modals
+const LibraryView = lazy(() => import('./components/LibraryView.js').then(m => ({ default: m.LibraryView })));
+const VerificationWorkspace = lazy(() => import('./components/VerificationWorkspace.js').then(m => ({ default: m.VerificationWorkspace })));
+const ReadingMode = lazy(() => import('./components/ReadingMode.js').then(m => ({ default: m.ReadingMode })));
+const SearchView = lazy(() => import('./components/SearchView.js').then(m => ({ default: m.SearchView })));
+const UploadModal = lazy(() => import('./components/UploadModal.js').then(m => ({ default: m.UploadModal })));
+const AuditLogModal = lazy(() => import('./components/AuditLogModal.js').then(m => ({ default: m.AuditLogModal })));
+
+const ViewLoadingFallback = () => (
+  <div className="flex-1 min-h-[60vh] flex flex-col items-center justify-center p-8 text-neutral-400">
+    <div className="w-12 h-12 rounded-full border-2 border-sacred-500/20 border-t-sacred-500 animate-spin flex items-center justify-center mb-4">
+      <span className="text-sacred-500 text-sm font-serif select-none">ॐ</span>
+    </div>
+    <div className="text-xs tracking-widest font-serif text-sacred-400/80 uppercase animate-pulse">
+      शास्त्रपाठ संयोजनम्...
+    </div>
+  </div>
+);
 
 export function App() {
   // Initialize from URL params or default to Brihat Stotra Ratnakar
@@ -40,7 +53,12 @@ export function App() {
   const initial = getInitialState();
   const [currentView, setCurrentView] = useState<'library' | 'workspace' | 'reader' | 'search'>(initial.view);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(initial.bookId);
-  const [selectedCustomStotra, setSelectedCustomStotra] = useState<ScriptureItem | null>(null);
+  const [selectedCustomStotra, setSelectedCustomStotra] = useState<ScriptureItem | null>(() => {
+    if (initial.bookId && (initial.bookId.startsWith('supp-') || initial.bookId.startsWith('custom-'))) {
+      return findStotraById(initial.bookId) || null;
+    }
+    return null;
+  });
   const [initialPage, setInitialPage] = useState<number | undefined>(undefined);
   const [initialStotraId, setInitialStotraId] = useState<number | string | undefined>(undefined);
   const [books, setBooks] = useState<Book[]>([]);
@@ -185,72 +203,80 @@ export function App() {
       )}
 
       {/* View Switcher */}
-      <main className="flex-1">
-        {currentView === 'library' && (
-          <LibraryView
-            books={books}
-            stats={stats}
-            onSelectBookForVerification={handleOpenWorkspace}
-            onSelectBookForReading={handleOpenReading}
-            onSelectCustomStotra={handleOpenCustomStotra}
-            onDeleteBook={handleDeleteBook}
-            onOpenUpload={() => setIsUploadOpen(true)}
-            onExport={handleExport}
-          />
-        )}
+      <main className="flex-1 flex flex-col">
+        <Suspense fallback={<ViewLoadingFallback />}>
+          {currentView === 'library' && (
+            <LibraryView
+              books={books}
+              stats={stats}
+              onSelectBookForVerification={handleOpenWorkspace}
+              onSelectBookForReading={handleOpenReading}
+              onSelectCustomStotra={handleOpenCustomStotra}
+              onDeleteBook={handleDeleteBook}
+              onOpenUpload={() => setIsUploadOpen(true)}
+              onExport={handleExport}
+            />
+          )}
 
-        {currentView === 'workspace' && selectedBookId && (
-          <VerificationWorkspace
-            bookId={selectedBookId}
-            onBack={() => {
-              setCurrentView('library');
-              refreshData();
-            }}
-            onReadBook={handleOpenReading}
-          />
-        )}
+          {currentView === 'workspace' && selectedBookId && (
+            <VerificationWorkspace
+              bookId={selectedBookId}
+              onBack={() => {
+                setCurrentView('library');
+                refreshData();
+              }}
+              onReadBook={handleOpenReading}
+            />
+          )}
 
-        {currentView === 'reader' && selectedBookId && (
-          <ReadingMode
-            bookId={selectedBookId}
-            initialPage={initialPage}
-            initialStotraId={initialStotraId}
-            customStotra={selectedCustomStotra}
-            onBack={() => {
-              setSelectedCustomStotra(null);
-              setCurrentView('library');
-              refreshData();
-            }}
-            onOpenVerification={handleOpenWorkspace}
-          />
-        )}
+          {currentView === 'reader' && selectedBookId && (
+            <ReadingMode
+              bookId={selectedBookId}
+              initialPage={initialPage}
+              initialStotraId={initialStotraId}
+              customStotra={selectedCustomStotra}
+              onBack={() => {
+                setSelectedCustomStotra(null);
+                setCurrentView('library');
+                refreshData();
+              }}
+              onOpenVerification={handleOpenWorkspace}
+            />
+          )}
 
-        {currentView === 'search' && (
-          <SearchView
-            onSelectResult={bookId => {
-              setSelectedBookId(bookId);
-              setCurrentView('workspace');
-            }}
-          />
-        )}
+          {currentView === 'search' && (
+            <SearchView
+              onSelectResult={bookId => {
+                setSelectedBookId(bookId);
+                setCurrentView('workspace');
+              }}
+            />
+          )}
+        </Suspense>
       </main>
 
       {/* Modals */}
-      <UploadModal
-        isOpen={isUploadOpen}
-        onClose={() => setIsUploadOpen(false)}
-        onUploadSuccess={newBookId => {
-          showNotification('ग्रन्थ सफलतापूर्वक अपलोड हुआ एवं पृष्ठ तैयार किए गए।', 'success');
-          refreshData();
-          handleOpenWorkspace(newBookId);
-        }}
-        uploadFn={api.uploadBook}
-      />
+      <Suspense fallback={null}>
+        {isUploadOpen && (
+          <UploadModal
+            isOpen={isUploadOpen}
+            onClose={() => setIsUploadOpen(false)}
+            onUploadSuccess={newBookId => {
+              showNotification('ग्रन्थ सफलतापूर्वक अपलोड हुआ एवं पृष्ठ तैयार किए गए।', 'success');
+              refreshData();
+              handleOpenWorkspace(newBookId);
+            }}
+            uploadFn={api.uploadBook}
+          />
+        )}
 
-      <AuditLogModal
-        isOpen={isAuditOpen}
-        onClose={() => setIsAuditOpen(false)}
-      />
+        {isAuditOpen && (
+          <AuditLogModal
+            isOpen={isAuditOpen}
+            onClose={() => setIsAuditOpen(false)}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }

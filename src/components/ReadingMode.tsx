@@ -38,11 +38,13 @@ import { GitaTableOfContents } from './GitaTableOfContents.js';
 import { VsnTableOfContents } from './VsnTableOfContents.js';
 import { GaneshPujanTableOfContents } from './GaneshPujanTableOfContents.js';
 import { BrihatStotraTableOfContents } from './BrihatStotraTableOfContents.js';
+import { SaptashatiTableOfContents } from './SaptashatiTableOfContents.js';
 import { UniversalTableOfContents } from './UniversalTableOfContents.js';
 import { GITA_SECTIONS, GitaChapter } from '../data/bhagavadGitaIndex.js';
 import { VSN_SECTIONS, VsnSection } from '../data/vishnuSahasranamaIndex.js';
+import { SAPTASHATI_SECTIONS, SaptashatiSection } from '../data/durgaSaptashatiIndex.js';
 import { BRIHAT_STOTRAS, BRIHAT_CATEGORIES, BrihatStotraItem } from '../data/brihatStotraRatnakarIndex.js';
-import { CANONICAL_DEITIES, ScriptureItem } from '../data/darshanTaxonomy.js';
+import { CANONICAL_DEITIES, ScriptureItem, findStotraById } from '../data/darshanTaxonomy.js';
 import type { Book, Page } from '../../shared/types.js';
 import { ChhandasPaniniStudio } from './ChhandasPaniniStudio.js';
 
@@ -133,10 +135,39 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isStudioModalOpen, setIsStudioModalOpen] = useState<boolean>(false);
 
-  const isGitaBook = Boolean(book?.id === 'granth-bhagavad-gita' || (book?.title?.includes('गीता') && !book?.title?.includes('सहस्रनाम')));
-  const isVsnBook = Boolean(book?.id?.includes('sahasranama') || book?.title?.includes('सहस्रनाम'));
-  const isGaneshPujanBook = Boolean(book?.id === 'granth-ganesh-pujan-paddhati' || (book?.title?.includes('गणेश') && book?.title?.includes('पूजन')));
-  const isBrihatStotraBook = Boolean(book?.id === 'granth-brihat-stotra-ratnakar' || book?.title?.includes('बृहत्स्तोत्ररत्नाकर'));
+  const isCustomOrSupp = Boolean(
+    customStotra ||
+    book?.id?.startsWith('supp-') ||
+    book?.id?.startsWith('custom-') ||
+    bookId.startsWith('supp-') ||
+    bookId.startsWith('custom-')
+  );
+
+  const isGitaBook = !isCustomOrSupp && Boolean(
+    book?.id === 'granth-bhagavad-gita' ||
+    (book?.title?.includes('भगवद्गीता') && !book?.title?.includes('सहस्रनाम'))
+  );
+
+  const isVsnBook = !isCustomOrSupp && Boolean(
+    book?.id === 'granth-vishnu-sahasranama' ||
+    (book?.title?.includes('विष्णु') && book?.title?.includes('सहस्रनाम') && !book?.title?.includes('ललिता'))
+  );
+
+  const isGaneshPujanBook = !isCustomOrSupp && Boolean(
+    book?.id === 'granth-ganesh-pujan-paddhati' ||
+    (book?.title?.includes('गणेश') && book?.title?.includes('पूजन'))
+  );
+
+  const isBrihatStotraBook = !isCustomOrSupp && Boolean(
+    book?.id === 'granth-brihat-stotra-ratnakar' ||
+    book?.title?.includes('बृहत्स्तोत्ररत्नाकर')
+  );
+
+  const isSaptashatiBook = !isCustomOrSupp && Boolean(
+    book?.id === 'granth-durga-saptashati' ||
+    bookId === 'granth-durga-saptashati' ||
+    (book?.title?.includes('दुर्गासप्तशती') || book?.title?.includes('सप्तशती') || book?.title?.includes('चण्डीपाठ'))
+  );
   const isDarkSlate = readingTheme === 'dark-slate';
 
   // Native Fullscreen API sync
@@ -194,6 +225,13 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
     const pageNum = currentPageIndex + 1;
     return VSN_SECTIONS.find(s => pageNum >= s.startPage && pageNum <= s.endPage) || null;
   }, [isVsnBook, currentPageIndex]);
+
+  // Derive current Saptashati liturgical section from current page
+  const currentSaptashatiSection = useMemo(() => {
+    if (!isSaptashatiBook) return null;
+    const pageNum = currentPageIndex + 1;
+    return SAPTASHATI_SECTIONS.find(s => pageNum >= s.startPage && pageNum <= s.endPage) || null;
+  }, [isSaptashatiBook, currentPageIndex]);
 
   // Derive current Brihat Stotra from activeStotraScope or current page
   const currentBrihatStotra = useMemo(() => {
@@ -399,12 +437,17 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   }, [isBrihatStotraBook, currentBrihatStotra, initialStotraId]);
 
   useEffect(() => {
-    if (customStotra) {
+    let resolvedCustom = customStotra;
+    if (!resolvedCustom && (bookId.startsWith('supp-') || bookId.startsWith('custom-'))) {
+      resolvedCustom = findStotraById(bookId) || null;
+    }
+
+    if (resolvedCustom) {
       const synthBook: Book = {
-        id: String(customStotra.id),
-        title: customStotra.title,
-        author: customStotra.author || 'पारंपरिक महर्षि',
-        description: customStotra.description || '',
+        id: String(resolvedCustom.id),
+        title: resolvedCustom.title,
+        author: resolvedCustom.author || 'पारंपरिक महर्षि',
+        description: resolvedCustom.description || '',
         language: 'sa',
         page_count: 1,
         status: 'FULLY_VERIFIED',
@@ -415,15 +458,15 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
         updated_at: new Date().toISOString(),
       };
       const synthPage: Page = {
-        id: `page-${customStotra.id}-1`,
-        book_id: String(customStotra.id),
+        id: `page-${resolvedCustom.id}-1`,
+        book_id: String(resolvedCustom.id),
         page_number: 1,
         original_image_path: '',
         status: 'VERIFIED',
         ocr_confidence: 1.0,
         unresolved_issue_count: 0,
-        verified_text: customStotra.content || '',
-        ocr_text: customStotra.content || '',
+        verified_text: resolvedCustom.content || '',
+        ocr_text: resolvedCustom.content || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -1464,7 +1507,15 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
           <button
             onClick={() => setIsTocOpen(true)}
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-sacred-800 hover:bg-sacred-700 text-white font-devanagari text-xs font-bold border border-sacred-600/50 shadow-md transition-all active:scale-95 cursor-pointer"
-            title={isGitaBook ? "श्रीमद्भगवद्गीता अनुक्रमणिका एवं अध्याय सूची खोलें" : isVsnBook ? "श्रीविष्णुसहस्रनाम विषय-सूची खोलें" : "अनुक्रमणिका खोलें"}
+            title={
+              isGitaBook
+                ? "श्रीमद्भगवद्गीता अनुक्रमणिका एवं अध्याय सूची खोलें"
+                : isVsnBook
+                ? "श्रीविष्णुसहस्रनाम विषय-सूची खोलें"
+                : isSaptashatiBook
+                ? "श्रीदुर्गासप्तशती पाठविधि एवं अध्याय सूची खोलें"
+                : "अनुक्रमणिका खोलें"
+            }
           >
             <Layers className="w-3.5 h-3.5 text-sacred-300" />
             <span>अनुक्रमणिका</span>
@@ -1491,6 +1542,14 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
                     <span className="text-neutral-500 font-serif text-sm">•</span>
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-sacred-950/80 border border-sacred-700 text-white text-xs sm:text-sm font-devanagari font-bold shadow-xs">
                       <span>{currentVsnSection.icon} {currentVsnSection.titleHi}</span>
+                    </span>
+                  </>
+                )}
+                {isSaptashatiBook && currentSaptashatiSection && (
+                  <>
+                    <span className="text-neutral-500 font-serif text-sm">•</span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-sacred-950/80 border border-sacred-700 text-white text-xs sm:text-sm font-devanagari font-bold shadow-xs">
+                      <span>{currentSaptashatiSection.icon} {currentSaptashatiSection.titleHi}</span>
                     </span>
                   </>
                 )}
@@ -1529,6 +1588,11 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
                   ) : isVsnBook && currentVsnSection ? (
                     <span className="text-neutral-200 font-medium">
                       {currentVsnSection.nameHi}
+                      <span className="text-neutral-500 font-mono ml-1.5">(पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
+                    </span>
+                  ) : isSaptashatiBook && currentSaptashatiSection ? (
+                    <span className="text-neutral-200 font-medium">
+                      {currentSaptashatiSection.nameSa}
                       <span className="text-neutral-500 font-mono ml-1.5">(पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
                     </span>
                   ) : (
@@ -2007,6 +2071,19 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
           isOpen={isTocOpen}
           onClose={() => setIsTocOpen(false)}
           currentPageNumber={currentPageIndex + 1}
+          onJumpToPage={(pageNum) => {
+            setCurrentPageIndex(pageNum - 1);
+          }}
+        />
+      ) : isSaptashatiBook ? (
+        <SaptashatiTableOfContents
+          isOpen={isTocOpen}
+          onClose={() => setIsTocOpen(false)}
+          currentPageNumber={currentPageIndex + 1}
+          activeSectionId={currentSaptashatiSection?.id || null}
+          onSelectSection={(sec) => {
+            setCurrentPageIndex(sec.startPage - 1);
+          }}
           onJumpToPage={(pageNum) => {
             setCurrentPageIndex(pageNum - 1);
           }}

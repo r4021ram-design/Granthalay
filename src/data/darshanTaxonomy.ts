@@ -287,7 +287,30 @@ export function saveCustomStotra(item: Omit<ScriptureItem, 'id' | 'isCustom'>): 
   return newItem;
 }
 
-// Map canonical 224 stotras and supplemental stotras into the deity taxonomy
+export function normalizeStotraTitleForDedup(title: string): string {
+  return title
+    .replace(/^श्री/g, '')
+    .replace(/\s*\([^)]*\)/g, '')
+    .replace(/स्तोत्रम्?$/g, '')
+    .replace(/अष्टकम्?$/g, '')
+    .replace(/षट्कम्?$/g, '')
+    .replace(/पञ्चकम्?$/g, '')
+    .replace(/पञ्चरत्नम्?$/g, '')
+    .replace(/सहस्रनामम्?$/g, '')
+    .replace(/कवचम्?$/g, '')
+    .replace(/हृदयम्?$/g, '')
+    .replace(/म्$/g, '')
+    .replace(/्$/g, '')
+    .replace(/ङ्/g, 'ं')
+    .replace(/ञ्/g, 'ं')
+    .replace(/ण्/g, 'ं')
+    .replace(/न्(?=[क-ह])/g, 'ं')
+    .replace(/म्(?=[क-ह])/g, 'ं')
+    .replace(/\s+/g, '')
+    .trim();
+}
+
+// Map all stotras into the unified, deduplicated deity taxonomy (एक स्तोत्र दो बार नहीं आना चाहिए)
 export function getAllStotrasForDarshan(deityId?: string, genreId?: StotraGenreId): ScriptureItem[] {
   const baseItems: ScriptureItem[] = BRIHAT_STOTRAS.map((s) => ({
     id: s.id,
@@ -308,7 +331,46 @@ export function getAllStotrasForDarshan(deityId?: string, genreId?: StotraGenreI
     ...c,
     genre: c.genre || classifyStotraGenre(c.title),
   }));
-  let all = [...supplementalItems, ...customItems, ...baseItems];
+
+  // Canonical Deduplication: Supplemental (verified full text) takes priority & merges folio page refs
+  const mergedList: ScriptureItem[] = [];
+  const matchedBaseIds = new Set<string | number>();
+
+  for (const supp of supplementalItems) {
+    const normS = normalizeStotraTitleForDedup(supp.title);
+    const match = baseItems.find((b) => {
+      if (b.deityId !== supp.deityId && supp.deityId !== 'sankeerna' && b.deityId !== 'sankeerna') return false;
+      const normB = normalizeStotraTitleForDedup(b.title);
+      return normB === normS || (normS.length >= 4 && normB.includes(normS)) || (normB.length >= 4 && normS.includes(normB));
+    });
+
+    if (match) {
+      matchedBaseIds.add(match.id);
+      mergedList.push({
+        ...supp,
+        bookPage: match.bookPage,
+        pdfPage: match.pdfPage,
+      });
+    } else {
+      mergedList.push(supp);
+    }
+  }
+
+  for (const custom of customItems) {
+    const normC = normalizeStotraTitleForDedup(custom.title);
+    const alreadyExists = mergedList.some((m) => normalizeStotraTitleForDedup(m.title) === normC);
+    if (!alreadyExists) {
+      mergedList.push(custom);
+    }
+  }
+
+  for (const base of baseItems) {
+    if (!matchedBaseIds.has(base.id)) {
+      mergedList.push(base);
+    }
+  }
+
+  let all = mergedList;
 
   if (deityId && deityId !== 'all') {
     all = all.filter((item) => item.deityId === deityId);
@@ -325,4 +387,9 @@ export function getDeityById(id: string): DeitySphere | undefined {
 
 export function getDarshanById(id: DarshanId): DarshanSphere | undefined {
   return CANONICAL_DARSHANS.find((d) => d.id === id);
+}
+
+export function findStotraById(id: string | number): ScriptureItem | undefined {
+  const all = getAllStotrasForDarshan();
+  return all.find((s) => String(s.id) === String(id));
 }
