@@ -8,6 +8,7 @@ import { UploadModal } from './components/UploadModal.js';
 import { AuditLogModal } from './components/AuditLogModal.js';
 import { api } from './api.js';
 import type { Book, BookStats } from '../shared/types.js';
+import type { ScriptureItem } from './data/darshanTaxonomy.js';
 
 export function App() {
   // Initialize from URL params or default to Brihat Stotra Ratnakar
@@ -39,6 +40,9 @@ export function App() {
   const initial = getInitialState();
   const [currentView, setCurrentView] = useState<'library' | 'workspace' | 'reader' | 'search'>(initial.view);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(initial.bookId);
+  const [selectedCustomStotra, setSelectedCustomStotra] = useState<ScriptureItem | null>(null);
+  const [initialPage, setInitialPage] = useState<number | undefined>(undefined);
+  const [initialStotraId, setInitialStotraId] = useState<number | string | undefined>(undefined);
   const [books, setBooks] = useState<Book[]>([]);
   const [stats, setStats] = useState<BookStats | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light' | 'sepia'>('dark');
@@ -101,12 +105,24 @@ export function App() {
   };
 
   const handleOpenWorkspace = (bookId: string) => {
+    setSelectedCustomStotra(null);
     setSelectedBookId(bookId);
     setCurrentView('workspace');
   };
 
-  const handleOpenReading = (bookId: string) => {
+  const handleOpenReading = (bookId: string, page?: number, stotraId?: number | string) => {
+    setSelectedCustomStotra(null);
     setSelectedBookId(bookId);
+    setInitialPage(page);
+    setInitialStotraId(stotraId);
+    setCurrentView('reader');
+  };
+
+  const handleOpenCustomStotra = (customItem: ScriptureItem) => {
+    setSelectedCustomStotra(customItem);
+    setSelectedBookId(String(customItem.id));
+    setInitialPage(1);
+    setInitialStotraId(undefined);
     setCurrentView('reader');
   };
 
@@ -176,6 +192,7 @@ export function App() {
             stats={stats}
             onSelectBookForVerification={handleOpenWorkspace}
             onSelectBookForReading={handleOpenReading}
+            onSelectCustomStotra={handleOpenCustomStotra}
             onDeleteBook={handleDeleteBook}
             onOpenUpload={() => setIsUploadOpen(true)}
             onExport={handleExport}
@@ -196,7 +213,11 @@ export function App() {
         {currentView === 'reader' && selectedBookId && (
           <ReadingMode
             bookId={selectedBookId}
+            initialPage={initialPage}
+            initialStotraId={initialStotraId}
+            customStotra={selectedCustomStotra}
             onBack={() => {
+              setSelectedCustomStotra(null);
               setCurrentView('library');
               refreshData();
             }}

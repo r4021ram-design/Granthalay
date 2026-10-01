@@ -4,17 +4,13 @@ import {
   CheckCircle2,
   AlertTriangle,
   Wand2,
-  Copy,
   Check,
   BookOpen,
   ArrowRight,
   Info,
-  Scroll,
   Layers,
-  Flame,
 } from 'lucide-react';
 import { identifyVerseMeter, analyzePada, MeterVerificationReport } from '../utils/chhandasEngine.js';
-import { extractNamavaliFromStotra, NamavaliEntry } from '../utils/namavaliEngine.js';
 
 interface ChhandasPaniniStudioProps {
   text: string;
@@ -25,8 +21,7 @@ export const ChhandasPaniniStudio: React.FC<ChhandasPaniniStudioProps> = ({
   text,
   onApplyFix,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'chhandas' | 'panini' | 'namavali'>('chhandas');
-  const [copiedMantraIndex, setCopiedMantraIndex] = useState<number | null>(null);
+  const [activeSubTab, setActiveSubTab] = useState<'chhandas' | 'panini'>('chhandas');
   const [hasAppliedFix, setHasAppliedFix] = useState<boolean>(false);
 
   // 1. Live Metrical Analysis
@@ -120,23 +115,12 @@ export const ChhandasPaniniStudio: React.FC<ChhandasPaniniStudioProps> = ({
     };
   }, [text]);
 
-  // 3. Automated Namavali Generation
-  const namavaliList: NamavaliEntry[] = useMemo(() => {
-    return extractNamavaliFromStotra(text || '', 'm', 108);
-  }, [text]);
-
   const handleApplyPaninianHeal = () => {
     if (onApplyFix && paninianAudit.hasCorrections) {
       onApplyFix(paninianAudit.healedText);
       setHasAppliedFix(true);
       setTimeout(() => setHasAppliedFix(false), 2500);
     }
-  };
-
-  const handleCopyMantra = (mantra: string, idx: number) => {
-    navigator.clipboard.writeText(mantra);
-    setCopiedMantraIndex(idx);
-    setTimeout(() => setCopiedMantraIndex(null), 2000);
   };
 
   return (
@@ -155,7 +139,7 @@ export const ChhandasPaniniStudio: React.FC<ChhandasPaniniStudioProps> = ({
               </span>
             </h3>
             <p className="text-[11px] text-neutral-400 font-devanagari">
-              अक्षर-मापन, लघु-गुरु गण, पाणिनीय विसर्ग शुद्धि एवं नामावली तन्त्र
+              अक्षर-मापन, लघु-गुरु गण एवं पाणिनीय विसर्ग व सन्धि शुद्धि
             </p>
           </div>
         </div>
@@ -185,17 +169,6 @@ export const ChhandasPaniniStudio: React.FC<ChhandasPaniniStudioProps> = ({
             {paninianAudit.hasCorrections && (
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             )}
-          </button>
-
-          <button
-            onClick={() => setActiveSubTab('namavali')}
-            className={`px-3 py-1 rounded-md font-medium transition-colors font-devanagari flex items-center space-x-1.5 ${
-              activeSubTab === 'namavali'
-                ? 'bg-sacred-600 text-white'
-                : 'text-neutral-400 hover:text-white'
-            }`}
-          >
-            <span>नामावली मन्त्र ({namavaliList.length})</span>
           </button>
         </div>
       </div>
@@ -480,71 +453,6 @@ export const ChhandasPaniniStudio: React.FC<ChhandasPaniniStudioProps> = ({
                         {sug.corrected}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* SUBTAB 3: INSTANT NAMAVALI GENERATOR */}
-        {activeSubTab === 'namavali' && (
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-bold text-neutral-100 font-devanagari">
-                  स्वचालित अर्चन नामावली (Archana Mantras)
-                </h4>
-                <p className="text-xs text-neutral-400 font-devanagari mt-0.5">
-                  स्तोत्र के श्लोकों से निष्कासित शुद्ध चतुर्थी विभक्त्यन्त 'ॐ ... नमः' नाम-मन्त्र
-                </p>
-              </div>
-
-              <span className="px-2.5 py-1 rounded-lg bg-sacred-950 text-sacred-300 border border-sacred-800 font-bold text-xs font-devanagari">
-                {namavaliList.length} नाम-मन्त्र उपलब्ध
-              </span>
-            </div>
-
-            {/* Mantras Grid */}
-            {namavaliList.length === 0 ? (
-              <div className="p-8 text-center rounded-xl bg-neutral-900/50 border border-neutral-800 text-neutral-400">
-                <Scroll className="w-8 h-8 mx-auto text-neutral-500 mb-2" />
-                <p className="text-sm font-devanagari">
-                  इस पाठ से कोई नाम-मन्त्र निष्कासित नहीं हो सका।
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                {namavaliList.map((entry, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between hover:border-sacred-800/80 transition-all group"
-                  >
-                    <div className="flex items-center space-x-2.5">
-                      <span className="w-6 h-6 rounded-md bg-neutral-800 text-neutral-400 flex items-center justify-center text-xs font-mono font-bold">
-                        {entry.index}
-                      </span>
-                      <div>
-                        <p className="font-devanagari font-bold text-sm text-neutral-100 group-hover:text-sacred-300 transition-colors">
-                          {entry.mantra}
-                        </p>
-                        <p className="text-[10px] text-neutral-400 font-devanagari">
-                          मूल: {entry.pratipadika} {entry.notes ? `• ${entry.notes}` : ''}
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handleCopyMantra(entry.mantra, idx)}
-                      className="p-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white transition-colors"
-                      title="मन्त्र कॉपी करें"
-                    >
-                      {copiedMantraIndex === idx ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      ) : (
-                        <Copy className="w-3.5 h-3.5" />
-                      )}
-                    </button>
                   </div>
                 ))}
               </div>

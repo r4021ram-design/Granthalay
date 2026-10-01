@@ -42,11 +42,15 @@ import { UniversalTableOfContents } from './UniversalTableOfContents.js';
 import { GITA_SECTIONS, GitaChapter } from '../data/bhagavadGitaIndex.js';
 import { VSN_SECTIONS, VsnSection } from '../data/vishnuSahasranamaIndex.js';
 import { BRIHAT_STOTRAS, BRIHAT_CATEGORIES, BrihatStotraItem } from '../data/brihatStotraRatnakarIndex.js';
+import { CANONICAL_DEITIES, ScriptureItem } from '../data/darshanTaxonomy.js';
 import type { Book, Page } from '../../shared/types.js';
 import { ChhandasPaniniStudio } from './ChhandasPaniniStudio.js';
 
 interface ReadingModeProps {
   bookId: string;
+  initialPage?: number;
+  initialStotraId?: number | string;
+  customStotra?: ScriptureItem | null;
   onBack: () => void;
   onOpenVerification: (bookId: string) => void;
 }
@@ -57,6 +61,9 @@ type LineHeightOption = 'compact' | 'normal' | 'relaxed';
 
 export const ReadingMode: React.FC<ReadingModeProps> = ({
   bookId,
+  initialPage,
+  initialStotraId,
+  customStotra,
   onBack,
   onOpenVerification,
 }) => {
@@ -203,13 +210,67 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
     const index = BRIHAT_STOTRAS.findIndex(s => s.id === activeStotraScope.id);
     const startPage = activeStotraScope.pdfPage;
     const nextStotra = index >= 0 && index < BRIHAT_STOTRAS.length - 1 ? BRIHAT_STOTRAS[index + 1] : null;
-    const endPage = nextStotra
-      ? (nextStotra.pdfPage > startPage ? nextStotra.pdfPage - 1 : startPage)
-      : pages.length;
+
+    let endPage = startPage;
+    if (nextStotra) {
+      if (nextStotra.pdfPage === startPage) {
+        endPage = startPage;
+      } else {
+        // If nextStotra starts on a later page, check if current stotra continues onto nextStotra.pdfPage
+        const nextStartPageText = pages[nextStotra.pdfPage - 1]?.verified_text || pages[nextStotra.pdfPage - 1]?.ocr_text || '';
+        const cleanNextTitle = nextStotra.title
+          .replace(/\s*\([०-९0-9]+\)/g, '')
+          .replace(/[म्ंः\s]+$/u, '')
+          .trim();
+        const nextTitleIdx = nextStartPageText.indexOf(cleanNextTitle);
+        // If next stotra title is not at the very top of that page (>40 chars in), current stotra extends onto that page
+        if (nextTitleIdx > 40 || nextTitleIdx === -1) {
+          endPage = nextStotra.pdfPage;
+        } else {
+          endPage = Math.max(startPage, nextStotra.pdfPage - 1);
+        }
+      }
+    } else {
+      endPage = pages.length;
+    }
+
     const totalPages = Math.max(1, endPage - startPage + 1);
     const prevStotra = index > 0 ? BRIHAT_STOTRAS[index - 1] : null;
     return { startPage, endPage, totalPages, index, nextStotra, prevStotra };
-  }, [activeStotraScope, pages.length]);
+  }, [activeStotraScope, pages]);
+
+  // Normalization helper for title matching across parenthesized variations, spaces, and ligatures
+  const normalizeSanskritTitle = (title: string): string => {
+    return title
+      .replace(/\s*\([^)]*\)/g, '')
+      .replace(/[म्ंः\s]+/gu, '')
+      .trim();
+  };
+
+  const findTitlePosition = useCallback((text: string, title: string): number => {
+    let idx = text.indexOf(title);
+    if (idx !== -1) return idx;
+
+    const cleanTitle = title.replace(/\s*\([^)]*\)/g, '').trim();
+    idx = text.indexOf(cleanTitle);
+    if (idx !== -1) return idx;
+
+    const baseTitle = cleanTitle.replace(/[म्ंः]+$/u, '').trim();
+    idx = text.indexOf(baseTitle);
+    if (idx !== -1) return idx;
+
+    const normTitle = normalizeSanskritTitle(title);
+    const lines = text.split('\n');
+    let charCount = 0;
+    for (const line of lines) {
+      const normLine = normalizeSanskritTitle(line);
+      if (normLine.includes(normTitle) || (normTitle.includes(normLine) && normLine.length >= 4)) {
+        return charCount;
+      }
+      charCount += line.length + 1;
+    }
+    return -1;
+  }, []);
 
   // Isolate stotra text so every stotra starts on a fresh page without mixing previous/next stotras
   const getStotraIsolatedText = useCallback((rawText: string, stotra: BrihatStotraItem, pageNum: number): string => {
@@ -219,75 +280,168 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
     const stotraIdx = BRIHAT_STOTRAS.findIndex(s => s.id === stotra.id);
     const nextStotra = stotraIdx >= 0 && stotraIdx < BRIHAT_STOTRAS.length - 1 ? BRIHAT_STOTRAS[stotraIdx + 1] : null;
 
-    // Clean title for matching (handles ending anusvara, visarga, virama, or spaces, and parenthesized numbers like (२))
-    const cleanTitle = stotra.title
-      .replace(/\s*\([०-९0-9]+\)/g, '')
-      .replace(/[म्ंः\s]+$/u, '')
-      .trim();
-
     // 1. If this is the START page of the active stotra, slice from the start of this stotra
     if (pageNum === stotra.pdfPage) {
-      let titleIndex = text.indexOf(stotra.title);
-      if (titleIndex === -1 && cleanTitle.length >= 4) {
-        titleIndex = text.indexOf(cleanTitle);
-      }
-
+      const titleIndex = findTitlePosition(text, stotra.title);
       if (titleIndex !== -1) {
-        // Find beginning of the line containing the stotra title
         const lineStart = text.lastIndexOf('\n', titleIndex);
         text = text.substring(lineStart === -1 ? 0 : lineStart + 1).trim();
       }
     }
 
-    // 2. If next stotra starts on this SAME page (e.g. this is the end page of active stotra)
+    // 2. If next stotra starts on this SAME page, slice right before the next stotra
     if (nextStotra && pageNum === nextStotra.pdfPage) {
-      const nextCleanTitle = nextStotra.title
-        .replace(/\s*\([०-९0-9]+\)/g, '')
-        .replace(/[म्ंः\s]+$/u, '')
-        .trim();
-      let nextTitleIndex = text.indexOf(nextStotra.title);
-      if (nextTitleIndex === -1 && nextCleanTitle.length >= 4) {
-        nextTitleIndex = text.indexOf(nextCleanTitle);
-      }
-
+      const nextTitleIndex = findTitlePosition(text, nextStotra.title);
       if (nextTitleIndex !== -1) {
-        // Slice right before the next stotra line
         const lineStart = text.lastIndexOf('\n', nextTitleIndex);
         text = text.substring(0, lineStart === -1 ? nextTitleIndex : lineStart).trim();
       }
     }
 
+    // 3. Colophon boundary: if the text contains a completion colophon for this stotra followed by a new section or next stotra, cut off the trailing noise
+    const lastIti = text.lastIndexOf('इति');
+    if (lastIti !== -1) {
+      const afterIti = text.substring(lastIti);
+      if (afterIti.includes('समाप्त') || afterIti.includes('सम्पूर्ण')) {
+        const lines = text.split('\n');
+        let foundIti = false;
+        for (let i = 0; i < lines.length; i++) {
+          const l = lines[i].trim();
+          if (l.startsWith('इति ') && (l.includes('समाप्त') || l.includes('सम्पूर्ण'))) {
+            foundIti = true;
+          } else if (foundIti && (l.startsWith('अथ ') || l.startsWith('॥ अथ ') || /^[०-९\d]+\.\s+/.test(l))) {
+            return lines.slice(0, i).join('\n').trim();
+          }
+        }
+      }
+    }
+
     return text;
-  }, []);
+  }, [findTitlePosition]);
+
+  // Assemble the complete stotra across its pages into one unbroken sacred text (Full Page)
+  const getFullStotraText = useCallback((stotra: BrihatStotraItem): string => {
+    if (!pages || pages.length === 0) return '';
+    const index = BRIHAT_STOTRAS.findIndex(s => s.id === stotra.id);
+    const startPage = stotra.pdfPage;
+    const nextStotra = index >= 0 && index < BRIHAT_STOTRAS.length - 1 ? BRIHAT_STOTRAS[index + 1] : null;
+
+    let endPage = startPage;
+    const maxPage = nextStotra ? nextStotra.pdfPage : pages.length;
+
+    for (let p = startPage; p <= maxPage; p++) {
+      const pageRaw = pages[p - 1]?.verified_text || pages[p - 1]?.ocr_text || '';
+      endPage = p;
+
+      if (nextStotra && p === nextStotra.pdfPage) {
+        break;
+      }
+
+      let searchFromIdx = 0;
+      if (p === startPage) {
+        const titlePos = findTitlePosition(pageRaw, stotra.title);
+        if (titlePos !== -1) searchFromIdx = titlePos;
+      }
+
+      const lastIti = pageRaw.lastIndexOf('इति');
+      if (lastIti > searchFromIdx) {
+        const colophonSnippet = pageRaw.substring(lastIti);
+        if (colophonSnippet.includes('समाप्त') || colophonSnippet.includes('सम्पूर्ण')) {
+          break;
+        }
+      }
+    }
+
+    const parts: string[] = [];
+    for (let p = startPage; p <= endPage; p++) {
+      const pageRaw = pages[p - 1]?.verified_text || pages[p - 1]?.ocr_text || '';
+      const isolated = getStotraIsolatedText(pageRaw, stotra, p);
+      if (isolated.trim()) parts.push(isolated.trim());
+    }
+    return parts.join('\n\n');
+  }, [pages, findTitlePosition, getStotraIsolatedText]);
+
+  // Complete assembled text of active stotra
+  const fullStotraText = useMemo(() => {
+    if (!activeStotraScope || !isBrihatStotraBook) return '';
+    return getFullStotraText(activeStotraScope);
+  }, [activeStotraScope, isBrihatStotraBook, getFullStotraText]);
 
   useEffect(() => {
-    if (activeStotraScope) {
-      const stotraFolio = currentPageIndex + 1 - activeStotraScope.pdfPage + 1;
-      setJumpPageInput(String(Math.max(1, stotraFolio)));
+    if (activeStotraScope && isBrihatStotraBook) {
+      setJumpPageInput(String(activeStotraScope.stotraNumber));
     } else if (activeChapterScope) {
       const chapterFolio = currentPageIndex + 1 - activeChapterScope.startPage + 1;
       setJumpPageInput(String(chapterFolio));
     } else {
       setJumpPageInput(String(currentPageIndex + 1));
     }
-  }, [currentPageIndex, activeChapterScope, activeStotraScope]);
+  }, [currentPageIndex, activeChapterScope, activeStotraScope, isBrihatStotraBook]);
 
   // Auto-initialize activeStotraScope when Brihat Stotra Ratnakar is loaded so every stotra starts on its fresh page
   const hasInitializedStotraScope = useRef(false);
   useEffect(() => {
-    if (isBrihatStotraBook && !hasInitializedStotraScope.current && currentBrihatStotra) {
-      hasInitializedStotraScope.current = true;
-      setActiveStotraScope(currentBrihatStotra);
+    if (isBrihatStotraBook && !hasInitializedStotraScope.current) {
+      if (initialStotraId) {
+        const match = BRIHAT_STOTRAS.find(s => String(s.id) === String(initialStotraId) || String(s.stotraNumber) === String(initialStotraId));
+        if (match) {
+          hasInitializedStotraScope.current = true;
+          setActiveStotraScope(match);
+          setCurrentPageIndex(match.pdfPage - 1);
+          return;
+        }
+      }
+      if (currentBrihatStotra) {
+        hasInitializedStotraScope.current = true;
+        setActiveStotraScope(currentBrihatStotra);
+      }
     }
-  }, [isBrihatStotraBook, currentBrihatStotra]);
+  }, [isBrihatStotraBook, currentBrihatStotra, initialStotraId]);
 
   useEffect(() => {
+    if (customStotra) {
+      const synthBook: Book = {
+        id: String(customStotra.id),
+        title: customStotra.title,
+        author: customStotra.author || 'पारंपरिक महर्षि',
+        description: customStotra.description || '',
+        language: 'sa',
+        page_count: 1,
+        status: 'FULLY_VERIFIED',
+        source_type: 'pdf',
+        original_filename: '',
+        original_file_path: '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      const synthPage: Page = {
+        id: `page-${customStotra.id}-1`,
+        book_id: String(customStotra.id),
+        page_number: 1,
+        original_image_path: '',
+        status: 'VERIFIED',
+        ocr_confidence: 1.0,
+        unresolved_issue_count: 0,
+        verified_text: customStotra.content || '',
+        ocr_text: customStotra.content || '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setBook(synthBook);
+      setPages([synthPage]);
+      setCurrentPageIndex(0);
+      setIsLoading(false);
+      return;
+    }
     async function loadBook() {
       try {
         setIsLoading(true);
         const data = await api.getBook(bookId);
         setBook(data.book);
         setPages(data.pages);
+        if (initialPage && initialPage > 0) {
+          setCurrentPageIndex(Math.min(initialPage - 1, data.pages.length - 1));
+        }
         setIsLoading(false);
       } catch (err) {
         console.error(err);
@@ -295,7 +449,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
       }
     }
     loadBook();
-  }, [bookId]);
+  }, [bookId, customStotra, initialPage]);
 
   if (isLoading || !book) {
     return (
@@ -1319,7 +1473,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
           <div className="flex flex-col">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="font-bold text-sm sm:text-base font-serifDevanagari text-white flex items-center gap-2">
-                <span>{book.title.replace(/\s*\([^)]*गीताप्रेस[^)]*\)/gi, '').trim()}</span>
+                <span>{isBrihatStotraBook ? 'स्तोत्र दर्शन' : book.title.replace(/\s*\([^)]*गीताप्रेस[^)]*\)/gi, '').trim()}</span>
                 {isGitaBook && currentChapter && (
                   <>
                     <span className="text-neutral-500 font-serif text-sm">•</span>
@@ -1343,33 +1497,44 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
                 {isBrihatStotraBook && currentBrihatStotra && (
                   <>
                     <span className="text-neutral-500 font-serif text-sm">•</span>
+                    <span className="text-amber-300 font-medium">
+                      {CANONICAL_DEITIES.find(d => d.id === currentBrihatStotra.category)?.name || 'सर्वदेव'}
+                    </span>
+                    <span className="text-neutral-500 font-serif text-sm">•</span>
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-sacred-950/80 border border-sacred-700 text-white text-xs sm:text-sm font-devanagari font-bold shadow-xs">
-                      <span>📖 #{currentBrihatStotra.stotraNumber} {currentBrihatStotra.title}</span>
+                      <span>{currentBrihatStotra.title}</span>
                     </span>
                   </>
                 )}
               </h1>
             </div>
-            <p className="text-[11px] text-neutral-400 font-devanagari flex items-center space-x-2 mt-0.5">
-              <span>दृष्टा / रचयिता: <strong>{book.author || 'पारंपरिक महर्षि'}</strong></span>
-              <span>•</span>
-              {isGitaBook && currentChapter ? (
-                <span className="text-neutral-200 font-medium">
-                  अध्याय पत्र {currentPageIndex + 1 - currentChapter.startPage + 1} / {currentChapter.endPage - currentChapter.startPage + 1}
-                  <span className="text-neutral-500 font-mono ml-1.5">(सकल पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
-                </span>
-              ) : isVsnBook && currentVsnSection ? (
-                <span className="text-neutral-200 font-medium">
-                  {currentVsnSection.nameHi}
-                  <span className="text-neutral-500 font-mono ml-1.5">(पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
-                </span>
-              ) : isBrihatStotraBook && currentBrihatStotra ? (
-                <span className="text-neutral-200 font-medium">
-                  स्तोत्र #{currentBrihatStotra.stotraNumber} {currentBrihatStotra.title} (मूल पृष्ठ {currentBrihatStotra.bookPage})
-                  <span className="text-neutral-500 font-mono ml-1.5">(पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
-                </span>
+            <p className="text-xs text-neutral-400 font-devanagari flex items-center gap-1.5 flex-wrap">
+              {isBrihatStotraBook && currentBrihatStotra ? (
+                <>
+                  <span>उपासना: <strong className="text-amber-300 font-devanagari">{CANONICAL_DEITIES.find(d => d.id === currentBrihatStotra.category)?.name || 'देवता'}</strong></span>
+                  <span>•</span>
+                  <span className="text-amber-400 font-serifDevanagari">{CANONICAL_DEITIES.find(d => d.id === currentBrihatStotra.category)?.sanskritTitle || 'स्तोत्राणि'}</span>
+                  <span>•</span>
+                  <span className="text-emerald-400 font-medium">सम्पूर्ण शास्त्रोक्त पाठ</span>
+                </>
               ) : (
-                <span>पत्र {currentPage ? currentPage.page_number : 0} / {pages.length}</span>
+                <>
+                  <span>दृष्टा / रचयिता: <strong>{book.author || 'पारंपरिक महर्षि'}</strong></span>
+                  <span>•</span>
+                  {isGitaBook && currentChapter ? (
+                    <span className="text-neutral-200 font-medium">
+                      अध्याय पत्र {currentPageIndex + 1 - currentChapter.startPage + 1} / {currentChapter.endPage - currentChapter.startPage + 1}
+                      <span className="text-neutral-500 font-mono ml-1.5">(सकल पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
+                    </span>
+                  ) : isVsnBook && currentVsnSection ? (
+                    <span className="text-neutral-200 font-medium">
+                      {currentVsnSection.nameHi}
+                      <span className="text-neutral-500 font-mono ml-1.5">(पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
+                    </span>
+                  ) : (
+                    <span>पत्र {currentPage ? currentPage.page_number : 0} / {pages.length}</span>
+                  )}
+                </>
               )}
             </p>
           </div>
@@ -1509,7 +1674,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
           <button
             onClick={() => setIsStudioModalOpen(true)}
             className="px-3 py-1 rounded-xl border border-sacred-500/80 bg-sacred-800/90 hover:bg-sacred-700 text-white text-xs font-semibold transition-all flex items-center space-x-1.5 font-devanagari shadow-sm cursor-pointer"
-            title="छन्द व शास्त्र-शोधक: अक्षर-भार, लघु-गुरु गण एवं नामावली मन्त्र"
+            title="छन्द व शास्त्र-शोधक: अक्षर-भार, लघु-गुरु गण एवं पाणिनीय शुद्धि"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
             <span>छन्द व शास्त्र-शोधक</span>
@@ -1543,7 +1708,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
       )}
 
       {/* Main Reading Container (Text / Path Mode Only) */}
-      <main className="max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6 w-full flex-grow flex flex-col items-center justify-center">
+      <main className="max-w-4xl sm:max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8 w-full flex-grow flex flex-col items-center justify-start">
         <div
           style={getPothiSheetStyle()}
           className="pothi-manuscript-border rounded-3xl p-5 sm:p-8 w-full transition-all relative overflow-hidden my-2"
@@ -1574,10 +1739,10 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
 
           {/* Core Scripture Body */}
           {currentPage ? (
-            (currentPage.verified_text || currentPage.ocr_text) ? (
+            (currentPage.verified_text || currentPage.ocr_text || fullStotraText) ? (
               renderFormattedScripture(
                 activeStotraScope && isBrihatStotraBook
-                  ? getStotraIsolatedText(currentPage.verified_text || currentPage.ocr_text || '', activeStotraScope, currentPageIndex + 1)
+                  ? fullStotraText
                   : (currentPage.verified_text || currentPage.ocr_text || '')
               )
             ) : (
@@ -1598,10 +1763,10 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
           )}
 
           {/* Stotra Quick Navigator (Previous / Next Stotra) */}
-          {isBrihatStotraBook && (
+          {isBrihatStotraBook && activeStotraScope && (
             <div className="flex flex-wrap items-center justify-between gap-2 pt-4 mt-6 border-t border-[#8C2D19]/20">
               {(() => {
-                const currentIndex = BRIHAT_STOTRAS.findIndex(s => s.pdfPage === currentBrihatStotra?.pdfPage);
+                const currentIndex = BRIHAT_STOTRAS.findIndex(s => s.id === activeStotraScope.id);
                 const prevStotra = currentIndex > 0 ? BRIHAT_STOTRAS[currentIndex - 1] : null;
                 const nextStotra = currentIndex >= 0 && currentIndex < BRIHAT_STOTRAS.length - 1 ? BRIHAT_STOTRAS[currentIndex + 1] : null;
                 return (
@@ -1609,14 +1774,14 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
                     {prevStotra ? (
                       <button
                         onClick={() => {
-                          if (activeStotraScope) setActiveStotraScope(prevStotra);
+                          setActiveStotraScope(prevStotra);
                           setCurrentPageIndex(prevStotra.pdfPage - 1);
                         }}
                         className="px-3 py-1.5 rounded-xl bg-[#8C2D19]/10 hover:bg-[#8C2D19]/20 text-[#8C2D19] dark:text-neutral-200 border border-[#8C2D19]/30 text-xs font-devanagari flex items-center space-x-1 transition-all cursor-pointer"
                         title={`पिछला स्तोत्र (${prevStotra.title})`}
                       >
                         <ChevronLeft className="w-3.5 h-3.5" />
-                        <span>#{prevStotra.stotraNumber} {prevStotra.title}</span>
+                        <span>{prevStotra.title}</span>
                       </button>
                     ) : <div />}
 
@@ -1626,20 +1791,20 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
                         className="px-3.5 py-1.5 rounded-xl bg-sacred-800 hover:bg-sacred-700 text-white border border-sacred-600 text-xs font-devanagari font-bold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer"
                       >
                         <BookOpen className="w-3.5 h-3.5 text-sacred-300" />
-                        <span>२२४ स्तोत्र सूची</span>
+                        <span>समग्र स्तोत्र अनुक्रमणिका</span>
                       </button>
                     </div>
 
                     {nextStotra ? (
                       <button
                         onClick={() => {
-                          if (activeStotraScope) setActiveStotraScope(nextStotra);
+                          setActiveStotraScope(nextStotra);
                           setCurrentPageIndex(nextStotra.pdfPage - 1);
                         }}
                         className="px-3 py-1.5 rounded-xl bg-[#8C2D19]/10 hover:bg-[#8C2D19]/20 text-[#8C2D19] dark:text-neutral-200 border border-[#8C2D19]/30 text-xs font-devanagari flex items-center space-x-1 transition-all cursor-pointer"
                         title={`अगला स्तोत्र (${nextStotra.title})`}
                       >
-                        <span>#{nextStotra.stotraNumber} {nextStotra.title}</span>
+                        <span>{nextStotra.title}</span>
                         <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     ) : <div />}
@@ -1649,10 +1814,12 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             </div>
           )}
 
-          {/* Pothi Manuscript Folio Number */}
+          {/* Manuscript Folio Colophon */}
           <div className="text-center pt-3 mt-4 border-t border-dashed border-[#8C2D19]/30 select-none">
             <p className="text-sm font-serifDevanagari font-bold text-[#8C2D19] dark:text-white tracking-wider">
-              ॥ पत्रम् {currentPageIndex + 1} / {pages.length} ॥
+              {activeStotraScope && isBrihatStotraBook
+                ? `॥ ${activeStotraScope.title} • सम्पूर्ण पाठ ॥`
+                : `॥ पत्रम् ${currentPageIndex + 1} / ${pages.length} ॥`}
             </p>
           </div>
         </div>
@@ -1662,10 +1829,12 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
       <footer className="sticky bottom-0 z-40 border-t border-black/20 bg-black/70 backdrop-blur-md px-4 py-3 flex items-center justify-between max-w-2xl mx-auto rounded-t-2xl shadow-2xl w-full">
         <button
           onClick={() => {
-            if (activeStotraScope && stotraRange && currentPageIndex <= stotraRange.startPage - 1) {
-              if (stotraRange.prevStotra) {
-                setActiveStotraScope(stotraRange.prevStotra);
-                setCurrentPageIndex(stotraRange.prevStotra.pdfPage - 1);
+            if (activeStotraScope && isBrihatStotraBook) {
+              const idx = BRIHAT_STOTRAS.findIndex(s => s.id === activeStotraScope.id);
+              if (idx > 0) {
+                const prev = BRIHAT_STOTRAS[idx - 1];
+                setActiveStotraScope(prev);
+                setCurrentPageIndex(prev.pdfPage - 1);
               }
               return;
             }
@@ -1680,8 +1849,8 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             setCurrentPageIndex(prev => Math.max(0, prev - 1));
           }}
           disabled={
-            activeStotraScope
-              ? (activeStotraScope.id === 1 && currentPageIndex <= 0)
+            activeStotraScope && isBrihatStotraBook
+              ? activeStotraScope.id === 1
               : activeChapterScope
               ? (activeChapterScope.id === 1 && currentPageIndex <= 0)
               : currentPageIndex === 0
@@ -1690,7 +1859,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
         >
           <ChevronLeft className="w-4 h-4" />
           <span className="font-devanagari font-semibold hidden sm:inline">
-            {activeStotraScope && stotraRange && currentPageIndex <= stotraRange.startPage - 1
+            {activeStotraScope && isBrihatStotraBook
               ? 'पूर्व स्तोत्र'
               : activeChapterScope && currentPageIndex <= activeChapterScope.startPage - 1
               ? 'पूर्व अध्याय'
@@ -1698,71 +1867,77 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
           </span>
         </button>
 
-        {/* Direct Page Jump Input */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const p = parseInt(jumpPageInput, 10);
-            if (!isNaN(p)) {
-              if (activeStotraScope && stotraRange) {
-                if (p >= 1 && p <= stotraRange.totalPages) {
-                  setCurrentPageIndex(activeStotraScope.pdfPage - 1 + (p - 1));
-                } else if (p >= 1 && p <= pages.length) {
-                  setCurrentPageIndex(p - 1);
-                }
-              } else if (activeChapterScope) {
-                const chapterPageCount = activeChapterScope.endPage - activeChapterScope.startPage + 1;
-                if (p >= 1 && p <= chapterPageCount) {
-                  setCurrentPageIndex(activeChapterScope.startPage - 1 + (p - 1));
-                } else if (p >= 1 && p <= pages.length) {
-                  setCurrentPageIndex(p - 1);
-                }
-              } else if (p >= 1 && p <= pages.length) {
-                setCurrentPageIndex(p - 1);
-              }
-            }
-          }}
-          className="flex items-center space-x-1.5 text-xs font-serifDevanagari"
-        >
-          <span className="text-white font-bold hidden sm:inline">
-            {activeStotraScope ? 'स्तोत्र पत्र' : activeChapterScope ? 'अध्याय पत्र' : 'पत्रम्'}
-          </span>
-          <input
-            type="number"
-            min="1"
-            max={
-              activeStotraScope && stotraRange
-                ? stotraRange.totalPages
-                : activeChapterScope
-                ? (activeChapterScope.endPage - activeChapterScope.startPage + 1)
-                : pages.length
-            }
-            value={jumpPageInput}
-            onChange={(e) => setJumpPageInput(e.target.value)}
-            className="w-14 text-center font-mono bg-black/80 text-white px-1 py-1 rounded-lg border border-neutral-700 text-xs focus:outline-none focus:border-sacred-500 font-bold"
-          />
-          <span className="text-neutral-400 font-mono">
-            / {activeStotraScope && stotraRange ? stotraRange.totalPages : activeChapterScope ? (activeChapterScope.endPage - activeChapterScope.startPage + 1) : pages.length}
-          </span>
-          {(activeStotraScope || activeChapterScope) && (
-            <span className="text-neutral-500 text-[10px] font-mono hidden md:inline ml-1" title="सम्पूर्ण ग्रन्थ पत्र संख्या">
-              (सकल {currentPageIndex + 1}/{pages.length})
+        {/* Stotra navigation or Page Jump */}
+        {activeStotraScope && isBrihatStotraBook ? (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsTocOpen(true)}
+              className="px-3 py-1.5 rounded-xl bg-sacred-800 hover:bg-sacred-700 text-amber-200 border border-sacred-600/70 text-xs font-devanagari font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>समग्र स्तोत्र अनुक्रमणिका</span>
+            </button>
+            <span className="text-amber-300 text-xs font-serifDevanagari font-bold hidden sm:inline truncate max-w-[200px]">
+              ॥ {activeStotraScope.title} ॥
             </span>
-          )}
-          <button
-            type="submit"
-            className="px-2.5 py-1 rounded-lg bg-sacred-700 hover:bg-sacred-600 text-white text-[11px] font-devanagari font-semibold transition-colors shadow cursor-pointer"
+          </div>
+        ) : (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const p = parseInt(jumpPageInput, 10);
+              if (!isNaN(p)) {
+                if (activeChapterScope) {
+                  const chapterPageCount = activeChapterScope.endPage - activeChapterScope.startPage + 1;
+                  if (p >= 1 && p <= chapterPageCount) {
+                    setCurrentPageIndex(activeChapterScope.startPage - 1 + (p - 1));
+                    return;
+                  }
+                }
+                if (p >= 1 && p <= pages.length) {
+                  setCurrentPageIndex(p - 1);
+                }
+              }
+            }}
+            className="flex items-center space-x-1.5 text-xs font-serifDevanagari"
           >
-            जाएँ
-          </button>
-        </form>
+            <span className="text-white font-bold hidden sm:inline">
+              {activeChapterScope ? 'अध्याय पत्र' : 'पत्रम्'}
+            </span>
+            <input
+              type="number"
+              min="1"
+              max={activeChapterScope ? (activeChapterScope.endPage - activeChapterScope.startPage + 1) : pages.length}
+              value={jumpPageInput}
+              onChange={(e) => setJumpPageInput(e.target.value)}
+              className="w-14 text-center font-mono bg-black/80 text-white px-1 py-1 rounded-lg border border-neutral-700 text-xs focus:outline-none focus:border-sacred-500 font-bold"
+            />
+            <span className="text-neutral-400 font-mono">
+              / {activeChapterScope ? (activeChapterScope.endPage - activeChapterScope.startPage + 1) : pages.length}
+            </span>
+            {activeChapterScope && (
+              <span className="text-neutral-500 text-[10px] font-mono hidden md:inline ml-1" title="सम्पूर्ण ग्रन्थ पत्र संख्या">
+                (सकल {currentPageIndex + 1}/{pages.length})
+              </span>
+            )}
+            <button
+              type="submit"
+              className="px-2.5 py-1 rounded-lg bg-sacred-700 hover:bg-sacred-600 text-white text-[11px] font-devanagari font-semibold transition-colors shadow cursor-pointer"
+            >
+              जाएँ
+            </button>
+          </form>
+        )}
 
         <button
           onClick={() => {
-            if (activeStotraScope && stotraRange && currentPageIndex >= stotraRange.endPage - 1) {
-              if (stotraRange.nextStotra) {
-                setActiveStotraScope(stotraRange.nextStotra);
-                setCurrentPageIndex(stotraRange.nextStotra.pdfPage - 1);
+            if (activeStotraScope && isBrihatStotraBook) {
+              const idx = BRIHAT_STOTRAS.findIndex(s => s.id === activeStotraScope.id);
+              if (idx < BRIHAT_STOTRAS.length - 1) {
+                const next = BRIHAT_STOTRAS[idx + 1];
+                setActiveStotraScope(next);
+                setCurrentPageIndex(next.pdfPage - 1);
               }
               return;
             }
@@ -1777,8 +1952,8 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             setCurrentPageIndex(prev => Math.min(pages.length - 1, prev + 1));
           }}
           disabled={
-            activeStotraScope
-              ? (!stotraRange?.nextStotra && currentPageIndex >= pages.length - 1)
+            activeStotraScope && isBrihatStotraBook
+              ? activeStotraScope.id === BRIHAT_STOTRAS[BRIHAT_STOTRAS.length - 1].id
               : activeChapterScope
               ? (activeChapterScope.id === GITA_SECTIONS.length && currentPageIndex >= pages.length - 1)
               : currentPageIndex === pages.length - 1
@@ -1786,7 +1961,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
           className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed font-medium text-xs text-white transition-all active:scale-95 cursor-pointer"
         >
           <span className="font-devanagari font-semibold hidden sm:inline">
-            {activeStotraScope && stotraRange && currentPageIndex >= stotraRange.endPage - 1
+            {activeStotraScope && isBrihatStotraBook
               ? 'अग्रिम स्तोत्र'
               : activeChapterScope && currentPageIndex >= activeChapterScope.endPage - 1
               ? 'अग्रिम अध्याय'

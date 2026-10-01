@@ -23,16 +23,16 @@ export interface BrihatStotraItem {
 }
 
 export const BRIHAT_CATEGORIES: BrihatStotraCategory[] = [
-  { id: 'all', name: 'सम्पूर्ण २२४ स्तोत्र', icon: '🕉️', count: 224 },
+  { id: 'all', name: 'सम्पूर्ण स्तोत्र', icon: '🕉️', count: 224 },
   { id: 'ganesha', name: 'गणेशस्तोत्राणि', icon: '🐘', count: 10 },
   { id: 'vishnu', name: 'विष्णुस्तोत्राणि', icon: '🪷', count: 28 },
   { id: 'shiva', name: 'शिवस्तोत्राणि', icon: '🔱', count: 30 },
   { id: 'surya', name: 'सूर्यस्तोत्राणि', icon: '☀️', count: 8 },
   { id: 'devi', name: 'देवीस्तोत्राणि', icon: '🌺', count: 26 },
-  { id: 'avatara', name: 'अवतार व गुरु स्तोत्राणि', icon: '✨', count: 16 },
+  { id: 'avatara', name: 'अवतार व गुरु स्तोत्राणि', icon: '✨', count: 18 },
   { id: 'rama', name: 'रामस्तोत्राणि', icon: '🏹', count: 13 },
   { id: 'maruti', name: 'मारुतिस्तोत्राणि', icon: '🚩', count: 5 },
-  { id: 'krishna', name: 'कृष्णस्तोत्राणि', icon: '🦚', count: 26 },
+  { id: 'krishna', name: 'कृष्णस्तोत्राणि', icon: '🦚', count: 24 },
   { id: 'ganga', name: 'गङ्गादि तीर्थस्तोत्राणि', icon: '🌊', count: 15 },
   { id: 'vedanta', name: 'वेदान्तस्तोत्राणि', icon: '📜', count: 14 },
   { id: 'navagraha', name: 'नवग्रहस्तोत्राणि', icon: '🪐', count: 14 },
@@ -589,10 +589,10 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
   {
     "id": 69,
     "stotraNumber": 69,
-    "title": "सूर्यकवचम्",
+    "title": "सूर्यकवचम् (त्रैलोक्यमङ्गलम्)",
     "category": "surya",
     "bookPage": 104,
-    "pdfPage": 98
+    "pdfPage": 96
   },
   {
     "id": 70,
@@ -600,20 +600,20 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
     "title": "सूर्यमण्डलस्तोत्रम्",
     "category": "surya",
     "bookPage": 106,
-    "pdfPage": 100
+    "pdfPage": 106
   },
   {
     "id": 71,
     "stotraNumber": 71,
-    "title": "आदित्यहृदयस्तोत्रम् (वाल्मीकीय)",
+    "title": "आदित्यहृदयस्तोत्रम् (भविष्यपुराण)",
     "category": "surya",
     "bookPage": 107,
-    "pdfPage": 101
+    "pdfPage": 98
   },
   {
     "id": 72,
     "stotraNumber": 72,
-    "title": "आदित्यहृदयस्तोत्रम् (भविष्यपुराण)",
+    "title": "आदित्यहृदयस्तोत्रम् (वाल्मीकीय)",
     "category": "surya",
     "bookPage": 114,
     "pdfPage": 108
@@ -909,7 +909,7 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
   {
     "id": 109,
     "stotraNumber": 109,
-    "title": "आर्तत्राणनारायणाष्टादशकम्",
+    "title": "आर्तत्राणपरायणनारायणाष्टादशकम्",
     "category": "avatara",
     "bookPage": 165,
     "pdfPage": 159
@@ -1021,7 +1021,7 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
   {
     "id": 123,
     "stotraNumber": 123,
-    "title": "ब्रह्मदेवकृतरामस्तुतिः",
+    "title": "ब्रह्मोक्तरामस्तुतिः",
     "category": "rama",
     "bookPage": 187,
     "pdfPage": 181
@@ -1101,7 +1101,7 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
   {
     "id": 133,
     "stotraNumber": 133,
-    "title": "हनुमत्स्तोत्रम्",
+    "title": "हनुमद्वडवानलस्तोत्रम्",
     "category": "maruti",
     "bookPage": 196,
     "pdfPage": 190
@@ -1317,7 +1317,7 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
   {
     "id": 160,
     "stotraNumber": 160,
-    "title": "श्रीकृष्णकवचम्",
+    "title": "पाण्डुरङ्गस्तोत्रम् (पाण्डुरङ्गाष्टकम्)",
     "category": "krishna",
     "bookPage": 225,
     "pdfPage": 219
@@ -1325,18 +1325,18 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
   {
     "id": 161,
     "stotraNumber": 161,
-    "title": "कार्तवीर्यस्तोत्रम्",
-    "category": "krishna",
-    "bookPage": 227,
-    "pdfPage": 221
+    "title": "कल्किस्तवः (नृपकृतः)",
+    "category": "avatara",
+    "bookPage": 226,
+    "pdfPage": 220
   },
   {
     "id": 162,
     "stotraNumber": 162,
-    "title": "कार्तवीर्यकवचम्",
-    "category": "krishna",
-    "bookPage": 228,
-    "pdfPage": 222
+    "title": "कल्किस्तोत्रम् (सुशान्ताकृतम्)",
+    "category": "avatara",
+    "bookPage": 227,
+    "pdfPage": 221
   },
   {
     "id": 163,
@@ -1477,7 +1477,7 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
   {
     "id": 180,
     "stotraNumber": 180,
-    "title": "धनाष्टकम्",
+    "title": "धन्याष्टकम्",
     "category": "vedanta",
     "bookPage": 243,
     "pdfPage": 237
@@ -1549,7 +1549,7 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
   {
     "id": 189,
     "stotraNumber": 189,
-    "title": "परापूजा",
+    "title": "परा पूजा",
     "category": "vedanta",
     "bookPage": 255,
     "pdfPage": 249
@@ -1557,7 +1557,7 @@ export const BRIHAT_STOTRAS: BrihatStotraItem[] = [
   {
     "id": 190,
     "stotraNumber": 190,
-    "title": "संक्षिप्त (मूल) रामायणम्",
+    "title": "मूलरामायणम्",
     "category": "vedanta",
     "bookPage": 256,
     "pdfPage": 250

@@ -65,13 +65,13 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
         <div className="p-4 sm:p-5 border-b border-neutral-800 bg-gradient-to-b from-neutral-900 to-neutral-950 flex items-center justify-between shrink-0">
           <div className="space-y-0.5">
             <div className="flex items-center space-x-2">
-              <span className="text-2xl text-sacred-400">📖</span>
+              <span className="text-2xl text-sacred-400">🕉️</span>
               <h2 className="text-lg sm:text-xl font-bold font-serifDevanagari text-white">
-                बृहत्स्तोत्ररत्नाकरः • २२४ स्तोत्र अनुक्रमणिका
+                स्तोत्र दर्शन • इष्टदेवता पावन अनुक्रमणिका
               </h2>
             </div>
             <p className="text-xs text-neutral-300 font-devanagari">
-              सचित्र पारम्परिक महास्तोत्र संग्रह • प्रामाणिक पाठ
+              समस्त आराध्य देवी-देवताओं के प्रामाणिक स्तोत्र, कवच एवं सहस्रनाम
             </p>
           </div>
           <button
@@ -92,7 +92,7 @@ export const BrihatStotraTableOfContents: React.FC<BrihatStotraTableOfContentsPr
               <strong className="text-white font-bold">
                 #{currentStotra.stotraNumber} {currentStotra.title}
               </strong>
-              <span className="text-neutral-300 text-[11px]">(पृष्ठ {currentStotra.bookPage})</span>
+              <span className="text-neutral-400 text-[11px] font-mono">(पत्र {currentStotra.pdfPage})</span>
             </div>
             <button
               onClick={() => onJumpToPage(currentStotra.pdfPage)}
