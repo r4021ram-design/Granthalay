@@ -60,10 +60,10 @@ export const CANONICAL_STOTRA_GENRES: StotraGenre[] = [
 ];
 
 export function classifyStotraGenre(title: string): StotraGenreId {
-  const t = title.trim().toLowerCase();
-  if (t.includes('कवच') || t.includes('कवचम्')) return 'kavacha';
-  if (t.includes('अष्टक') || t.includes('अष्टकम्') || t.includes('अष्टकः')) return 'ashtaka';
-  if (t.includes('पञ्चक') || t.includes('पञ्चकम्') || t.includes('पञ्चरत्न') || t.includes('पंचक')) return 'panchaka';
+  const t = title.trim();
+  if (t.includes('कवच')) return 'kavacha';
+  if (/ष्टक/.test(t)) return 'ashtaka';
+  if (/पञ्चक|पञ्चरत्न|पंचक/.test(t)) return 'panchaka';
   if (t.includes('मानसपूजा') || t.includes('मानस पूजा') || t.includes('मानसिक')) return 'manasapuja';
   if (
     t.includes('सहस्रनाम') ||
@@ -73,7 +73,7 @@ export function classifyStotraGenre(title: string): StotraGenreId {
     t.includes('द्वादशनाम') ||
     t.includes('नामावलि')
   ) return 'namavali';
-  if (t.includes('हृदय') || t.includes('हृदयम्')) return 'hridaya';
+  if (/हृदय|द्धृदय/.test(t)) return 'hridaya';
   return 'stotra';
 }
 
@@ -238,6 +238,16 @@ export const CANONICAL_DEITIES: DeitySphere[] = [
     mantra: '॥ ॐ ब्रह्मा मुरारिस्त्रिपुरान्तकारी भानुः शशी भूमिसुतो बुधश्च ॥',
   },
   {
+    id: 'kartikeya',
+    name: 'भगवान् सुब्रह्मण्य / कार्तिकेय',
+    sanskritTitle: 'सुब्रह्मण्यस्तोत्राणि',
+    icon: '🪶',
+    badge: 'bg-emerald-950 text-emerald-300 border-emerald-800',
+    gradient: 'from-emerald-950/90 via-teal-950/60 to-neutral-900',
+    border: 'border-emerald-800/60 hover:border-emerald-500',
+    mantra: '॥ ॐ षण्मुखाय नमः ॥',
+  },
+  {
     id: 'vedanta',
     name: 'वेदान्त एवं आत्मज्ञान',
     sanskritTitle: 'वेदान्तस्तोत्राणि',
@@ -291,15 +301,8 @@ export function normalizeStotraTitleForDedup(title: string): string {
   return title
     .replace(/^श्री/g, '')
     .replace(/\s*\([^)]*\)/g, '')
-    .replace(/स्तोत्रम्?$/g, '')
-    .replace(/अष्टकम्?$/g, '')
-    .replace(/षट्कम्?$/g, '')
-    .replace(/पञ्चकम्?$/g, '')
-    .replace(/पञ्चरत्नम्?$/g, '')
-    .replace(/सहस्रनामम्?$/g, '')
-    .replace(/कवचम्?$/g, '')
-    .replace(/हृदयम्?$/g, '')
     .replace(/म्$/g, '')
+    .replace(/ः$/g, '')
     .replace(/्$/g, '')
     .replace(/ङ्/g, 'ं')
     .replace(/ञ्/g, 'ं')
@@ -338,10 +341,16 @@ export function getAllStotrasForDarshan(deityId?: string, genreId?: StotraGenreI
 
   for (const supp of supplementalItems) {
     const normS = normalizeStotraTitleForDedup(supp.title);
+    const suppGenre = supp.genre || classifyStotraGenre(supp.title);
+
     const match = baseItems.find((b) => {
       if (b.deityId !== supp.deityId && supp.deityId !== 'sankeerna' && b.deityId !== 'sankeerna') return false;
+      const bGenre = b.genre || classifyStotraGenre(b.title);
+      // Genres must match unless both are general stotras
+      if (suppGenre !== bGenre && suppGenre !== 'stotra' && bGenre !== 'stotra') return false;
+
       const normB = normalizeStotraTitleForDedup(b.title);
-      return normB === normS || (normS.length >= 4 && normB.includes(normS)) || (normB.length >= 4 && normS.includes(normB));
+      return normB === normS || (normS.length >= 6 && normB.includes(normS)) || (normB.length >= 6 && normS.includes(normB));
     });
 
     if (match) {

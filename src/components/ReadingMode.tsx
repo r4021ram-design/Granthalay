@@ -47,6 +47,8 @@ import { BRIHAT_STOTRAS, BRIHAT_CATEGORIES, BrihatStotraItem } from '../data/bri
 import { CANONICAL_DEITIES, ScriptureItem, findStotraById } from '../data/darshanTaxonomy.js';
 import type { Book, Page } from '../../shared/types.js';
 import { ChhandasPaniniStudio } from './ChhandasPaniniStudio.js';
+import { useShlokaSelection } from '../utils/useShlokaSelection.js';
+import { ShlokaMeaningPopover } from './ShlokaMeaningPopover.js';
 
 interface ReadingModeProps {
   bookId: string;
@@ -134,6 +136,16 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   const [isHeaderHidden, setIsHeaderHidden] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isStudioModalOpen, setIsStudioModalOpen] = useState<boolean>(false);
+
+  // Interactive Shloka Selection & Paninian Vyakarana State
+  const readingContainerRef = useRef<HTMLDivElement>(null);
+  const {
+    selectedText,
+    selectionRect,
+    isActive: isSelectionActive,
+    shlokaNumber: selectedShlokaNum,
+    clearSelection,
+  } = useShlokaSelection(readingContainerRef);
 
   const isCustomOrSupp = Boolean(
     customStotra ||
@@ -1772,7 +1784,10 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
       )}
 
       {/* Main Reading Container (Text / Path Mode Only) */}
-      <main className="max-w-4xl sm:max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8 w-full flex-grow flex flex-col items-center justify-start">
+      <main
+        ref={readingContainerRef}
+        className="max-w-4xl sm:max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8 w-full flex-grow flex flex-col items-center justify-start select-text"
+      >
         <div
           style={getPothiSheetStyle()}
           className="pothi-manuscript-border rounded-3xl p-5 sm:p-8 w-full transition-all relative overflow-hidden my-2"
@@ -2152,6 +2167,17 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Interactive Shloka Meaning & Paninian Vyakarana Popover */}
+      {isSelectionActive && selectionRect && selectedText && (
+        <ShlokaMeaningPopover
+          selectedText={selectedText}
+          selectionRect={selectionRect}
+          shlokaNumber={selectedShlokaNum}
+          stotraId={book?.id || customStotra?.id?.toString() || bookId}
+          onClose={clearSelection}
+        />
       )}
     </div>
   );

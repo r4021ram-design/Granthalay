@@ -25,7 +25,8 @@ storage/exports/
 
 # OCR Models & Reference Documents (Large Binary Files)
 *.traineddata
-Docs/
+Docs/**
+!Docs/*.md
 *.pdf
 
 # Logs & Temporary Files

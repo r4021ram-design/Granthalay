@@ -7,6 +7,15 @@
 
 import { ScriptureItem } from './darshanTaxonomy.js';
 import { CANONICAL_PARAYANA_STOTRAS } from './canonicalParayanaStotras.js';
+import { EXPANDED_SHIVA_STOTRAS } from './stotras/shivaStotras.js';
+import { EXPANDED_RAMA_STOTRAS } from './stotras/ramaStotras.js';
+import { EXPANDED_MARUTI_STOTRAS } from './stotras/marutiStotras.js';
+import { EXPANDED_GANESHA_STOTRAS } from './stotras/ganeshaStotras.js';
+import { EXPANDED_DEVI_STOTRAS } from './stotras/deviStotras.js';
+import { EXPANDED_KRISHNA_STOTRAS } from './stotras/krishnaStotras.js';
+import { EXPANDED_SURYA_NAVAGRAHA_STOTRAS } from './stotras/suryaNavagrahaStotras.js';
+import { EXPANDED_KARTIKEYA_STOTRAS } from './stotras/kartikeyaStotras.js';
+import { EXPANDED_AVATARA_GURU_STOTRAS } from './stotras/avataraGuruStotras.js';
 
 const BASE_SUPPLEMENTAL_STOTRAS: ScriptureItem[] = [
   // --------------------------------------------------------------------------
@@ -1677,4 +1686,13 @@ const BASE_SUPPLEMENTAL_STOTRAS: ScriptureItem[] = [
 export const SUPPLEMENTAL_CANONICAL_STOTRAS: ScriptureItem[] = [
   ...BASE_SUPPLEMENTAL_STOTRAS,
   ...CANONICAL_PARAYANA_STOTRAS,
+  ...EXPANDED_SHIVA_STOTRAS,
+  ...EXPANDED_RAMA_STOTRAS,
+  ...EXPANDED_MARUTI_STOTRAS,
+  ...EXPANDED_GANESHA_STOTRAS,
+  ...EXPANDED_DEVI_STOTRAS,
+  ...EXPANDED_KRISHNA_STOTRAS,
+  ...EXPANDED_SURYA_NAVAGRAHA_STOTRAS,
+  ...EXPANDED_KARTIKEYA_STOTRAS,
+  ...EXPANDED_AVATARA_GURU_STOTRAS,
 ];

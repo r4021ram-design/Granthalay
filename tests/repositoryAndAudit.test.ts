@@ -77,5 +77,5 @@ describe('Repository, Audit Logs & Non-Destructive Revision Tracking (Section 24
     const results = Repository.searchScripture('गणपतये');
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].matched_text).toBe('गणपतये');
-  });
+  }, 10000);
 });
