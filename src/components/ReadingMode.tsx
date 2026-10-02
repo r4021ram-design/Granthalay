@@ -49,6 +49,8 @@ import type { Book, Page } from '../../shared/types.js';
 import { ChhandasPaniniStudio } from './ChhandasPaniniStudio.js';
 import { useShlokaSelection } from '../utils/useShlokaSelection.js';
 import { ShlokaMeaningPopover } from './ShlokaMeaningPopover.js';
+import { ScriptureAudioPlayer } from './ScriptureAudioPlayer.js';
+import { getScriptureAudioTrack } from '../data/durgaSaptashatiAudio.js';
 
 interface ReadingModeProps {
   bookId: string;
@@ -136,6 +138,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   const [isHeaderHidden, setIsHeaderHidden] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isStudioModalOpen, setIsStudioModalOpen] = useState<boolean>(false);
+  const [isAudioPlayerOpen, setIsAudioPlayerOpen] = useState<boolean>(true);
 
   // Interactive Shloka Selection & Paninian Vyakarana State
   const readingContainerRef = useRef<HTMLDivElement>(null);
@@ -244,6 +247,13 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
     const pageNum = currentPageIndex + 1;
     return SAPTASHATI_SECTIONS.find(s => pageNum >= s.startPage && pageNum <= s.endPage) || null;
   }, [isSaptashatiBook, currentPageIndex]);
+
+  // Derive current audio track for audio-enabled scriptures
+  const currentAudioTrack = useMemo(() => {
+    const pageNum = currentPageIndex + 1;
+    const currentBookId = book?.id || bookId;
+    return getScriptureAudioTrack(currentBookId, pageNum);
+  }, [book?.id, bookId, currentPageIndex]);
 
   // Derive current Brihat Stotra from activeStotraScope or current page
   const currentBrihatStotra = useMemo(() => {
@@ -1732,6 +1742,22 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             <span>{isPadachhedaMode ? 'पदच्छेद (विभक्त शब्द)' : 'पदच्छेद'}</span>
           </button>
 
+          {/* Sacred Audio Recitation Toggle */}
+          {currentAudioTrack && (
+            <button
+              onClick={() => setIsAudioPlayerOpen(prev => !prev)}
+              className={`px-3 py-1 rounded-xl border text-xs font-devanagari font-bold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer ${
+                isAudioPlayerOpen
+                  ? 'bg-rose-900 border-rose-600 text-white shadow-md'
+                  : 'bg-white/10 hover:bg-white/20 border-white/20 text-neutral-200'
+              }`}
+              title={isAudioPlayerOpen ? "ऑडियो प्लेयर छिपाएँ" : "शास्त्रोक्त पाठ सुनें"}
+            >
+              <span>🎧</span>
+              <span>{isAudioPlayerOpen ? 'ऑडियो चालू' : 'पाठ सुनें'}</span>
+            </button>
+          )}
+
           {/* Karmakanda Ritual Action Toggle */}
           <button
             onClick={() => setIsKarmakandaMode(!isKarmakandaMode)}
@@ -1786,7 +1812,9 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
       {/* Main Reading Container (Text / Path Mode Only) */}
       <main
         ref={readingContainerRef}
-        className="max-w-4xl sm:max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8 w-full flex-grow flex flex-col items-center justify-start select-text"
+        className={`max-w-4xl sm:max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8 w-full flex-grow flex flex-col items-center justify-start select-text ${
+          isAudioPlayerOpen && currentAudioTrack ? 'pb-28 sm:pb-36' : 'pb-8'
+        }`}
       >
         <div
           style={getPothiSheetStyle()}
@@ -1905,7 +1933,9 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
       </main>
 
       {/* Sticky Bottom Navigation Bar */}
-      <footer className="sticky bottom-0 z-40 border-t border-black/20 bg-black/70 backdrop-blur-md px-4 py-3 flex items-center justify-between max-w-2xl mx-auto rounded-t-2xl shadow-2xl w-full">
+      <footer className={`sticky z-30 border-t border-black/20 bg-black/70 backdrop-blur-md px-4 py-3 flex items-center justify-between max-w-2xl mx-auto rounded-t-2xl shadow-2xl w-full transition-all duration-300 ${
+        isAudioPlayerOpen && currentAudioTrack ? 'bottom-20 sm:bottom-24 mb-1' : 'bottom-0'
+      }`}>
         <button
           onClick={() => {
             if (activeStotraScope && isBrihatStotraBook) {
@@ -2177,6 +2207,27 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
           shlokaNumber={selectedShlokaNum}
           stotraId={book?.id || customStotra?.id?.toString() || bookId}
           onClose={clearSelection}
+        />
+      )}
+
+      {/* Sacred Recitation Master Audio Player */}
+      {isAudioPlayerOpen && currentAudioTrack && (
+        <ScriptureAudioPlayer
+          track={currentAudioTrack}
+          readingTheme={readingTheme}
+          onNextTrack={() => {
+            if (currentPageIndex < pages.length - 1) {
+              setCurrentPageIndex(prev => prev + 1);
+            }
+          }}
+          onPrevTrack={() => {
+            if (currentPageIndex > 0) {
+              setCurrentPageIndex(prev => prev - 1);
+            }
+          }}
+          hasNextTrack={currentPageIndex < pages.length - 1}
+          hasPrevTrack={currentPageIndex > 0}
+          onClose={() => setIsAudioPlayerOpen(false)}
         />
       )}
     </div>

@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   List,
   ArrowRight,
+  Volume2,
 } from 'lucide-react';
 import { HinduGranthalayLogo } from './HinduGranthalayLogo.js';
 import type { Book, BookStats } from '../../shared/types.js';
@@ -348,6 +349,208 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
             <span>📖</span>
             <span>सम्पूर्ण ग्रन्थ</span>
           </button>
+        </div>
+      </div>
+
+      {/* शारदीय नवरात्रि एवं महादेवी पावन पारायण (विशेष स्तवन व सस्वर पाठ) */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#240606] via-[#160706] to-[#0D0404] border border-rose-900/60 p-5 sm:p-6 shadow-2xl space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-rose-950/80 border border-rose-700/50 text-rose-300 text-xs font-devanagari">
+              <span>🌺</span>
+              <span>शारदीय नवरात्रि एवं महालक्ष्मी आराधना • प्रामाणिक पारायण व शास्त्रीय ऑडियो</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-amber-100 font-serifDevanagari">
+              महादेवी पावन स्तवन एवं सस्वर पारायण
+            </h2>
+            <p className="text-xs text-rose-200/70 font-devanagari">
+              सस्वर एवं शास्त्रसम्मत शुद्ध पाठ — प्रत्येक अध्याय व श्लोक के साथ प्रामाणिक ऑडियो प्रवाह।
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {/* 1. Sri Durga Saptashati */}
+          <div
+            onClick={() => onSelectBookForReading('granth-durga-saptashati')}
+            className="group p-4 rounded-2xl bg-gradient-to-b from-rose-950/70 via-red-950/40 to-neutral-950 border border-rose-800/40 hover:border-rose-500/80 transition-all shadow-lg hover:shadow-rose-950/50 cursor-pointer flex flex-col justify-between"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xl">🗡️</span>
+                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800">
+                  <Volume2 className="w-2.5 h-2.5" />
+                  <span>२८ ऑडियो</span>
+                </span>
+              </div>
+              <h3 className="font-bold text-amber-100 font-serifDevanagari group-hover:text-amber-300 transition-colors">
+                श्रीदुर्गासप्तशती
+              </h3>
+              <p className="text-[11px] text-neutral-300 font-devanagari line-clamp-2">
+                सम्पूर्ण २८ पावन अध्याय, पूर्वाङ्ग, उत्तरङ्ग, सिद्धकुञ्जिका व क्षमापन।
+              </p>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-rose-900/40 flex items-center justify-between text-xs text-rose-300 font-devanagari font-medium group-hover:text-amber-200">
+              <span>पठन व श्रवण</span>
+              <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* 2. Sri Suktam */}
+          <div
+            onClick={() => onSelectBookForReading('granth-sri-suktam')}
+            className="group p-4 rounded-2xl bg-gradient-to-b from-amber-950/70 via-orange-950/40 to-neutral-950 border border-amber-800/40 hover:border-amber-500/80 transition-all shadow-lg hover:shadow-amber-950/50 cursor-pointer flex flex-col justify-between"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xl">🪷</span>
+                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-800">
+                  <Volume2 className="w-2.5 h-2.5" />
+                  <span>११:४४ सस्वर</span>
+                </span>
+              </div>
+              <h3 className="font-bold text-amber-100 font-serifDevanagari group-hover:text-amber-300 transition-colors">
+                श्रीसूक्तम्
+              </h3>
+              <p className="text-[11px] text-neutral-300 font-devanagari line-clamp-2">
+                ऋग्वेदीय खिलभाग सस्वर १६ मन्त्र एवं महाफलश्रुति (हिरण्यवर्णां हरिणीं...)।
+              </p>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-amber-900/40 flex items-center justify-between text-xs text-amber-300 font-devanagari font-medium group-hover:text-amber-200">
+              <span>पठन व श्रवण</span>
+              <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* 3. Kanakadhara Stotram */}
+          <div
+            onClick={() => onSelectBookForReading('granth-kanakadhara-stotram')}
+            className="group p-4 rounded-2xl bg-gradient-to-b from-yellow-950/70 via-amber-950/40 to-neutral-950 border border-yellow-800/40 hover:border-yellow-500/80 transition-all shadow-lg hover:shadow-yellow-950/50 cursor-pointer flex flex-col justify-between"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xl">🪙</span>
+                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-yellow-950 text-yellow-300 border border-yellow-800">
+                  <Volume2 className="w-2.5 h-2.5" />
+                  <span>०९:२७ ऑडियो</span>
+                </span>
+              </div>
+              <h3 className="font-bold text-amber-100 font-serifDevanagari group-hover:text-amber-300 transition-colors">
+                श्रीकनकधारास्तोत्रम्
+              </h3>
+              <p className="text-[11px] text-neutral-300 font-devanagari line-clamp-2">
+                आदि शङ्कराचार्य विरचित स्वर्णवृष्टिप्रदायक २१ वसन्ततिलका श्लोक।
+              </p>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-yellow-900/40 flex items-center justify-between text-xs text-yellow-300 font-devanagari font-medium group-hover:text-amber-200">
+              <span>पठन व श्रवण</span>
+              <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* 4. Saundaryalahari */}
+          <div
+            onClick={() => onSelectBookForReading('granth-saundarya-lahari')}
+            className="group p-4 rounded-2xl bg-gradient-to-b from-fuchsia-950/70 via-rose-950/40 to-neutral-950 border border-fuchsia-800/40 hover:border-fuchsia-500/80 transition-all shadow-lg hover:shadow-fuchsia-950/50 cursor-pointer flex flex-col justify-between"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xl">🌸</span>
+                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-fuchsia-950 text-fuchsia-300 border border-fuchsia-800">
+                  <Volume2 className="w-2.5 h-2.5" />
+                  <span>६७:३० ऑडियो</span>
+                </span>
+              </div>
+              <h3 className="font-bold text-amber-100 font-serifDevanagari group-hover:text-amber-300 transition-colors">
+                सौन्दर्यलहरी
+              </h3>
+              <p className="text-[11px] text-neutral-300 font-devanagari line-clamp-2">
+                आनन्दलहरी (१-४१) एवं सौन्दर्यलहरी (४२-१००) सम्पूर्ण १०० शिखरिणी श्लोक।
+              </p>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-fuchsia-900/40 flex items-center justify-between text-xs text-fuchsia-300 font-devanagari font-medium group-hover:text-amber-200">
+              <span>पठन व श्रवण</span>
+              <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* 5. Sri Durga Saptashloki */}
+          <div
+            onClick={() => onSelectBookForReading('granth-durga-saptashloki')}
+            className="group p-4 rounded-2xl bg-gradient-to-b from-rose-950/70 via-red-950/40 to-neutral-950 border border-rose-800/40 hover:border-rose-500/80 transition-all shadow-lg hover:shadow-rose-950/50 cursor-pointer flex flex-col justify-between"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xl">🌺</span>
+                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-800">
+                  <Volume2 className="w-2.5 h-2.5" />
+                  <span>०२:४४ ऑडियो</span>
+                </span>
+              </div>
+              <h3 className="font-bold text-amber-100 font-serifDevanagari group-hover:text-amber-300 transition-colors">
+                श्रीदुर्गासप्तश्लोकी
+              </h3>
+              <p className="text-[11px] text-neutral-300 font-devanagari line-clamp-2">
+                शिव-पार्वती सम्वाद, विनियोग, ध्यान एवं भगवती दुर्गा के सात कल्याणकारी मूल मन्त्र।
+              </p>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-rose-900/40 flex items-center justify-between text-xs text-rose-300 font-devanagari font-medium group-hover:text-amber-200">
+              <span>पठन व श्रवण</span>
+              <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* 6. Sri Chandika Stotram (Complete 12 Verses) */}
+          <div
+            onClick={() => onSelectBookForReading('granth-chandika-stotram')}
+            className="group p-4 rounded-2xl bg-gradient-to-b from-red-950/70 via-orange-950/40 to-neutral-950 border border-red-800/40 hover:border-red-500/80 transition-all shadow-lg hover:shadow-red-950/50 cursor-pointer flex flex-col justify-between"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xl">⚔️</span>
+                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-red-950 text-red-300 border border-red-800">
+                  <FileText className="w-2.5 h-2.5" />
+                  <span>सम्पूर्ण १२ श्लोक</span>
+                </span>
+              </div>
+              <h3 className="font-bold text-amber-100 font-serifDevanagari group-hover:text-amber-300 transition-colors">
+                श्रीचण्डिकास्तोत्रम्
+              </h3>
+              <p className="text-[11px] text-neutral-300 font-devanagari line-clamp-2">
+                मार्कण्डेय पुराणीय तीव्रचण्डिका स्तोत्र — ध्यान, १२ प्रचण्ड बीजमन्त्र श्लोक व मन्त्रसिद्धि।
+              </p>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-red-900/40 flex items-center justify-between text-xs text-red-300 font-devanagari font-medium group-hover:text-amber-200">
+              <span>पठन व स्वाध्याय</span>
+              <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* 7. Sri Arjuna Krita Durga Stuti */}
+          <div
+            onClick={() => onSelectBookForReading('granth-arjuna-durga-stuti')}
+            className="group p-4 rounded-2xl bg-gradient-to-b from-indigo-950/70 via-rose-950/40 to-neutral-950 border border-indigo-800/40 hover:border-indigo-500/80 transition-all shadow-lg hover:shadow-indigo-950/50 cursor-pointer flex flex-col justify-between"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xl">🏹</span>
+                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800">
+                  <Volume2 className="w-2.5 h-2.5" />
+                  <span>०१:५६ ऑडियो</span>
+                </span>
+              </div>
+              <h3 className="font-bold text-amber-100 font-serifDevanagari group-hover:text-amber-300 transition-colors">
+                श्रीअर्जुनकृत दुर्गास्तोत्रम्
+              </h3>
+              <p className="text-[11px] text-neutral-300 font-devanagari line-clamp-2">
+                महाभारत भीष्मपर्व (२३) — श्रीकृष्ण-निर्देशित स्तुति व भगवती का साक्षात् विजय-वरदान।
+              </p>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-indigo-900/40 flex items-center justify-between text-xs text-indigo-300 font-devanagari font-medium group-hover:text-amber-200">
+              <span>पठन व श्रवण</span>
+              <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
         </div>
       </div>
 

@@ -9,6 +9,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { SAPTASHATI_SECTIONS, SaptashatiSection } from '../data/durgaSaptashatiIndex.js';
+import { SAPTASHATI_AUDIO_TRACKS } from '../data/durgaSaptashatiAudio.js';
 
 interface SaptashatiTableOfContentsProps {
   isOpen: boolean;
@@ -68,7 +69,7 @@ export const SaptashatiTableOfContents: React.FC<SaptashatiTableOfContentsProps>
                   श्रीदुर्गासप्तशती अनुक्रमणिका
                 </h2>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-950 border border-red-800 text-red-200 font-semibold font-devanagari">
-                  सम्पूर्ण २२ खण्ड • ७०० मन्त्र
+                  सम्पूर्ण २८ खण्ड • ७०० मन्त्र
                 </span>
               </div>
               <p className="text-xs text-amber-400/80 font-devanagari mt-0.5">
@@ -117,7 +118,7 @@ export const SaptashatiTableOfContents: React.FC<SaptashatiTableOfContentsProps>
                   : 'bg-neutral-900/80 text-neutral-400 hover:text-amber-300 border border-neutral-800'
               }`}
             >
-              १. पूर्वाङ्ग विधि (६ खण्ड)
+              १. पूर्वाङ्ग विधि (८ खण्ड)
             </button>
             <button
               onClick={() => setActiveTab('pradhana')}
@@ -137,7 +138,7 @@ export const SaptashatiTableOfContents: React.FC<SaptashatiTableOfContentsProps>
                   : 'bg-neutral-900/80 text-neutral-400 hover:text-amber-300 border border-neutral-800'
               }`}
             >
-              ३. उत्तराङ्ग व रहस्यत्रय (३ खण्ड)
+              ३. उत्तराङ्ग व रहस्यत्रय (७ खण्ड)
             </button>
           </div>
         </div>
@@ -194,6 +195,13 @@ export const SaptashatiTableOfContents: React.FC<SaptashatiTableOfContentsProps>
                       {sec.mantraCount && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-900 text-amber-400/90 border border-neutral-800 font-mono">
                           {sec.mantraCount} मन्त्र
+                        </span>
+                      )}
+
+                      {SAPTASHATI_AUDIO_TRACKS[sec.startPage] && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-950/80 text-rose-200 border border-rose-800/60 font-devanagari flex items-center gap-1 font-semibold">
+                          <span>🎧</span>
+                          <span>{SAPTASHATI_AUDIO_TRACKS[sec.startPage].durationLabel}</span>
                         </span>
                       )}
                     </div>
