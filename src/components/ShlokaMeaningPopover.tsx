@@ -91,15 +91,17 @@ export const ShlokaMeaningPopover: React.FC<ShlokaMeaningPopoverProps> = ({
         zIndex: 50,
       };
 
-  return (
-    <div
-      className="transition-all duration-200 ease-out"
-      style={containerStyle}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="bg-[#0D0B0A] text-slate-100 rounded-xl border border-stone-800 shadow-2xl backdrop-blur-md overflow-hidden flex flex-col h-full max-h-[inherit]">
-        {/* Header Bar */}
-        <div className="px-4 py-2.5 bg-[#171311] border-b border-stone-800/80 flex items-center justify-between shrink-0">
+  const isMobile = viewportWidth < 640;
+
+  const contentInner = (
+    <div className={`bg-[#0D0B0A] text-slate-100 ${isMobile ? 'rounded-t-2xl max-h-[85vh]' : 'rounded-xl max-h-[inherit]'} border border-stone-800 shadow-2xl backdrop-blur-md overflow-hidden flex flex-col h-full`}>
+      {isMobile && (
+        <div className="pt-2.5 pb-1 flex justify-center shrink-0 bg-[#171311]">
+          <div className="w-12 h-1 bg-stone-600 rounded-full" />
+        </div>
+      )}
+      {/* Header Bar */}
+      <div className="px-4 py-2.5 bg-[#171311] border-b border-stone-800/80 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-[#8C2D19] dark:text-rose-400 font-bold text-base">🕉️</span>
             <span className="font-serif text-sm tracking-wide font-semibold text-slate-100">
@@ -309,6 +311,28 @@ export const ShlokaMeaningPopover: React.FC<ShlokaMeaningPopoverProps> = ({
           )}
         </div>
       </div>
+  );
+
+  if (isMobile) {
+    return (
+      <div
+        className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex flex-col justify-end animate-fadeIn"
+        onClick={onClose}
+      >
+        <div onClick={(e) => e.stopPropagation()} className="w-full">
+          {contentInner}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="transition-all duration-200 ease-out"
+      style={containerStyle}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {contentInner}
     </div>
   );
 };

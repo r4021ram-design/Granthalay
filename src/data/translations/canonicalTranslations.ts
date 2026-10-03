@@ -10,9 +10,15 @@ import {
   DURGA_SAPTASHATI_COMPLETE_TRANSLATIONS,
   resolveDurgaSaptashatiVerse
 } from './durgaSaptashatiCompleteData.js';
+import { EXTENDED_COHORT_TRANSLATIONS } from './extendedCohortTranslations.js';
+import { MAHISHASURAMARDINI_COMPLETE_TRANSLATIONS } from './mahishasuramardiniCompleteData.js';
+import { CHANDIKA_STOTRAM_COMPLETE_TRANSLATIONS } from './chandikaStotramCompleteData.js';
 
 export const CANONICAL_SHLOKA_TRANSLATIONS: ShlokaLinguisticData[] = [
   ...DURGA_SAPTASHATI_COMPLETE_TRANSLATIONS,
+  ...EXTENDED_COHORT_TRANSLATIONS,
+  ...MAHISHASURAMARDINI_COMPLETE_TRANSLATIONS,
+  ...CHANDIKA_STOTRAM_COMPLETE_TRANSLATIONS,
   // --------------------------------------------------------------------------
   // १. श्रीगणपत्यथर्वशीर्षम् - श्लोक १
   // --------------------------------------------------------------------------
@@ -902,46 +908,6 @@ export const CANONICAL_SHLOKA_TRANSLATIONS: ShlokaLinguisticData[] = [
     sourceReference: 'गोस्वामी तुलसीदास (रामचरितमानस, किष्किन्धाकाण्ड मङ्गलाचरण)',
   },
 
-  // --------------------------------------------------------------------------
-  // १६. महिषासुरमर्दिनीस्तोत्रम् - श्लोक १
-  // --------------------------------------------------------------------------
-  {
-    stotraId: 'supp-devi-mahishasuramardini',
-    shlokaNumber: 1,
-    shlokaText: `अयि गिरिनन्दिनि नन्दितमेदिनि विश्वविनोदिनि नन्दनुते
-गिरिवरविन्ध्यशिरोऽधिनिवासिनि विष्णुविलासिनि जिष्णुनुते ।
-भगवति हे शितिकण्ठकुटुम्बिनि भूरिकुटुम्बिनि भूरिकृते
-जय जय हे महिषासुरमर्दिनि रम्यकपर्दिनि शैलसुते ॥ १ ॥`,
-    hindiMeaning: `हे पर्वतराज हिमालय की कन्या! सम्पूर्ण पृथ्वी को आनन्दित करने वाली, समस्त ब्रह्माण्ड में लीला-विलास करने वाली तथा नन्दगोप द्वारा वन्दित देवि! विन्ध्याचल पर्वत के शिखर पर वास करने वाली, भगवान् विष्णु को आह्लादित करने वाली और इन्द्र द्वारा पूजित! हे नीलकण्ठ महादेव की धर्मपत्नी, विशाल विश्वरूपी कुटुम्ब वाली और विपुल ऐश्वर्य प्रदान करने वाली भगवती! हे सुन्दर जटाजूट धारण करने वाली महिषासुरमर्दिनी शैलपुत्री! आपकी सदा जय हो, सदा जय हो!`,
-    dandanvaya: `अयि गिरिनन्दिनि! नन्दितमेदिनि! विश्वविनोदिनि! नन्दनुते! गिरिवरविन्ध्यशिरोऽधिनिवासिनि! विष्णुविलासिनि! जिष्णुनुते! हे शितिकण्ठकुटुम्बिनि भूरिकुटुम्बिनि भूरिकृते भगवति! हे रम्यकपर्दिनि शैलसुते महिषासुरमर्दिनि! जय जय।`,
-    padaccheda: `अयि । गिरि-नन्दिनि । नन्दित-मेदिनि । विश्व-विनोदिनि । नन्द-नुते । गिरि-वर-विन्ध्य-शिरः-अधिनिवासिनि । विष्णु-विलासिनि । जिष्णु-नुते । भगवति । हे । शितिकण्ठ-कुटुम्बिनि । भूरि-कुटुम्बिनि । भूरि-कृते । जय । जय । हे । महिषासुर-मर्दिनि । रम्य-कपर्दिनि । शैल-सुते ॥`,
-    samasaList: [
-      {
-        compoundWord: 'महिषासुरमर्दिनि',
-        vigraha: 'महिषः चासौ असुरः महिषासुरः, तं मर्दयति इति, हे महिषासुरमर्दिनि',
-        samasaType: 'उपपद तत्पुरुष समास',
-        meaningHindi: 'महिषासुर का संहार करने वाली देवि',
-      },
-    ],
-    padaList: [
-      {
-        word: 'अयि',
-        pratipadikaOrDhatu: 'अयि',
-        grammaticalType: 'avyaya',
-        details: 'सम्बोधनार्थक अव्यय पद',
-        meaningHindi: 'हे (सादर आमन्त्रण)',
-      },
-    ],
-    chhandas: {
-      name: 'तोटक / मत्तकोकिला रूपान्तर',
-      syllableWeight: '। । ऽ  । । ऽ  । । ऽ  । । ऽ',
-      ganaPattern: 'स-गण बाहुल्य लयबद्ध छन्द',
-      totalMatras: 28,
-      totalAksharas: 21,
-      description: 'आदिशंकराचार्य विरचित झंकृत संगीतबद्ध महिषासुरमर्दिनी स्तोत्र।',
-    },
-    sourceReference: 'श्रीमदाद्यशंकराचार्य (महिषासुरमर्दिनीस्तोत्रम्, श्लोक १)',
-  },
 ];
 
 /**
@@ -966,10 +932,14 @@ export function findCanonicalTranslation(
   const normQuery = normalizeForTranslationLookup(selectedText);
   if (!normQuery || normQuery.length < 4) return undefined;
 
-  // 1. Direct StotraId + ShlokaNumber match
+  // 1. Direct StotraId + ShlokaNumber match (handles hyphen/underscore variances)
   if (stotraId && shlokaNum !== undefined) {
+    const cleanId = stotraId.replace(/[-_]/g, '').toLowerCase();
     const directMatch = CANONICAL_SHLOKA_TRANSLATIONS.find(
-      (t) => t.stotraId === stotraId && t.shlokaNumber === shlokaNum
+      (t) =>
+        (t.stotraId === stotraId ||
+          t.stotraId?.replace(/[-_]/g, '').toLowerCase() === cleanId) &&
+        t.shlokaNumber === shlokaNum
     );
     if (directMatch) return directMatch;
   }
@@ -985,16 +955,13 @@ export function findCanonicalTranslation(
   });
   if (directFound) return directFound;
 
-  // 3. Complete Durga Saptashati Section/Story Resolver
-  if (
-    stotraId?.includes('durga-saptashati') ||
-    stotraId?.includes('saptashati') ||
-    stotraId?.includes('chandi')
-  ) {
+  // 3. Complete Durga Saptashati Section/Story Resolver - STRICTLY only when reading the 700-shloka granth!
+  if (stotraId === 'granth-durga-saptashati') {
     const saptashatiResolved = resolveDurgaSaptashatiVerse(selectedText);
     if (saptashatiResolved) return saptashatiResolved;
   }
 
-  // Also check without stotraId if text matches Saptashati patterns
-  return resolveDurgaSaptashatiVerse(selectedText) || undefined;
+  // Do not fall back to generic Saptashati story for non-Saptashati scriptures;
+  // allow the Paninian Linguistic Engine to dynamically parse the text!
+  return undefined;
 }

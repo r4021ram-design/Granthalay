@@ -11,10 +11,12 @@ import {
   Filter,
   LayoutGrid,
   List,
+  Layers,
   ArrowRight,
   Volume2,
 } from 'lucide-react';
 import { HinduGranthalayLogo } from './HinduGranthalayLogo.js';
+import { SingleUnifiedIndex } from './SingleUnifiedIndex.js';
 import type { Book, BookStats } from '../../shared/types.js';
 import {
   CANONICAL_DARSHANS,
@@ -63,7 +65,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   const [stotraDeity, setStotraDeity] = useState<string>('all');
   const [selectedGenre, setSelectedGenre] = useState<StotraGenreId>('all');
   const [stotraSearch, setStotraSearch] = useState('');
-  const [stotraLayout, setStotraLayout] = useState<'grid' | 'compact'>('grid');
+  const [stotraLayout, setStotraLayout] = useState<'unified' | 'grid' | 'compact'>('unified');
   const [refreshKey] = useState(0);
 
   // General Library Filter states (for 'all' or specific non-stotra darshans)
@@ -353,10 +355,11 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       </div>
 
       {/* शारदीय नवरात्रि एवं महादेवी पावन पारायण (विशेष स्तवन व सस्वर पाठ) */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#240606] via-[#160706] to-[#0D0404] border border-rose-900/60 p-5 sm:p-6 shadow-2xl space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-rose-950/80 border border-rose-700/50 text-rose-300 text-xs font-devanagari">
+      {(activeDarshan === 'all' || (activeDarshan === 'stotra' && stotraLayout !== 'unified')) && (
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#240606] via-[#160706] to-[#0D0404] border border-rose-900/60 p-5 sm:p-6 shadow-2xl space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-rose-950/80 border border-rose-700/50 text-rose-300 text-xs font-devanagari">
               <span>🌺</span>
               <span>शारदीय नवरात्रि एवं महालक्ष्मी आराधना • प्रामाणिक पारायण व शास्त्रीय ऑडियो</span>
             </div>
@@ -553,12 +556,31 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           </div>
         </div>
       </div>
+      )}
 
       {/* 2. STOTRA DARSHAN VIEW (Pure Deity First - Absolutely Zero Publisher Branding) */}
       {activeDarshan === 'stotra' && (
         <div className="space-y-6">
-          {/* Sacred Stotra Darshan Header */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1C0A04] via-[#120602] to-[#0D0401] border border-amber-600/30 p-6 sm:p-8 shadow-2xl text-center space-y-3">
+          {stotraLayout === 'unified' ? (
+            <SingleUnifiedIndex
+              stotraLayout={stotraLayout}
+              onLayoutChange={setStotraLayout}
+              onSelectStotra={(item) => {
+                if (item.isCustom && onSelectCustomStotra) {
+                  onSelectCustomStotra(item);
+                } else {
+                  onSelectBookForReading(
+                    'granth-brihat-stotra-ratnakar',
+                    item.pdfPage || 1,
+                    item.id
+                  );
+                }
+              }}
+            />
+          ) : (
+            <>
+              {/* Sacred Stotra Darshan Header */}
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1C0A04] via-[#120602] to-[#0D0401] border border-amber-600/30 p-6 sm:p-8 shadow-2xl text-center space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/80 border border-amber-600/40 text-amber-300 text-xs font-devanagari">
               <span>🕉️</span>
               <span>विशुद्ध देवतोपासना एवं पावन स्तुति पीठ</span>
@@ -682,6 +704,18 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
             {/* Layout Toggle */}
             <div className="flex items-center bg-neutral-900 border border-neutral-800 rounded-xl p-1 shrink-0 self-end sm:self-auto">
               <button
+                onClick={() => setStotraLayout('unified')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-devanagari transition-all cursor-pointer ${
+                  (stotraLayout as string) === 'unified'
+                    ? 'bg-amber-600 text-neutral-950 font-bold shadow-sm'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+                title="एकल अनुक्रमणिका (Single Accordion Index)"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">एकल सूची</span>
+              </button>
+              <button
                 onClick={() => setStotraLayout('grid')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-devanagari transition-all cursor-pointer ${
                   stotraLayout === 'grid'
@@ -703,54 +737,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                 title="सघन सूची (Compact List View)"
               >
                 <List className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">सघन सूची</span>
+                <span className="hidden sm:inline">सघन कार्ड</span>
               </button>
             </div>
           </div>
 
-          {/* Mahagrantha Highlight: Srimad Durga Saptashati */}
-          {(stotraDeity === 'devi' || stotraDeity === 'all') && !stotraSearch.trim() && selectedGenre === 'all' && (
-            <div
-              onClick={() => onSelectBookForReading('granth-durga-saptashati', 1)}
-              className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-rose-950/90 via-red-950/70 to-neutral-900 border-2 border-rose-600/60 hover:border-amber-400 p-5 sm:p-6 shadow-2xl transition-all duration-300 hover:scale-[1.01] cursor-pointer group"
-            >
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-rose-900/40 border border-rose-500/40 flex items-center justify-center text-3xl shrink-0 group-hover:scale-110 transition-transform">
-                    🔱
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-2.5 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-700/60 text-[11px] font-devanagari font-bold">
-                        महाग्रन्थ पारायण
-                      </span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-700/60 text-[11px] font-devanagari font-bold">
-                        ७०० मन्त्र • १३ अध्याय
-                      </span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 text-[11px] font-devanagari font-bold">
-                        पूर्वाङ्ग व उत्तराङ्ग सहित
-                      </span>
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-bold font-serifDevanagari text-white group-hover:text-amber-200 transition-colors">
-                      श्रीदुर्गासप्तशती (चण्डीपाठ / देवी माहात्म्यम्)
-                    </h3>
-                    <p className="text-xs sm:text-sm text-neutral-300 font-devanagari">
-                      मार्कण्डेयपुराणान्तर्गत सम्पूर्ण ७०० मन्त्र, त्रिमूर्ति-चरित्र, कवच, अर्गला, कीलक, रात्रिसूक्त, नवार्ण मन्त्र, देव्यपराधक्षमापन एवं सिद्धकुञ्जिकास्तोत्रम्।
-                    </p>
-                  </div>
-                </div>
-                <div className="self-end sm:self-center shrink-0">
-                  <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 group-hover:bg-rose-500 text-white font-devanagari font-bold text-xs sm:text-sm shadow-lg group-hover:scale-105 transition-all">
-                    <span>सम्पूर्ण पाठ खोलें</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Stotras Content */}
-          {stotrasList.length === 0 ? (
+              {/* Stotras Content for Grid/Compact View */}
+              {stotrasList.length === 0 ? (
             <div className="bg-neutral-900/40 border border-dashed border-neutral-800 rounded-3xl p-12 text-center space-y-3">
               <span className="text-3xl">🪔</span>
               <p className="text-sm text-neutral-300 font-devanagari">
@@ -909,8 +902,10 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               })}
             </div>
           )}
-        </div>
+        </>
       )}
+    </div>
+  )}
 
       {/* 3. NON-STOTRA DARSHANS & ALL BOOKS GRID */}
       {activeDarshan !== 'stotra' && (

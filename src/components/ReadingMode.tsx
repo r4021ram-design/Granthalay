@@ -138,7 +138,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   const [isHeaderHidden, setIsHeaderHidden] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isStudioModalOpen, setIsStudioModalOpen] = useState<boolean>(false);
-  const [isAudioPlayerOpen, setIsAudioPlayerOpen] = useState<boolean>(true);
+  const [isAudioPlayerOpen, setIsAudioPlayerOpen] = useState<boolean>(false);
 
   // Interactive Shloka Selection & Paninian Vyakarana State
   const readingContainerRef = useRef<HTMLDivElement>(null);
@@ -2208,6 +2208,18 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
           stotraId={book?.id || customStotra?.id?.toString() || bookId}
           onClose={clearSelection}
         />
+      )}
+
+      {/* On-Demand Minimal Floating Audio Trigger */}
+      {currentAudioTrack && !isAudioPlayerOpen && (
+        <button
+          onClick={() => setIsAudioPlayerOpen(true)}
+          className="fixed bottom-6 right-6 z-40 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-neutral-950 font-bold shadow-2xl flex items-center gap-2 font-devanagari text-xs transition-all hover:scale-105 cursor-pointer border border-amber-400/60"
+          title="पवित्र सस्वर पाठ सुनें"
+        >
+          <span className="text-base">🔊</span>
+          <span className="hidden sm:inline">ऑडियो पाठ</span>
+        </button>
       )}
 
       {/* Sacred Recitation Master Audio Player */}

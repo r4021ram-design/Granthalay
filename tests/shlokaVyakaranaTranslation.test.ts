@@ -153,4 +153,40 @@ describe('Shloka Bhavartha & Paninian Vyakarana Engine', () => {
       expect(result?.padaccheda.length, `Padaccheda for ${section} should not be empty`).toBeGreaterThan(0);
     });
   });
+
+  it('should accurately translate Mahishasuramardini Stotram verses without getting hijacked by Saptashati story summaries', () => {
+    const shloka3Text = `अयि जगदम्ब मदम्ब कदम्बवनप्रियवासिनि हासरते
+शिखरि शिरोमणि तुङ्गहिमालय शृङ्गिनिजालय मध्यगते ।
+मधुमधुरे मधुकैटभगञ्जिनि कैटभभञ्जिनि रासरते
+जय जय हे महिषासुरमर्दिनि रम्यकपर्दिनि शैलसुते ॥ ३ ॥`;
+
+    const result = analyzeShlokaLinguistics(shloka3Text, 'supp-devi-mahishasura-mardini', 3);
+    expect(result).toBeDefined();
+    // Must NOT be the generic Durga Saptashati chapter story summary
+    expect(result.hindiMeaning).not.toContain('॥ मध्यम चरित्र (महिषासुर संहार) ॥');
+    expect(result.hindiMeaning).not.toContain('जब महिषासुर के अत्याचारों से पीड़ित होकर');
+    // Must be the authentic Shloka 3 translation
+    expect(result.hindiMeaning).toContain('जगदम्ब');
+    expect(result.hindiMeaning).toContain('कदम्ब');
+    expect(result.hindiMeaning).toContain('हिमालय');
+    expect(result.shlokaNumber).toBe(3);
+    expect(result.padaccheda).toContain('कदम्ब-वन-प्रिय-वासिनि');
+    expect(result.samasaList.length).toBeGreaterThan(0);
+  });
+
+  it('should accurately translate Sri Chandika Stotram verses without getting hijacked by Saptashati story summaries', () => {
+    const chandikaDhyanam = `चामुण्डा प्रेतगा विकृता चाऽस्थिभूषणा ।
+दंष्ट्रालि क्षीणदेहा च गर्ताक्षी कामरूपिणी ॥`;
+
+    const result = analyzeShlokaLinguistics(chandikaDhyanam, 'supp-chandika-stotram', 1);
+    expect(result).toBeDefined();
+    // Must NOT be the generic Durga Saptashati chapter story summary
+    expect(result.hindiMeaning).not.toContain('॥ उत्तर चरित्र (शुम्भ-निशुम्भ व रक्तबीज संहार) ॥');
+    expect(result.hindiMeaning).not.toContain('भगवती चण्डिका के भाल-प्रदेश से विकराल वदना महाकाली का प्राकट्य हुआ');
+    // Must be the authentic Chandika Stotram Dhyanam translation
+    expect(result.hindiMeaning).toContain('चण्डमुण्डा');
+    expect(result.hindiMeaning).toContain('कामरूपिणी');
+    expect(result.shlokaNumber).toBe(1);
+    expect(result.sourceReference).toContain('तीव्रचण्डिकास्तोत्रम्');
+  });
 });
