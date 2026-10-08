@@ -43,10 +43,10 @@ export function App() {
         return { bookId: 'granth-brihat-stotra-ratnakar', view };
       }
     }
-    // Default directly to Brihat Stotra Ratnakar
+    // Default directly to Library View showing the 4 Darshans
     return {
-      bookId: 'granth-brihat-stotra-ratnakar',
-      view: 'reader' as const
+      bookId: null,
+      view: 'library' as const
     };
   };
 
@@ -235,6 +235,8 @@ export function App() {
               initialPage={initialPage}
               initialStotraId={initialStotraId}
               customStotra={selectedCustomStotra}
+              books={books}
+              onSelectBook={(newBookId) => handleOpenReading(newBookId)}
               onBack={() => {
                 setSelectedCustomStotra(null);
                 setCurrentView('library');

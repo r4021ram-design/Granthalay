@@ -78,7 +78,7 @@ describe('बृहत्स्तोत्ररत्नाकरः (सच�
     const db = new Database('storage/granth.db');
     const book = db.prepare('SELECT * FROM books WHERE id = ?').get('granth-brihat-stotra-ratnakar') as any;
     expect(book).toBeDefined();
-    expect(book.title).toContain('बृहत्स्तोत्ररत्नाकरः');
+    expect(book.title).toContain('स्तोत्र दर्शन');
     expect(book.page_count).toBe(284);
 
     const pages = db.prepare('SELECT count(*) as c FROM pages WHERE book_id = ?').get('granth-brihat-stotra-ratnakar') as any;

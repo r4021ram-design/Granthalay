@@ -36,29 +36,56 @@ export const UniversalTableOfContents: React.FC<UniversalTableOfContentsProps> =
   const [searchQuery, setSearchQuery] = useState('');
   const [viewTab, setViewTab] = useState<'index' | 'pages'>('index');
 
-  // Extract page summaries / titles
+  // Extract page summaries / titles without repeating headers in preview
   const pageEntries = useMemo(() => {
     return pages.map(p => {
       const text = p.verified_text || p.ocr_text || '';
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
       // Look for heading line with brackets or danda
       let title = `पत्र संख्या ${p.page_number}`;
-      for (const line of lines.slice(0, 5)) {
+      let titleLineIdx = -1;
+      for (let i = 0; i < Math.min(lines.length, 6); i++) {
+        const line = lines[i];
         if (line.startsWith('॥') && line.endsWith('॥') && line.length > 4) {
-          title = line.replace(/^[॥\s]+|[॥\s]+$/g, '').trim();
+          const stripped = line.replace(/^[॥\s]+|[॥\s]+$/g, '').trim();
+          // If the line is just a deity invocation (e.g., ॥ श्री लक्ष्मीनारायणाय नमः ॥), look for actual topic heading
+          if (stripped.includes('नमः') && i === 0 && lines.length > 1) {
+            continue;
+          }
+          title = stripped;
+          titleLineIdx = i;
           break;
         } else if (line.startsWith('【') && line.includes('】')) {
           title = line.replace(/^[【\s]+|[】\s]+$/g, '').trim();
+          titleLineIdx = i;
           break;
         } else if (line.startsWith('•') || line.startsWith('▪')) {
           title = line.replace(/^[•▪\s]+/, '').trim();
+          titleLineIdx = i;
           break;
         }
       }
+
+      // Sanitize title: strip any accidental "अध्याय" and redundant prefixes
+      title = title
+        .replace(/^[०-९\d]+[\.\s\-]+/, '')
+        .replace(/^.*?(?:अध्यायः|अध्याय)\s*[:\-]\s*/i, '')
+        .trim();
+
+      // Collect preview lines starting strictly AFTER the title line, avoiding title duplication
+      const bodyLines = lines.filter((line, idx) => {
+        if (idx <= titleLineIdx && titleLineIdx !== -1) return false;
+        if (line.startsWith('॥') && line.endsWith('॥')) return false;
+        if (title && line.includes(title)) return false;
+        return true;
+      });
+
+      const preview = (bodyLines.length > 0 ? bodyLines.slice(0, 2).join(' ') : lines.slice(titleLineIdx + 1).join(' ')).trim();
+
       return {
         pageNumber: p.page_number,
         title,
-        preview: lines.slice(0, 3).join(' ')
+        preview
       };
     });
   }, [pages]);
@@ -86,7 +113,7 @@ export const UniversalTableOfContents: React.FC<UniversalTableOfContentsProps> =
       const match = line.match(tocLineRegex);
       if (match) {
         const itemNum = devToNum(match[1]) || idx;
-        const itemTitle = match[2].trim();
+        const itemTitle = match[2].replace(/^.*?(?:अध्यायः|अध्याय)\s*[:\-]\s*/i, '').trim();
         const rawPage = match[3] || match[4];
         const pageNum = rawPage ? devToNum(rawPage) : itemNum;
 
@@ -155,7 +182,7 @@ export const UniversalTableOfContents: React.FC<UniversalTableOfContentsProps> =
               <button
                 onClick={() => setViewTab('index')}
                 className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-devanagari font-bold transition-all flex items-center justify-center space-x-1.5 ${
-                  viewTab === 'index'
+                  activeTabEffective === 'index'
                     ? 'bg-gradient-to-r from-sacred-700 to-amber-700 text-white shadow'
                     : 'text-amber-200/70 hover:text-amber-100'
                 }`}
@@ -166,7 +193,7 @@ export const UniversalTableOfContents: React.FC<UniversalTableOfContentsProps> =
               <button
                 onClick={() => setViewTab('pages')}
                 className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-devanagari font-bold transition-all flex items-center justify-center space-x-1.5 ${
-                  viewTab === 'pages'
+                  activeTabEffective === 'pages'
                     ? 'bg-gradient-to-r from-sacred-700 to-amber-700 text-white shadow'
                     : 'text-amber-200/70 hover:text-amber-100'
                 }`}

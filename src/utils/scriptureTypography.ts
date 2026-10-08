@@ -13,7 +13,16 @@ export type ScriptureBlockType =
   | 'SANKALPA'
   | 'SECTION_HEADING'
   | 'INVOCATION_HEADING'
+  | 'ANUKRAMANIKA_ROW'
   | 'REGULAR_TEXT';
+
+export interface AnukramanikaEntry {
+  raw: string;
+  serial: string;
+  title: string;
+  subtitle?: string;
+  pageNumber: number;
+}
 
 export interface ScriptureBlockConfig {
   type: ScriptureBlockType;
@@ -236,6 +245,70 @@ const VIDHI_ACTION_VERBS: RegExp[] = [
 ];
 
 /**
+ * Parses an Anukramanika (Table of Contents) entry row
+ */
+export function parseAnukramanikaLine(line: string): AnukramanikaEntry | null {
+  const trimmed = line.trim();
+  const devanagariDigits: Record<string, number> = {
+    '०': 0, '१': 1, '२': 2, '३': 3, '४': 4, '५': 5, '६': 6, '७': 7, '८': 8, '९': 9
+  };
+
+  const parseNum = (str: string): number => {
+    return str.split('').reduce((acc, char) => {
+      const d = devanagariDigits[char];
+      return d !== undefined ? acc * 10 + d : acc * 10 + (parseInt(char, 10) || 0);
+    }, 0) || 1;
+  };
+
+  // Pattern 1: "१. मङ्गलाचरण ... पत्र १" or "१. मङ्गलाचरण — पत्र १"
+  const dotLeaderMatch = trimmed.match(
+    /^([०-९\d]+)\.\s*(.+?)\s*(?:\.{2,}|[-–—]{1,}|\s{3,})\s*(?:पत्र|पृष्ठ|पृ०)\s*([०-९\d]+)$/u
+  );
+  if (dotLeaderMatch) {
+    let mainTitle = dotLeaderMatch[2].trim();
+    let subtitle: string | undefined = undefined;
+
+    // Check for "मुख्य शीर्षक — उपशीर्षक"
+    const dashMatch = mainTitle.match(/^([^—–]+?)\s*[—–]\s*(.+)$/u);
+    if (dashMatch) {
+      mainTitle = dashMatch[1].trim();
+      subtitle = dashMatch[2].trim();
+    } else {
+      // Check for "मुख्य शीर्षक (उपशीर्षक)"
+      const parenMatch = mainTitle.match(/^([^(]+?)\s*\(([^)]+)\)$/u);
+      if (parenMatch) {
+        mainTitle = parenMatch[1].trim();
+        subtitle = parenMatch[2].trim();
+      }
+    }
+
+    return {
+      raw: trimmed,
+      serial: dotLeaderMatch[1],
+      title: mainTitle,
+      subtitle,
+      pageNumber: parseNum(dotLeaderMatch[3]),
+    };
+  }
+
+  // Pattern 2: "[पत्र १: शीर्षक]" or "[पत्र १] शीर्षक"
+  const bracketMatch = trimmed.match(
+    /^\[\s*(?:पत्र|पृष्ठ)\s*([०-९\d]+)\s*[:\]\-—–]\s*([^\]]+)\]?(?:\s*[:—–]\s*(.+))?$/u
+  );
+  if (bracketMatch) {
+    return {
+      raw: trimmed,
+      serial: bracketMatch[1],
+      title: bracketMatch[2].trim(),
+      subtitle: bracketMatch[3]?.trim(),
+      pageNumber: parseNum(bracketMatch[1]),
+    };
+  }
+
+  return null;
+}
+
+/**
  * Classifies an individual scripture line into its liturgical category
  */
 export function classifyScriptureLine(rawLine: string): ScriptureBlockType {
@@ -247,7 +320,12 @@ export function classifyScriptureLine(rawLine: string): ScriptureBlockType {
     return 'SECTION_HEADING';
   }
 
-  // 1b. Numbered Stotra Titles: e.g. "१. गणेशन्यासः" or "४. गणेशबाह्यपूजा" or "५. गणेशमहिम्नः स्तोत्रम्"
+  // 1b. Anukramanika Table of Contents Row (e.g. "१. मङ्गलाचरण ... पत्र १")
+  if (parseAnukramanikaLine(line) !== null) {
+    return 'ANUKRAMANIKA_ROW';
+  }
+
+  // 1c. Numbered Stotra Titles: e.g. "१. गणेशन्यासः" or "४. गणेशबाह्यपूजा" or "५. गणेशमहिम्नः स्तोत्रम्"
   if (
     /^[०-९0-9]+\.\s*[^।॥\n]+$/u.test(line) &&
     (/(?:स्तोत्रम्|कवचम्|न्यासः|पूजा|अष्टकम्|शतकम्|पद्धति|माहात्म्य|सहस्रनाम|हृदयम्|वर्णनम्|महिम्न)/u.test(line) ||
@@ -261,7 +339,7 @@ export function classifyScriptureLine(rawLine: string): ScriptureBlockType {
   if (
     line.startsWith('॥') &&
     line.endsWith('॥') &&
-    line.length < 75 &&
+    line.length < 110 &&
     !/^[॥\s]*[०-९\d\-]+[॥\s]*$/u.test(line)
   ) {
     return 'INVOCATION_HEADING';
@@ -272,8 +350,11 @@ export function classifyScriptureLine(rawLine: string): ScriptureBlockType {
     return 'RITUAL_STEP_HEADER';
   }
 
-  // 4. Ritual Step Headers: • पवित्रीकरणम्: or • आचम्य (आचमन करें):
-  if (/^[•▪]\s*[^:—–]+[:—–]/u.test(line)) {
+  // 4. Ritual Step Headers: • पवित्रीकरणम्: or • आचम्य (आचमन करें): or (क) पयः (गोदुग्ध) स्नानम्:
+  if (
+    /^[•▪]\s*[^:—–]+[:—–]/u.test(line) ||
+    /^(?:[•▪]\s*)?\([क-ह०-९\d]+\)\s*[^:—–\n]+[:—–]?$/u.test(line)
+  ) {
     return 'RITUAL_STEP_HEADER';
   }
 
@@ -313,6 +394,15 @@ export function classifyScriptureLine(rawLine: string): ScriptureBlockType {
     return 'NAMAVALI';
   }
 
+  // 8.5. Vedic Mantras (Explicit Svara accents, Gomukha nasal ꣳ, or canonical incipits)
+  // Check for Vedic Svara Unicode range: \u0951 (Svarita), \u0952 (Anudatta), \u1CDA (Dirgha Svarita), \uA8E0-\uA8F1 (Vedic tones), ꣳ (Gomukha), or vedic samhita incipits
+  const hasVedicAccents = /[\u0951\u0952\u1CDA\uA8E0-\uA8F1\u0933\u0934ꣳ]/u.test(line);
+  const isVedicIncipit = VEDIC_INCIPITS.some(re => re.test(line));
+
+  if (hasVedicAccents || isVedicIncipit) {
+    return 'VEDIC_MANTRA';
+  }
+
   // 9. Upachara Samarpana Mantras (Liturgical offerings):
   if (
     /(?:समर्पयामि|प्रतिगृह्यताम्|आवाहयामि\s*स्थापयामि|पूजयामि\s*मम\s*पूजां|दर्शयामि|निवेदयामि|अर्घ्यं\s*समर्पयामि|पाद्यं\s*समर्पयामि|पुष्पं\s*समर्पयामि|चन्दनं\s*समर्पयामि|स्वाहाकृतं|स्वाहा\s*[।॥])/u.test(
@@ -322,16 +412,7 @@ export function classifyScriptureLine(rawLine: string): ScriptureBlockType {
     return 'SAMARPANA_MANTRA';
   }
 
-  // 10. Vedic Mantras (Explicit Svara accents, Gomukha nasal ꣳ, or canonical incipits)
-  // Check for Vedic Svara Unicode range: \u0951 (Svarita), \u0952 (Anudatta), \u1CDA (Dirgha Svarita), \uA8E0-\uA8F1 (Vedic tones), ꣳ (Gomukha)
-  const hasVedicAccents = /[\u0951\u0952\u1CDA\uA8E0-\uA8F1\u0933\u0934ꣳ]/u.test(line);
-  const isVedicIncipit = VEDIC_INCIPITS.some(re => re.test(line));
-
-  if (hasVedicAccents || isVedicIncipit) {
-    return 'VEDIC_MANTRA';
-  }
-
-  // 11. Pauranika Shloka, Classical Stotra, Aartis & Stutis
+  // 10. Pauranika Shloka, Classical Stotra, Aartis & Stutis
   if (
     PAURANIK_MARKERS.some(re => re.test(line)) ||
     /[।॥]/.test(line) ||
@@ -360,9 +441,9 @@ export function getScriptureBlockConfig(type: ScriptureBlockType): ScriptureBloc
         badgeLabel: 'वैदिक सस्वर मन्त्र',
         badgeIcon: '🕉️',
         containerClass:
-          'relative my-3.5 px-4 py-3 rounded-2xl bg-[#8C2D19]/[0.06] border-l-4 border-sacred-600 shadow-sm transition-all hover:bg-[#8C2D19]/[0.09]',
+          'relative my-2.5 px-4 py-2 select-text',
         textClass:
-          'font-tiro text-center font-medium select-text font-feature-settings-vedic text-[#261208]',
+          'font-tiro text-center font-bold select-text font-feature-settings-vedic text-[#8C2D19] dark:text-white',
       };
 
     case 'PAURANIK_SHLOKA':
@@ -461,6 +542,17 @@ export function getScriptureBlockConfig(type: ScriptureBlockType): ScriptureBloc
         textClass: 'font-tiro font-bold text-sm sm:text-base text-[#7A1505] tracking-wider',
       };
 
+    case 'ANUKRAMANIKA_ROW':
+      return {
+        type,
+        fontFamily: '"Tiro Devanagari Sanskrit", "Noto Serif Devanagari", serif',
+        lineHeightClass: 'leading-[1.8]',
+        badgeLabel: 'विषय सूची',
+        badgeIcon: '📑',
+        containerClass: 'py-1.5 px-3 select-text',
+        textClass: 'font-tiro font-medium text-[#1C120C] dark:text-neutral-200',
+      };
+
     case 'REGULAR_TEXT':
     default:
       return {
@@ -475,16 +567,19 @@ export function getScriptureBlockConfig(type: ScriptureBlockType): ScriptureBloc
 
 export type GroupedScriptureUnit =
   | { kind: 'single'; line: string; type: ScriptureBlockType }
-  | { kind: 'namavali_grid'; items: string[] };
+  | { kind: 'namavali_grid'; items: string[] }
+  | { kind: 'anukramanika_table'; entries: AnukramanikaEntry[] };
 
 /**
  * Groups consecutive Namavali lines into cohesive grid units
+ * and consecutive Anukramanika lines into structured table units,
  * while leaving other verses as standalone blocks.
  */
 export function groupScriptureFolio(rawText: string): GroupedScriptureUnit[] {
   const lines = rawText.split('\n');
   const units: GroupedScriptureUnit[] = [];
   let pendingNamavali: string[] = [];
+  let pendingAnukramanika: AnukramanikaEntry[] = [];
 
   let isVedicSection = false;
   let inVedicCouplet = false;
@@ -498,6 +593,13 @@ export function groupScriptureFolio(rawText: string): GroupedScriptureUnit[] {
         units.push({ kind: 'single', line: pendingNamavali[0], type: 'SECTION_HEADING' });
       }
       pendingNamavali = [];
+    }
+  };
+
+  const flushAnukramanika = () => {
+    if (pendingAnukramanika.length > 0) {
+      units.push({ kind: 'anukramanika_table', entries: [...pendingAnukramanika] });
+      pendingAnukramanika = [];
     }
   };
 
@@ -535,7 +637,8 @@ export function groupScriptureFolio(rawText: string): GroupedScriptureUnit[] {
         type !== 'RITUAL_STEP_HEADER' &&
         type !== 'INVOCATION_HEADING' &&
         type !== 'VIDHI_INSTRUCTION' &&
-        type !== 'NAMAVALI'
+        type !== 'NAMAVALI' &&
+        type !== 'ANUKRAMANIKA_ROW'
       ) {
         type = 'VEDIC_MANTRA';
       }
@@ -556,7 +659,8 @@ export function groupScriptureFolio(rawText: string): GroupedScriptureUnit[] {
         type !== 'RITUAL_STEP_HEADER' &&
         type !== 'INVOCATION_HEADING' &&
         type !== 'VIDHI_INSTRUCTION' &&
-        type !== 'NAMAVALI'
+        type !== 'NAMAVALI' &&
+        type !== 'ANUKRAMANIKA_ROW'
       ) {
         type = 'VEDIC_MANTRA';
         if (/[॥]\s*(?:[०-९\d\-]+[॥\s]*)?$/u.test(trimmed)) {
@@ -568,14 +672,25 @@ export function groupScriptureFolio(rawText: string): GroupedScriptureUnit[] {
     }
 
     if (type === 'NAMAVALI') {
+      flushAnukramanika();
       pendingNamavali.push(trimmed);
+    } else if (type === 'ANUKRAMANIKA_ROW') {
+      flushNamavali();
+      const parsed = parseAnukramanikaLine(trimmed);
+      if (parsed) {
+        pendingAnukramanika.push(parsed);
+      } else {
+        units.push({ kind: 'single', line: trimmed, type });
+      }
     } else {
       flushNamavali();
+      flushAnukramanika();
       units.push({ kind: 'single', line: trimmed, type });
     }
   }
 
   flushNamavali();
+  flushAnukramanika();
   return units;
 }
 
