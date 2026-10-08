@@ -51,6 +51,7 @@ import { useShlokaSelection } from '../utils/useShlokaSelection.js';
 import { ShlokaMeaningPopover } from './ShlokaMeaningPopover.js';
 import { ScriptureAudioPlayer } from './ScriptureAudioPlayer.js';
 import { getScriptureAudioTrack } from '../data/durgaSaptashatiAudio.js';
+import { ReaderSettingsSheet } from './ReaderSettingsSheet.js';
 
 interface ReadingModeProps {
   bookId: string;
@@ -85,9 +86,10 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   const [fontFamily, setFontFamily] = useState<ScriptureFont>(() => {
     try {
       const saved = localStorage.getItem('granth_reader_font');
-      return (saved as ScriptureFont) || 'yatra';
+      if (!saved || saved === 'yatra') return 'tiro';
+      return (saved as ScriptureFont);
     } catch {
-      return 'yatra';
+      return 'tiro';
     }
   });
   const [readingTheme, setReadingTheme] = useState<ReadingTheme>(() => {
@@ -143,6 +145,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isStudioModalOpen, setIsStudioModalOpen] = useState<boolean>(false);
   const [isAudioPlayerOpen, setIsAudioPlayerOpen] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
   // Interactive Shloka Selection & Paninian Vyakarana State
   const readingContainerRef = useRef<HTMLDivElement>(null);
@@ -187,7 +190,81 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
     bookId === 'granth-durga-saptashati' ||
     (book?.title?.includes('दुर्गासप्तशती') || book?.title?.includes('सप्तशती') || book?.title?.includes('चण्डीपाठ'))
   );
+
+  const isKarmakandaBook = !isCustomOrSupp && Boolean(
+    book?.id?.includes('paddhati') ||
+    book?.id?.includes('pujan') ||
+    book?.title?.includes('पद्धति') ||
+    book?.title?.includes('पूजन')
+  );
   const isDarkSlate = readingTheme === 'dark-slate';
+
+  const goToPrevPage = useCallback(() => {
+    if (activeStotraScope && isBrihatStotraBook) {
+      const idx = BRIHAT_STOTRAS.findIndex(s => s.id === activeStotraScope.id);
+      if (idx > 0) {
+        const prev = BRIHAT_STOTRAS[idx - 1];
+        setActiveStotraScope(prev);
+        setCurrentPageIndex(prev.pdfPage - 1);
+      }
+      return;
+    }
+    if (activeChapterScope && currentPageIndex <= activeChapterScope.startPage - 1) {
+      const prevChap = GITA_SECTIONS.find(s => s.id === activeChapterScope.id - 1);
+      if (prevChap) {
+        setActiveChapterScope(prevChap);
+        setCurrentPageIndex(prevChap.endPage - 1);
+      }
+      return;
+    }
+    setCurrentPageIndex(prev => Math.max(0, prev - 1));
+  }, [activeStotraScope, isBrihatStotraBook, activeChapterScope, currentPageIndex]);
+
+  const goToNextPage = useCallback(() => {
+    if (activeStotraScope && isBrihatStotraBook) {
+      const idx = BRIHAT_STOTRAS.findIndex(s => s.id === activeStotraScope.id);
+      if (idx < BRIHAT_STOTRAS.length - 1) {
+        const next = BRIHAT_STOTRAS[idx + 1];
+        setActiveStotraScope(next);
+        setCurrentPageIndex(next.pdfPage - 1);
+      }
+      return;
+    }
+    if (activeChapterScope && currentPageIndex >= activeChapterScope.endPage - 1) {
+      const nextChap = GITA_SECTIONS.find(s => s.id === activeChapterScope.id + 1);
+      if (nextChap) {
+        setActiveChapterScope(nextChap);
+        setCurrentPageIndex(nextChap.startPage - 1);
+      }
+      return;
+    }
+    setCurrentPageIndex(prev => Math.min(pages.length - 1, prev + 1));
+  }, [activeStotraScope, isBrihatStotraBook, activeChapterScope, currentPageIndex, pages.length]);
+
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+
+    // Minimum horizontal swipe distance of 55px, with low vertical deviation (< 85px)
+    if (Math.abs(deltaX) > 55 && Math.abs(deltaY) < 85) {
+      if (deltaX < 0) {
+        goToNextPage();
+      } else {
+        goToPrevPage();
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
 
   // Native Fullscreen API sync
   useEffect(() => {
@@ -1585,342 +1662,304 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
 
       {/* Top Reading Controls Header */}
       {!isHeaderHidden && (
-        <header className="sticky top-0 z-40 border-b border-black/30 bg-neutral-950/90 backdrop-blur-md px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-neutral-100 shadow-lg">
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={onBack}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold transition-all hover:scale-105 active:scale-95"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span className="font-devanagari">ग्रन्थालय</span>
-          </button>
+        <header className="sticky top-0 z-40 border-b border-black/30 bg-neutral-950/95 backdrop-blur-md px-3 sm:px-6 py-2.5 sm:py-3 text-neutral-100 shadow-lg">
+          {/* Mobile Header (< 768px): Minimal, Clean, Zero-Clutter */}
+          <div className="flex md:hidden items-center justify-between gap-2 w-full">
+            <button
+              onClick={onBack}
+              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold transition-all active:scale-95 shrink-0 min-h-[40px] cursor-pointer"
+              title="ग्रन्थालय वापस"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="font-devanagari text-[11px]">ग्रन्थालय</span>
+            </button>
 
-          {/* Table of Contents Trigger */}
-          <button
-            onClick={() => setIsTocOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-sacred-800 hover:bg-sacred-700 text-white font-devanagari text-xs font-bold border border-sacred-600/50 shadow-md transition-all active:scale-95 cursor-pointer"
-            title={
-              isGitaBook
-                ? "श्रीमद्भगवद्गीता अनुक्रमणिका एवं अध्याय सूची खोलें"
-                : isVsnBook
-                ? "श्रीविष्णुसहस्रनाम विषय-सूची खोलें"
-                : isSaptashatiBook
-                ? "श्रीदुर्गासप्तशती पाठविधि एवं अध्याय सूची खोलें"
-                : "अनुक्रमणिका खोलें"
-            }
-          >
-            <Layers className="w-3.5 h-3.5 text-sacred-300" />
-            <span>अनुक्रमणिका</span>
-          </button>
-
-          {/* Quick Book Selector Dropdown */}
-          {books && books.length > 0 && onSelectBook && (
-            <div className="relative">
-              <select
-                value={bookId}
-                onChange={(e) => onSelectBook(e.target.value)}
-                className="bg-neutral-900/90 text-amber-200 border border-sacred-700/60 rounded-xl px-2.5 py-1.5 text-xs font-devanagari font-bold focus:outline-none focus:border-amber-400 cursor-pointer shadow-sm hover:bg-neutral-800 transition-all max-w-[200px] sm:max-w-[260px] truncate"
-                title="अन्य पावन ग्रन्थ का चयन करें"
-              >
-                {books.map((b) => (
-                  <option key={b.id} value={b.id} className="bg-neutral-950 text-neutral-200 py-1">
-                    {b.id === 'granth-brihat-stotra-ratnakar' || b.title.includes('बृहत्स्तोत्ररत्नाकर')
-                      ? 'स्तोत्र दर्शन • सर्वदेव स्तुति संग्रह'
-                      : b.title.replace(/\s*\([^)]*गीताप्रेस[^)]*\)/gi, '').trim()}
-                  </option>
-                ))}
-              </select>
+            {/* Book / Chapter title center */}
+            <div className="flex-1 min-w-0 text-center px-1">
+              <h1 className="text-xs font-bold font-serifDevanagari text-amber-200 truncate leading-tight">
+                {isBrihatStotraBook && currentBrihatStotra
+                  ? currentBrihatStotra.title
+                  : isGitaBook && currentChapter
+                  ? (currentChapter.sectionType === 'adhyaya' && currentChapter.chapterNumber
+                      ? `अध्याय ${currentChapter.chapterNumber} : ${currentChapter.nameSa}`
+                      : currentChapter.titleSa)
+                  : isVsnBook && currentVsnSection
+                  ? currentVsnSection.titleHi
+                  : isSaptashatiBook && currentSaptashatiSection
+                  ? currentSaptashatiSection.titleHi
+                  : book.title.replace(/बृहत्स्तोत्ररत्नाकरः?/g, 'स्तोत्र दर्शन').replace(/\s*\([^)]*गीताप्रेस[^)]*\)/gi, '').trim()}
+              </h1>
+              <div className="text-[10px] text-neutral-400 font-devanagari truncate">
+                पत्र {currentPage ? currentPage.page_number : 0} / {pages.length}
+              </div>
             </div>
-          )}
 
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="font-bold text-sm sm:text-base font-serifDevanagari text-white flex items-center gap-2">
-                <span>{isBrihatStotraBook ? 'स्तोत्र दर्शन' : book.title.replace(/बृहत्स्तोत्ररत्नाकरः?/g, 'स्तोत्र दर्शन').replace(/\s*\([^)]*गीताप्रेस[^)]*\)/gi, '').trim()}</span>
-                {isGitaBook && currentChapter && (
-                  <>
-                    <span className="text-neutral-500 font-serif text-sm">•</span>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-sacred-950/80 border border-sacred-700 text-white text-xs sm:text-sm font-devanagari font-bold shadow-xs">
+            {/* Actions: TOC & Settings */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => setIsTocOpen(true)}
+                className="p-2 rounded-xl bg-sacred-800 hover:bg-sacred-700 text-amber-200 border border-sacred-600/50 transition-all active:scale-95 min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer shadow-sm"
+                title="अनुक्रमणिका"
+              >
+                <Layers className="w-4 h-4 text-amber-300" />
+              </button>
+
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-amber-300 border border-neutral-700 transition-all active:scale-95 min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer shadow-sm"
+                title="पठन विन्यास (Settings)"
+              >
+                <Sliders className="w-4 h-4 text-amber-300" />
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop Header (>= 768px): Refined & Uncluttered Sacred Toolbar */}
+          <div className="hidden md:flex items-center justify-between gap-4 w-full">
+            {/* 1. Left Group: Back, TOC & Compact Book Switcher */}
+            <div className="flex items-center space-x-2 shrink-0">
+              <button
+                onClick={onBack}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
+                title="ग्रन्थालय में वापस जाएँ"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span className="font-devanagari">ग्रन्थालय</span>
+              </button>
+
+              <button
+                onClick={() => setIsTocOpen(true)}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-sacred-800 hover:bg-sacred-700 text-white font-devanagari text-xs font-bold border border-sacred-600/50 shadow-md transition-all active:scale-95 cursor-pointer"
+                title={
+                  isGitaBook
+                    ? "श्रीमद्भगवद्गीता अनुक्रमणिका एवं अध्याय सूची"
+                    : isVsnBook
+                    ? "श्रीविष्णुसहस्रनाम विषय-सूची"
+                    : isSaptashatiBook
+                    ? "श्रीदुर्गासप्तशती पाठविधि एवं अध्याय सूची"
+                    : "अनुक्रमणिका खोलें"
+                }
+              >
+                <Layers className="w-3.5 h-3.5 text-sacred-300" />
+                <span>अनुक्रमणिका</span>
+              </button>
+
+              {books && books.length > 1 && onSelectBook && (
+                <div className="relative">
+                  <select
+                    value={bookId}
+                    onChange={(e) => onSelectBook(e.target.value)}
+                    className="bg-neutral-900/90 text-amber-200/90 border border-neutral-700/80 hover:border-amber-500 rounded-xl px-2 py-1.5 text-xs font-devanagari font-medium focus:outline-none focus:border-amber-400 cursor-pointer shadow-xs max-w-[155px] truncate transition-all"
+                    title="अन्य ग्रन्थ का चयन करें"
+                  >
+                    {books.map((b) => (
+                      <option key={b.id} value={b.id} className="bg-neutral-950 text-neutral-200 py-1">
+                        {b.id === 'granth-brihat-stotra-ratnakar' || b.title.includes('बृहत्स्तोत्ररत्नाकर')
+                          ? 'स्तोत्र दर्शन संग्रह'
+                          : b.title.replace(/\s*\([^)]*गीताप्रेस[^)]*\)/gi, '').trim()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* 2. Center Group: Sacred Title & Current Adhyaya Badge */}
+            <div className="flex flex-col items-center justify-center text-center px-2 min-w-0 flex-1">
+              <div className="flex items-center gap-2 max-w-full justify-center">
+                <h1 className="font-bold text-sm lg:text-base font-serifDevanagari text-white flex items-center gap-2 truncate">
+                  <span className="truncate">
+                    {isBrihatStotraBook
+                      ? 'स्तोत्र दर्शन • पावन स्तुति संग्रह'
+                      : book.title.replace(/बृहत्स्तोत्ररत्नाकरः?/g, 'स्तोत्र दर्शन').replace(/\s*\([^)]*गीताप्रेस[^)]*\)/gi, '').trim()}
+                  </span>
+                  {isGitaBook && currentChapter && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-sacred-950/80 border border-sacred-700 text-amber-200 text-xs font-devanagari font-bold shadow-xs shrink-0">
                       {currentChapter.sectionType === 'adhyaya' && currentChapter.chapterNumber ? (
                         <span>अध्याय {currentChapter.chapterNumber} : {currentChapter.nameSa}</span>
                       ) : (
                         <span>{currentChapter.titleSa}</span>
                       )}
                     </span>
-                  </>
-                )}
-                {isVsnBook && currentVsnSection && (
-                  <>
-                    <span className="text-neutral-500 font-serif text-sm">•</span>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-sacred-950/80 border border-sacred-700 text-white text-xs sm:text-sm font-devanagari font-bold shadow-xs">
-                      <span>{currentVsnSection.icon} {currentVsnSection.titleHi}</span>
-                    </span>
-                  </>
-                )}
-                {isSaptashatiBook && currentSaptashatiSection && (
-                  <>
-                    <span className="text-neutral-500 font-serif text-sm">•</span>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-sacred-950/80 border border-sacred-700 text-white text-xs sm:text-sm font-devanagari font-bold shadow-xs">
-                      <span>{currentSaptashatiSection.icon} {currentSaptashatiSection.titleHi}</span>
-                    </span>
-                  </>
-                )}
-                {isBrihatStotraBook && currentBrihatStotra && (
-                  <>
-                    <span className="text-neutral-500 font-serif text-sm">•</span>
-                    <span className="text-amber-300 font-medium">
-                      {CANONICAL_DEITIES.find(d => d.id === currentBrihatStotra.category)?.name || 'सर्वदेव'}
-                    </span>
-                    <span className="text-neutral-500 font-serif text-sm">•</span>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-sacred-950/80 border border-sacred-700 text-white text-xs sm:text-sm font-devanagari font-bold shadow-xs">
+                  )}
+                  {isBrihatStotraBook && currentBrihatStotra && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-sacred-950/80 border border-sacred-700 text-amber-300 text-xs font-devanagari font-bold shadow-xs shrink-0">
                       <span>{currentBrihatStotra.title}</span>
                     </span>
-                  </>
-                )}
-              </h1>
-            </div>
-            <p className="text-xs text-neutral-400 font-devanagari flex items-center gap-1.5 flex-wrap">
-              {isBrihatStotraBook && currentBrihatStotra ? (
-                <>
-                  <span>उपासना: <strong className="text-amber-300 font-devanagari">{CANONICAL_DEITIES.find(d => d.id === currentBrihatStotra.category)?.name || 'देवता'}</strong></span>
-                  <span>•</span>
-                  <span className="text-amber-400 font-serifDevanagari">{CANONICAL_DEITIES.find(d => d.id === currentBrihatStotra.category)?.sanskritTitle || 'स्तोत्राणि'}</span>
-                  <span>•</span>
-                  <span className="text-emerald-400 font-medium">सम्पूर्ण शास्त्रोक्त पाठ</span>
-                </>
-              ) : (
-                <>
-                  <span>दृष्टा / रचयिता: <strong>{book.author || 'पारंपरिक महर्षि'}</strong></span>
-                  <span>•</span>
-                  {isGitaBook && currentChapter ? (
-                    <span className="text-neutral-200 font-medium">
-                      अध्याय पत्र {currentPageIndex + 1 - currentChapter.startPage + 1} / {currentChapter.endPage - currentChapter.startPage + 1}
-                      <span className="text-neutral-500 font-mono ml-1.5">(सकल पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
-                    </span>
-                  ) : isVsnBook && currentVsnSection ? (
-                    <span className="text-neutral-200 font-medium">
-                      {currentVsnSection.nameHi}
-                      <span className="text-neutral-500 font-mono ml-1.5">(पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
-                    </span>
-                  ) : isSaptashatiBook && currentSaptashatiSection ? (
-                    <span className="text-neutral-200 font-medium">
-                      {currentSaptashatiSection.nameSa}
-                      <span className="text-neutral-500 font-mono ml-1.5">(पत्र {currentPage ? currentPage.page_number : 0} / {pages.length})</span>
-                    </span>
-                  ) : (
-                    <span>पत्र {currentPage ? currentPage.page_number : 0} / {pages.length}</span>
                   )}
-                </>
-              )}
-            </p>
+                </h1>
+              </div>
+              <p className="text-[11px] text-neutral-400 font-devanagari flex items-center justify-center gap-1.5 truncate">
+                <span>दृष्टा / रचयिता: <strong className="text-neutral-300">{book.author || 'पारंपरिक महर्षि'}</strong></span>
+                <span>•</span>
+                <span className="text-amber-400/90 font-medium">पत्र {currentPage ? currentPage.page_number : 0} / {pages.length}</span>
+              </p>
+            </div>
+
+            {/* 3. Right Group: Unified Controls (Font, Theme, Tools, Focus) */}
+            <div className="flex items-center gap-2 text-xs shrink-0">
+              {/* Typography Pill: Font Selector + Size Stepper */}
+              <div className="flex items-center bg-neutral-900/90 border border-neutral-700/80 rounded-xl p-0.5 shadow-sm">
+                <select
+                  value={fontFamily}
+                  onChange={e => setFontFamily(e.target.value as ScriptureFont)}
+                  className="bg-transparent text-amber-200 text-xs font-devanagari px-2 py-1 focus:outline-none cursor-pointer max-w-[135px] truncate"
+                  title="पवित्र संस्कृत लिपि फॉन्ट"
+                >
+                  <option value="tiro" className="bg-neutral-950 text-white">📜 पोथी (Tiro Sanskrit)</option>
+                  <option value="harmonized" className="bg-neutral-950 text-white">⚜️ शास्त्र सम्मत (Harmonized)</option>
+                  <option value="notoSerif" className="bg-neutral-950 text-white">📖 सेरिफ़ (Noto Serif)</option>
+                  <option value="rozha" className="bg-neutral-950 text-white">🛕 मन्दिर (Rozha One)</option>
+                  <option value="notoSans" className="bg-neutral-950 text-white">🔤 सुगम (Noto Sans)</option>
+                  <option value="yatra" className="bg-neutral-950 text-white">🪶 काष्ठ पाण्डुलिपि</option>
+                </select>
+                <div className="flex items-center border-l border-neutral-700/80 pl-1 pr-0.5">
+                  <button
+                    onClick={() => setFontSize(prev => Math.max(16, prev - 2))}
+                    className="p-1 rounded hover:bg-white/10 text-neutral-300 hover:text-white cursor-pointer"
+                    title="फॉन्ट छोटा करें"
+                  >
+                    <ZoomOut className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="text-[11px] font-mono px-1.5 text-white font-bold">{fontSize}</span>
+                  <button
+                    onClick={() => setFontSize(prev => Math.min(36, prev + 2))}
+                    className="p-1 rounded hover:bg-white/10 text-neutral-300 hover:text-white cursor-pointer"
+                    title="फॉन्ट बड़ा करें"
+                  >
+                    <ZoomIn className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Theme Segmented Pill */}
+              <div className="flex items-center bg-neutral-900/90 border border-neutral-700/80 rounded-xl p-0.5 shadow-sm">
+                <button
+                  onClick={() => setReadingTheme('bhojpatra')}
+                  className={`px-2 py-1 rounded-lg text-xs font-devanagari transition-all flex items-center space-x-1 cursor-pointer ${
+                    readingTheme === 'bhojpatra' ? 'bg-sacred-700 text-white font-bold shadow' : 'text-neutral-400 hover:text-white'
+                  }`}
+                  title="हिमालयी भोजपत्र"
+                >
+                  <Scroll className="w-3.5 h-3.5" />
+                  <span className="hidden xl:inline">भोजपत्र</span>
+                </button>
+                <button
+                  onClick={() => setReadingTheme('golden-birch')}
+                  className={`px-2 py-1 rounded-lg text-xs font-devanagari transition-all flex items-center space-x-1 cursor-pointer ${
+                    readingTheme === 'golden-birch' ? 'bg-amber-700 text-white font-bold shadow' : 'text-neutral-400 hover:text-white'
+                  }`}
+                  title="स्वर्णिम भूर्जपत्र"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span className="hidden xl:inline">स्वर्ण</span>
+                </button>
+                <button
+                  onClick={() => setReadingTheme('dark-slate')}
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                    readingTheme === 'dark-slate' ? 'bg-neutral-800 text-white font-bold shadow' : 'text-neutral-400 hover:text-white'
+                  }`}
+                  title="डार्क मोड"
+                >
+                  <Moon className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setReadingTheme('ivory-white')}
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                    readingTheme === 'ivory-white' ? 'bg-neutral-200 text-neutral-900 shadow' : 'text-neutral-400 hover:text-white'
+                  }`}
+                  title="धवल ग्रन्थ"
+                >
+                  <Sun className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Liturgical Tools */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setIsPadachhedaMode(!isPadachhedaMode)}
+                  className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all flex items-center space-x-1 font-devanagari cursor-pointer ${
+                    isPadachhedaMode
+                      ? 'bg-sacred-700 border-sacred-500 text-white shadow-md font-bold'
+                      : 'bg-neutral-900/90 hover:bg-neutral-800 border-neutral-700 text-neutral-300'
+                  }`}
+                  title="पाणिनीय पदच्छेद (संधि-विच्छेद)"
+                >
+                  <Split className="w-3.5 h-3.5" />
+                  <span className="hidden lg:inline">पदच्छेद</span>
+                </button>
+
+                <button
+                  onClick={() => setIsStudioModalOpen(true)}
+                  className="px-2.5 py-1.5 rounded-xl border border-neutral-700 bg-neutral-900/90 hover:bg-neutral-800 text-neutral-200 hover:text-white text-xs font-semibold transition-all flex items-center space-x-1 font-devanagari cursor-pointer"
+                  title="छन्द व शास्त्र-शोधक"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden 2xl:inline">छन्द शोधक</span>
+                </button>
+
+                {isKarmakandaBook && (
+                  <button
+                    onClick={() => setIsKarmakandaMode(!isKarmakandaMode)}
+                    className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-all flex items-center space-x-1 font-devanagari cursor-pointer ${
+                      isKarmakandaMode
+                        ? 'bg-sacred-700 border-sacred-500 text-white shadow-md font-bold'
+                        : 'bg-neutral-900/90 hover:bg-neutral-800 border-neutral-700 text-neutral-300'
+                    }`}
+                    title="कर्मकाण्ड क्रिया-कार्ड"
+                  >
+                    <span>🪔</span>
+                    <span className="hidden xl:inline">क्रिया-कार्ड</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Fullscreen & Focus Mode */}
+              <div className="flex items-center gap-1 border-l border-neutral-800 pl-1.5">
+                <button
+                  onClick={toggleFullscreen}
+                  className="p-1.5 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-700 text-neutral-300 hover:text-white transition-all cursor-pointer shadow-xs"
+                  title="पूर्ण स्क्रीन (F)"
+                >
+                  {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                </button>
+                <button
+                  onClick={() => setIsHeaderHidden(true)}
+                  className="p-1.5 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-700 text-neutral-300 hover:text-white transition-all cursor-pointer shadow-xs"
+                  title="ध्यान मोड (H)"
+                >
+                  <EyeOff className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-
-        {/* Customization Toolbar */}
-        <div className="flex items-center flex-wrap gap-2 text-xs">
-          {/* View Mode (Only 'पाठ' shown as required) */}
-          <div className="flex items-center bg-sacred-700 text-white rounded-xl px-2.5 py-1 font-devanagari font-bold space-x-1.5 shadow-xs border border-sacred-500/50">
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>पाठ</span>
-          </div>
-
-          {/* Font Selector */}
-          <select
-            value={fontFamily}
-            onChange={e => setFontFamily(e.target.value as ScriptureFont)}
-            className="bg-neutral-900 border border-neutral-700 text-neutral-100 rounded-xl px-2.5 py-1.5 text-xs font-devanagari focus:outline-none focus:border-sacred-500 cursor-pointer shadow-inner"
-            title="पवित्र संस्कृत लिपि फॉन्ट चुनें"
-          >
-            <option value="harmonized">⚜️ शास्त्र सम्मत (वैदिक + पौराणिक द्वैध)</option>
-            <option value="tiro">📜 पारंपरिक पोथी (Tiro Sanskrit)</option>
-            <option value="yatra">🪶 काष्ठ पाण्डुलिपि (Yatra One)</option>
-            <option value="rozha">🛕 राजसी मन्दिर शैली (Rozha One)</option>
-            <option value="notoSerif">📖 शास्त्रीय सेरिफ़ (Noto Serif)</option>
-            <option value="notoSans">🔤 सुगम देवनागरी (Noto Sans)</option>
-          </select>
-
-          {/* Font Size Buttons */}
-          <div className="flex items-center bg-white/10 rounded-xl p-0.5 border border-white/15">
-            <button
-              onClick={() => setFontSize(prev => Math.max(16, prev - 2))}
-              className="p-1 rounded hover:bg-white/15 font-bold text-neutral-300 hover:text-white"
-              title="फॉन्ट छोटा करें"
-            >
-              <ZoomOut className="w-3.5 h-3.5" />
-            </button>
-            <span className="text-[11px] font-mono px-2 text-white font-bold">{fontSize}</span>
-            <button
-              onClick={() => setFontSize(prev => Math.min(36, prev + 2))}
-              className="p-1 rounded hover:bg-white/15 font-bold text-neutral-300 hover:text-white"
-              title="फॉन्ट बड़ा करें"
-            >
-              <ZoomIn className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Spacing (Only 'सघन' shown as required) */}
-          <div className="flex items-center bg-sacred-700 text-white rounded-xl px-2.5 py-1 font-devanagari font-bold text-xs shadow-xs border border-sacred-500/50" title="सघन पंक्ति दूरी (Compact row spacing)">
-            <span>सघन</span>
-          </div>
-
-          {/* Theme Selector */}
-          <div className="flex items-center bg-white/10 rounded-xl p-0.5 border border-white/15">
-            <button
-              onClick={() => setReadingTheme('bhojpatra')}
-              className={`px-2 py-1 rounded-lg text-xs font-devanagari transition-all flex items-center space-x-1 ${
-                readingTheme === 'bhojpatra' ? 'bg-sacred-700 text-white font-bold shadow' : 'text-neutral-300 hover:text-white'
-              }`}
-              title="प्राकृतिक हिमालयी भोजपत्र शैली"
-            >
-              <Scroll className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">भोजपत्र</span>
-            </button>
-            <button
-              onClick={() => setReadingTheme('golden-birch')}
-              className={`px-2 py-1 rounded-lg text-xs font-devanagari transition-all flex items-center space-x-1 ${
-                readingTheme === 'golden-birch' ? 'bg-neutral-800 text-white font-bold shadow' : 'text-neutral-300 hover:text-white'
-              }`}
-              title="स्वर्णिम भूर्जपत्र शैली"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">स्वर्ण</span>
-            </button>
-            <button
-              onClick={() => setReadingTheme('dark-slate')}
-              className={`p-1.5 rounded-lg transition-all ${
-                readingTheme === 'dark-slate' ? 'bg-neutral-800 text-white font-bold shadow' : 'text-neutral-400 hover:text-white'
-              }`}
-              title="रात्रि गर्भगृह (Dark Mode)"
-            >
-              <Moon className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setReadingTheme('ivory-white')}
-              className={`p-1.5 rounded-lg transition-all ${
-                readingTheme === 'ivory-white' ? 'bg-neutral-200 text-neutral-900 shadow' : 'text-neutral-400 hover:text-white'
-              }`}
-              title="शुभ्र ग्रन्थ (Ivory White)"
-            >
-              <Sun className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Script Mode Toggle */}
-          <button
-            onClick={() => setScriptMode(scriptMode === 'devanagari' ? 'iast' : 'devanagari')}
-            className={`px-2.5 py-1 rounded-xl border text-xs font-semibold transition-all ${
-              scriptMode === 'devanagari'
-                ? 'bg-sacred-800/80 border-sacred-600 text-white font-bold'
-                : 'bg-neutral-800 border-neutral-700 text-sky-300 font-mono'
-            }`}
-            title="देवनागरी / IAST रोमनीकरण बदलें"
-          >
-            {scriptMode === 'devanagari' ? 'देवनागरी' : 'IAST Roman'}
-          </button>
-
-          {/* Padachheda (Word-Split) Toggle */}
-          <button
-            onClick={() => setIsPadachhedaMode(!isPadachhedaMode)}
-            className={`px-3 py-1 rounded-xl border text-xs font-semibold transition-all flex items-center space-x-1.5 font-devanagari shadow-sm ${
-              isPadachhedaMode
-                ? 'bg-sacred-700 border-sacred-500 text-white shadow-md font-bold scale-[1.02]'
-                : 'bg-white/10 hover:bg-white/20 border-white/20 text-neutral-200'
-            }`}
-            title="पाणिनीय पदच्छेद: समस्त पदों एवं संधियों को अलग-अलग देखने हेतु (UoHyd Standard)"
-          >
-            <Split className="w-3.5 h-3.5" />
-            <span>{isPadachhedaMode ? 'पदच्छेद (विभक्त शब्द)' : 'पदच्छेद'}</span>
-          </button>
-
-          {/* Sacred Audio Recitation Toggle */}
-          {currentAudioTrack && (
-            <button
-              onClick={() => setIsAudioPlayerOpen(prev => !prev)}
-              className={`px-3 py-1 rounded-xl border text-xs font-devanagari font-bold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer ${
-                isAudioPlayerOpen
-                  ? 'bg-rose-900 border-rose-600 text-white shadow-md'
-                  : 'bg-white/10 hover:bg-white/20 border-white/20 text-neutral-200'
-              }`}
-              title={isAudioPlayerOpen ? "ऑडियो प्लेयर छिपाएँ" : "शास्त्रोक्त पाठ सुनें"}
-            >
-              <span>🎧</span>
-              <span>{isAudioPlayerOpen ? 'ऑडियो चालू' : 'पाठ सुनें'}</span>
-            </button>
-          )}
-
-          {/* Karmakanda Ritual Action Toggle */}
-          <button
-            onClick={() => setIsKarmakandaMode(!isKarmakandaMode)}
-            className={`px-3 py-1 rounded-xl border text-xs font-semibold transition-all flex items-center space-x-1.5 font-devanagari shadow-sm ${
-              isKarmakandaMode
-                ? 'bg-sacred-700 border-sacred-500 text-white shadow-md font-bold'
-                : 'bg-white/10 hover:bg-white/20 border-white/20 text-neutral-300'
-            }`}
-            title="कर्मकाण्ड विधि निर्देश, सङ्कल्प, विनियोग, न्यास एवं उपचार चक्र दर्शन"
-          >
-            <span>🪔</span>
-            <span>{isKarmakandaMode ? 'क्रिया-कार्ड सक्रिय' : 'क्रिया-कार्ड'}</span>
-          </button>
-
-          {/* Shastra-Shodhaka & Chhandas Studio Toggle */}
-          <button
-            onClick={() => setIsStudioModalOpen(true)}
-            className="px-3 py-1 rounded-xl border border-sacred-500/80 bg-sacred-800/90 hover:bg-sacred-700 text-white text-xs font-semibold transition-all flex items-center space-x-1.5 font-devanagari shadow-sm cursor-pointer"
-            title="छन्द व शास्त्र-शोधक: अक्षर-भार, लघु-गुरु गण एवं पाणिनीय शुद्धि"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>छन्द व शास्त्र-शोधक</span>
-          </button>
-
-          {/* Fullscreen Toggle */}
-          <button
-            onClick={toggleFullscreen}
-            className={`px-2.5 py-1 rounded-xl border text-xs font-semibold transition-all flex items-center space-x-1 cursor-pointer ${
-              isFullscreen
-                ? 'bg-sacred-700 border-sacred-500 text-white shadow-md'
-                : 'bg-white/10 hover:bg-white/20 border-white/20 text-neutral-200'
-            }`}
-            title="पूर्ण स्क्रीन (Fullscreen - F)"
-          >
-            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">{isFullscreen ? 'सामान्य' : 'पूर्ण स्क्रीन'}</span>
-          </button>
-
-          {/* Hide Top Bar / Focus Mode */}
-          <button
-            onClick={() => setIsHeaderHidden(true)}
-            className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-neutral-200 hover:text-white transition-all flex items-center space-x-1 cursor-pointer"
-            title="शीर्ष बार छिपाएं / स्वाध्याय मोड (H)"
-          >
-            <EyeOff className="w-3.5 h-3.5 text-neutral-400" />
-            <span className="hidden sm:inline font-devanagari">बार छिपाएं</span>
-          </button>
-        </div>
       </header>
       )}
 
       {/* Main Reading Container (Text / Path Mode Only) */}
       <main
         ref={readingContainerRef}
-        className={`max-w-4xl sm:max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8 w-full flex-grow flex flex-col items-center justify-start select-text ${
-          isAudioPlayerOpen && currentAudioTrack ? 'pb-28 sm:pb-36' : 'pb-8'
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className={`max-w-4xl sm:max-w-5xl lg:max-w-6xl mx-auto px-2 sm:px-6 py-2 sm:py-6 w-full flex-grow flex flex-col items-center justify-start select-text touch-pan-y ${
+          isAudioPlayerOpen && currentAudioTrack ? 'pb-28 sm:pb-36' : 'pb-16 sm:pb-8'
         }`}
       >
         <div
           style={getPothiSheetStyle()}
-          className="pothi-manuscript-border rounded-3xl p-5 sm:p-8 w-full transition-all relative overflow-hidden my-2"
+          className="pothi-manuscript-border rounded-2xl sm:rounded-3xl p-4 sm:p-9 lg:p-12 w-full transition-all relative overflow-hidden my-1 sm:my-2 shadow-[0_25px_70px_-15px_rgba(0,0,0,0.7)]"
         >
           {/* Sacred Corner Rosettes */}
-          <div className="absolute top-3.5 left-3.5 w-6 h-6 rounded-full border border-[#8C2D19] bg-[#C44D25]/20 flex items-center justify-center text-[10px] text-[#8C2D19] font-bold select-none">
+          <div className="absolute top-4 left-4 w-7 h-7 rounded-full border border-[#8C2D19] bg-[#C44D25]/15 flex items-center justify-center text-xs text-[#8C2D19] font-bold select-none shadow-xs">
             卐
           </div>
-          <div className="absolute top-3.5 right-3.5 w-6 h-6 rounded-full border border-[#8C2D19] bg-[#C44D25]/20 flex items-center justify-center text-[10px] text-[#8C2D19] font-bold select-none">
+          <div className="absolute top-4 right-4 w-7 h-7 rounded-full border border-[#8C2D19] bg-[#C44D25]/15 flex items-center justify-center text-xs text-[#8C2D19] font-bold select-none shadow-xs">
             卐
           </div>
-          <div className="absolute bottom-3.5 left-3.5 w-6 h-6 rounded-full border border-[#8C2D19] bg-[#C44D25]/20 flex items-center justify-center text-[10px] text-[#8C2D19] font-bold select-none">
+          <div className="absolute bottom-4 left-4 w-7 h-7 rounded-full border border-[#8C2D19] bg-[#C44D25]/15 flex items-center justify-center text-xs text-[#8C2D19] font-bold select-none shadow-xs">
             卐
           </div>
-          <div className="absolute bottom-3.5 right-3.5 w-6 h-6 rounded-full border border-[#8C2D19] bg-[#C44D25]/20 flex items-center justify-center text-[10px] text-[#8C2D19] font-bold select-none">
+          <div className="absolute bottom-4 right-4 w-7 h-7 rounded-full border border-[#8C2D19] bg-[#C44D25]/15 flex items-center justify-center text-xs text-[#8C2D19] font-bold select-none shadow-xs">
             卐
           </div>
 
@@ -2023,30 +2062,11 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
       </main>
 
       {/* Sticky Bottom Navigation Bar */}
-      <footer className={`sticky z-30 border-t border-black/20 bg-black/70 backdrop-blur-md px-4 py-3 flex items-center justify-between max-w-2xl mx-auto rounded-t-2xl shadow-2xl w-full transition-all duration-300 ${
+      <footer className={`sticky z-30 border-t border-black/20 bg-black/85 backdrop-blur-md px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between max-w-2xl mx-auto rounded-t-2xl shadow-2xl w-full pb-safe transition-all duration-300 ${
         isAudioPlayerOpen && currentAudioTrack ? 'bottom-20 sm:bottom-24 mb-1' : 'bottom-0'
       }`}>
         <button
-          onClick={() => {
-            if (activeStotraScope && isBrihatStotraBook) {
-              const idx = BRIHAT_STOTRAS.findIndex(s => s.id === activeStotraScope.id);
-              if (idx > 0) {
-                const prev = BRIHAT_STOTRAS[idx - 1];
-                setActiveStotraScope(prev);
-                setCurrentPageIndex(prev.pdfPage - 1);
-              }
-              return;
-            }
-            if (activeChapterScope && currentPageIndex <= activeChapterScope.startPage - 1) {
-              const prevChap = GITA_SECTIONS.find(s => s.id === activeChapterScope.id - 1);
-              if (prevChap) {
-                setActiveChapterScope(prevChap);
-                setCurrentPageIndex(prevChap.endPage - 1);
-              }
-              return;
-            }
-            setCurrentPageIndex(prev => Math.max(0, prev - 1));
-          }}
+          onClick={goToPrevPage}
           disabled={
             activeStotraScope && isBrihatStotraBook
               ? activeStotraScope.id === 1
@@ -2054,7 +2074,8 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
               ? (activeChapterScope.id === 1 && currentPageIndex <= 0)
               : currentPageIndex === 0
           }
-          className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed font-medium text-xs text-white transition-all active:scale-95 cursor-pointer"
+          className="flex items-center space-x-1.5 px-3.5 py-2.5 sm:py-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed font-medium text-xs text-white transition-all active:scale-95 cursor-pointer min-h-[44px]"
+          title="पूर्व पृष्ठ"
         >
           <ChevronLeft className="w-4 h-4" />
           <span className="font-devanagari font-semibold hidden sm:inline">
@@ -2072,7 +2093,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             <button
               type="button"
               onClick={() => setIsTocOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-sacred-800 hover:bg-sacred-700 text-amber-200 border border-sacred-600/70 text-xs font-devanagari font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-sacred-800 hover:bg-sacred-700 text-amber-200 border border-sacred-600/70 text-xs font-devanagari font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer min-h-[40px]"
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>समग्र स्तोत्र अनुक्रमणिका</span>
@@ -2110,7 +2131,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
               max={activeChapterScope ? (activeChapterScope.endPage - activeChapterScope.startPage + 1) : pages.length}
               value={jumpPageInput}
               onChange={(e) => setJumpPageInput(e.target.value)}
-              className="w-14 text-center font-mono bg-black/80 text-white px-1 py-1 rounded-lg border border-neutral-700 text-xs focus:outline-none focus:border-sacred-500 font-bold"
+              className="w-14 text-center font-mono bg-black/80 text-white px-1 py-1 rounded-lg border border-neutral-700 text-xs focus:outline-none focus:border-sacred-500 font-bold min-h-[36px]"
             />
             <span className="text-neutral-400 font-mono">
               / {activeChapterScope ? (activeChapterScope.endPage - activeChapterScope.startPage + 1) : pages.length}
@@ -2122,7 +2143,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
             )}
             <button
               type="submit"
-              className="px-2.5 py-1 rounded-lg bg-sacred-700 hover:bg-sacred-600 text-white text-[11px] font-devanagari font-semibold transition-colors shadow cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-sacred-700 hover:bg-sacred-600 text-white text-[11px] font-devanagari font-semibold transition-colors shadow cursor-pointer min-h-[36px]"
             >
               जाएँ
             </button>
@@ -2130,26 +2151,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
         )}
 
         <button
-          onClick={() => {
-            if (activeStotraScope && isBrihatStotraBook) {
-              const idx = BRIHAT_STOTRAS.findIndex(s => s.id === activeStotraScope.id);
-              if (idx < BRIHAT_STOTRAS.length - 1) {
-                const next = BRIHAT_STOTRAS[idx + 1];
-                setActiveStotraScope(next);
-                setCurrentPageIndex(next.pdfPage - 1);
-              }
-              return;
-            }
-            if (activeChapterScope && currentPageIndex >= activeChapterScope.endPage - 1) {
-              const nextChap = GITA_SECTIONS.find(s => s.id === activeChapterScope.id + 1);
-              if (nextChap) {
-                setActiveChapterScope(nextChap);
-                setCurrentPageIndex(nextChap.startPage - 1);
-              }
-              return;
-            }
-            setCurrentPageIndex(prev => Math.min(pages.length - 1, prev + 1));
-          }}
+          onClick={goToNextPage}
           disabled={
             activeStotraScope && isBrihatStotraBook
               ? activeStotraScope.id === BRIHAT_STOTRAS[BRIHAT_STOTRAS.length - 1].id
@@ -2157,7 +2159,8 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
               ? (activeChapterScope.id === GITA_SECTIONS.length && currentPageIndex >= pages.length - 1)
               : currentPageIndex === pages.length - 1
           }
-          className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed font-medium text-xs text-white transition-all active:scale-95 cursor-pointer"
+          className="flex items-center space-x-1.5 px-3.5 py-2.5 sm:py-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed font-medium text-xs text-white transition-all active:scale-95 cursor-pointer min-h-[44px]"
+          title="अग्रिम पृष्ठ"
         >
           <span className="font-devanagari font-semibold hidden sm:inline">
             {activeStotraScope && isBrihatStotraBook
@@ -2332,6 +2335,20 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
           onClose={() => setIsAudioPlayerOpen(false)}
         />
       )}
+
+      {/* Mobile Reader Settings Bottom Sheet */}
+      <ReaderSettingsSheet
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        fontSize={fontSize}
+        setFontSize={setFontSize}
+        fontFamily={fontFamily}
+        setFontFamily={setFontFamily}
+        readingTheme={readingTheme}
+        setReadingTheme={setReadingTheme}
+        isPadachhedaMode={isPadachhedaMode}
+        setIsPadachhedaMode={setIsPadachhedaMode}
+      />
     </div>
   );
 };

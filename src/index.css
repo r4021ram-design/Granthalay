@@ -173,5 +173,36 @@
   letter-spacing: 0.04em;
 }
 
+/* Mobile Friendly Utilities & Safe Areas */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 16px), 16px);
+}
+
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top, 0px), 0px);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 640px) {
+  .pothi-manuscript-border {
+    border-width: 2.5px;
+    outline-width: 1px;
+    outline-offset: -5px;
+  }
+}
+
+
 
 

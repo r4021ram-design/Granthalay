@@ -1,8 +1,9 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Navbar } from './components/Navbar.js';
+import { MobileBottomNav } from './components/MobileBottomNav.js';
 import { api } from './api.js';
 import type { Book, BookStats } from '../shared/types.js';
-import { findStotraById, type ScriptureItem } from './data/darshanTaxonomy.js';
+import { findStotraById, type ScriptureItem, type DarshanId } from './data/darshanTaxonomy.js';
 
 // Dynamic code-splitting for heavy views & modals
 const LibraryView = lazy(() => import('./components/LibraryView.js').then(m => ({ default: m.LibraryView })));
@@ -52,6 +53,7 @@ export function App() {
 
   const initial = getInitialState();
   const [currentView, setCurrentView] = useState<'library' | 'workspace' | 'reader' | 'search'>(initial.view);
+  const [activeDarshan, setActiveDarshan] = useState<DarshanId | 'all'>('stotra');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(initial.bookId);
   const [selectedCustomStotra, setSelectedCustomStotra] = useState<ScriptureItem | null>(() => {
     if (initial.bookId && (initial.bookId.startsWith('supp-') || initial.bookId.startsWith('custom-'))) {
@@ -203,12 +205,14 @@ export function App() {
       )}
 
       {/* View Switcher */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col pb-16 md:pb-0">
         <Suspense fallback={<ViewLoadingFallback />}>
           {currentView === 'library' && (
             <LibraryView
               books={books}
               stats={stats}
+              activeDarshan={activeDarshan}
+              onDarshanChange={setActiveDarshan}
               onSelectBookForVerification={handleOpenWorkspace}
               onSelectBookForReading={handleOpenReading}
               onSelectCustomStotra={handleOpenCustomStotra}
@@ -256,6 +260,19 @@ export function App() {
           )}
         </Suspense>
       </main>
+
+      {/* Mobile Bottom Navigation Bar (Hidden in Reader & Desktop) */}
+      <MobileBottomNav
+        currentView={currentView}
+        setCurrentView={setCurrentView}
+        activeDarshan={activeDarshan}
+        onSelectDarshan={(darshan) => {
+          setActiveDarshan(darshan);
+          setCurrentView('library');
+        }}
+        theme={theme}
+        setTheme={setTheme}
+      />
 
       {/* Modals */}
       <Suspense fallback={null}>

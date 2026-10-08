@@ -13,12 +13,14 @@ import {
 import { EXTENDED_COHORT_TRANSLATIONS } from './extendedCohortTranslations.js';
 import { MAHISHASURAMARDINI_COMPLETE_TRANSLATIONS } from './mahishasuramardiniCompleteData.js';
 import { CHANDIKA_STOTRAM_COMPLETE_TRANSLATIONS } from './chandikaStotramCompleteData.js';
+import { RUDRASHTADHYAYI_COMPLETE_TRANSLATIONS } from './rudrashtadhyayiCompleteData.js';
 
 export const CANONICAL_SHLOKA_TRANSLATIONS: ShlokaLinguisticData[] = [
   ...DURGA_SAPTASHATI_COMPLETE_TRANSLATIONS,
   ...EXTENDED_COHORT_TRANSLATIONS,
   ...MAHISHASURAMARDINI_COMPLETE_TRANSLATIONS,
   ...CHANDIKA_STOTRAM_COMPLETE_TRANSLATIONS,
+  ...RUDRASHTADHYAYI_COMPLETE_TRANSLATIONS,
   // --------------------------------------------------------------------------
   // १. श्रीगणपत्यथर्वशीर्षम् - श्लोक १
   // --------------------------------------------------------------------------

@@ -41,6 +41,8 @@ interface LibraryViewProps {
   onDeleteBook: (bookId: string) => void;
   onOpenUpload: () => void;
   onExport: (bookId: string, format: 'txt' | 'docx' | 'pdf') => void;
+  activeDarshan?: DarshanId | 'all';
+  onDarshanChange?: (darshan: DarshanId | 'all') => void;
 }
 
 interface DeityTheme {
@@ -61,8 +63,15 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   onDeleteBook,
   onOpenUpload,
   onExport,
+  activeDarshan: controlledActiveDarshan,
+  onDarshanChange,
 }) => {
-  const [activeDarshan, setActiveDarshan] = useState<DarshanId | 'all'>('stotra');
+  const [internalActiveDarshan, setInternalActiveDarshan] = useState<DarshanId | 'all'>('stotra');
+  const activeDarshan = controlledActiveDarshan !== undefined ? controlledActiveDarshan : internalActiveDarshan;
+  const setActiveDarshan = (d: DarshanId | 'all') => {
+    setInternalActiveDarshan(d);
+    onDarshanChange?.(d);
+  };
   const [stotraDeity, setStotraDeity] = useState<string>('all');
   const [selectedGenre, setSelectedGenre] = useState<StotraGenreId>('all');
   const [stotraSearch, setStotraSearch] = useState('');
@@ -639,13 +648,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* 1. Canonical 4 Darshans Toolbar with Dropdown Buttons */}
       <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-neutral-800 relative z-30">
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap py-1">
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-1 max-w-full -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
           {CANONICAL_DARSHANS.map((d) => {
             const isSelected = activeDarshan === d.id;
             const isDropdownOpen = openDropdown === d.id;
 
             return (
-              <div key={d.id} className="relative darshan-dropdown-container">
+              <div key={d.id} className="relative darshan-dropdown-container flex-shrink-0">
                 <div
                   className={`inline-flex items-stretch rounded-xl text-xs sm:text-sm font-devanagari transition-all whitespace-nowrap border shadow-sm ${
                     isSelected
@@ -700,7 +709,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   <>
                     {/* Fixed Transparent Backdrop to safely close on click outside */}
                     <div
-                      className="fixed inset-0 z-40 bg-black/25 cursor-default"
+                      className="fixed inset-0 z-40 bg-black/60 sm:bg-black/25 backdrop-blur-xs cursor-default"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -710,8 +719,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className={`absolute top-full mt-2 w-72 sm:w-84 max-h-[75vh] overflow-y-auto bg-[#140C07] border border-amber-600/70 rounded-2xl shadow-2xl p-2 z-50 divide-y divide-neutral-900/80 animate-in fade-in zoom-in-95 duration-150 ${
-                        d.id === 'veda-purana' ? 'right-0' : 'left-0'
+                      className={`fixed inset-x-3 bottom-18 sm:bottom-auto sm:inset-x-auto sm:top-full mt-2 w-auto sm:w-84 max-h-[75vh] overflow-y-auto bg-[#140C07] border border-amber-600/70 rounded-2xl shadow-2xl p-2 z-50 divide-y divide-neutral-900/80 animate-in fade-in zoom-in-95 duration-150 ${
+                        d.id === 'veda-purana' ? 'sm:right-0' : 'sm:left-0'
                       }`}
                     >
                     {/* Stotra Darshan Dropdown */}
