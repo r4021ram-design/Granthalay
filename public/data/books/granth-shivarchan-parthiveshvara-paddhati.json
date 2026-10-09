@@ -1,30 +1,32 @@
 {
-  "id": "granth-shivarchan-parthiveshvara-paddhati",
-  "title": "श्री शिवार्चन एवं पार्थिवेश्वर पूजन पद्धति",
-  "author": "आचार्य धीरेन्द्र (वाजसनेयी माध्यन्दिन एवं आगम परम्परा)",
-  "description": "पार्थिवेश्वर शिवपूजन, अखण्ड पूर्वाङ्ग, गणेशाऽम्बिका पूजन, कलश प्रतिष्ठा, वरण विधान, सस्वर महाभिषेक धारा (रुद्राष्टाध्यायी पञ्चम अध्याय), पञ्चवक्त्र, अङ्ग-आवरण-अष्टमूर्ति पूजन, शिव अष्टोत्तरशत नामावली, तर्पण, नीराजन (आरती), चण्डेश्वर बलि एवं विसर्जन की सम्पूर्ण सोपानबद्ध संहिता।",
-  "language": "sa",
-  "page_count": 25,
-  "status": "FULLY_VERIFIED",
-  "source_type": "pdf",
-  "original_filename": "shivarchan_paddhati.pdf",
-  "original_file_path": "D:\\August 2026\\Desktop\\Granth\\storage\\pages\\granth-shivarchan-parthiveshvara-paddhati\\granth-shivarchan-parthiveshvara-paddhati.pdf",
-  "created_at": "2026-10-07T06:25:55.634Z",
-  "updated_at": "2026-10-07T06:25:55.635Z",
-  "verified_pages": 25,
-  "total_issues": 0,
-  "critical_issues": 0,
-  "cover_path": "/data/pages/granth-shivarchan-parthiveshvara-paddhati/1.webp",
-  "tags": [
-    "पूजा पद्धति",
-    "शिव पूजन",
-    "पार्थिवेश्वर",
-    "रुद्राभिषेक",
-    "शिवार्चन",
-    "वैदिक",
-    "कर्मकाण्ड"
-  ],
-  "category": "पूजा पद्धति",
+  "book": {
+    "id": "granth-shivarchan-parthiveshvara-paddhati",
+    "title": "श्री शिवार्चन एवं पार्थिवेश्वर पूजन पद्धति",
+    "author": "आचार्य धीरेन्द्र (वाजसनेयी माध्यन्दिन एवं आगम परम्परा)",
+    "description": "पार्थिवेश्वर शिवपूजन, अखण्ड पूर्वाङ्ग, गणेशाऽम्बिका पूजन, कलश प्रतिष्ठा, वरण विधान, सस्वर महाभिषेक धारा (रुद्राष्टाध्यायी पञ्चम अध्याय), पञ्चवक्त्र, अङ्ग-आवरण-अष्टमूर्ति पूजन, शिव अष्टोत्तरशत नामावली, तर्पण, नीराजन (आरती), चण्डेश्वर बलि एवं विसर्जन की सम्पूर्ण सोपानबद्ध संहिता।",
+    "language": "sa",
+    "page_count": 25,
+    "status": "FULLY_VERIFIED",
+    "source_type": "pdf",
+    "original_filename": "shivarchan_paddhati.pdf",
+    "original_file_path": "D:\\August 2026\\Desktop\\Granth\\storage\\pages\\granth-shivarchan-parthiveshvara-paddhati\\granth-shivarchan-parthiveshvara-paddhati.pdf",
+    "created_at": "2026-10-07T06:25:55.634Z",
+    "updated_at": "2026-10-07T06:25:55.635Z",
+    "verified_pages": 25,
+    "total_issues": 0,
+    "critical_issues": 0,
+    "cover_path": "/data/pages/granth-shivarchan-parthiveshvara-paddhati/1.webp",
+    "tags": [
+      "पूजा पद्धति",
+      "शिव पूजन",
+      "पार्थिवेश्वर",
+      "रुद्राभिषेक",
+      "शिवार्चन",
+      "वैदिक",
+      "कर्मकाण्ड"
+    ],
+    "category": "पूजा पद्धति"
+  },
   "pages": [
     {
       "id": "f74381af-65c2-4344-ba7e-015a600cfb9a",
@@ -426,5 +428,31 @@
       "verified_at": "2026-10-07T06:25:55.641Z",
       "verified_by": "Antigravity Authentic Sanskrit Proofing Engine"
     }
-  ]
+  ],
+  "id": "granth-shivarchan-parthiveshvara-paddhati",
+  "title": "श्री शिवार्चन एवं पार्थिवेश्वर पूजन पद्धति",
+  "author": "आचार्य धीरेन्द्र (वाजसनेयी माध्यन्दिन एवं आगम परम्परा)",
+  "description": "पार्थिवेश्वर शिवपूजन, अखण्ड पूर्वाङ्ग, गणेशाऽम्बिका पूजन, कलश प्रतिष्ठा, वरण विधान, सस्वर महाभिषेक धारा (रुद्राष्टाध्यायी पञ्चम अध्याय), पञ्चवक्त्र, अङ्ग-आवरण-अष्टमूर्ति पूजन, शिव अष्टोत्तरशत नामावली, तर्पण, नीराजन (आरती), चण्डेश्वर बलि एवं विसर्जन की सम्पूर्ण सोपानबद्ध संहिता।",
+  "language": "sa",
+  "page_count": 25,
+  "status": "FULLY_VERIFIED",
+  "source_type": "pdf",
+  "original_filename": "shivarchan_paddhati.pdf",
+  "original_file_path": "D:\\August 2026\\Desktop\\Granth\\storage\\pages\\granth-shivarchan-parthiveshvara-paddhati\\granth-shivarchan-parthiveshvara-paddhati.pdf",
+  "created_at": "2026-10-07T06:25:55.634Z",
+  "updated_at": "2026-10-07T06:25:55.635Z",
+  "verified_pages": 25,
+  "total_issues": 0,
+  "critical_issues": 0,
+  "cover_path": "/data/pages/granth-shivarchan-parthiveshvara-paddhati/1.webp",
+  "tags": [
+    "पूजा पद्धति",
+    "शिव पूजन",
+    "पार्थिवेश्वर",
+    "रुद्राभिषेक",
+    "शिवार्चन",
+    "वैदिक",
+    "कर्मकाण्ड"
+  ],
+  "category": "पूजा पद्धति"
 }

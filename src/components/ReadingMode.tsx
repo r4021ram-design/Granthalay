@@ -137,6 +137,7 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
     }
   }, [isPadachhedaMode]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [jumpPageInput, setJumpPageInput] = useState<string>('1');
   const [isTocOpen, setIsTocOpen] = useState<boolean>(false);
   const [activeChapterScope, setActiveChapterScope] = useState<GitaChapter | null>(null);
@@ -582,20 +583,69 @@ export const ReadingMode: React.FC<ReadingModeProps> = ({
     async function loadBook() {
       try {
         setIsLoading(true);
+        setLoadError(null);
         const data = await api.getBook(bookId);
-        setBook(data.book);
-        setPages(data.pages);
-        if (initialPage && initialPage > 0) {
+        const resolvedBook = data?.book || books.find(b => b.id === bookId) || null;
+        setBook(resolvedBook);
+        setPages(data?.pages || []);
+        if (initialPage && initialPage > 0 && data?.pages?.length) {
           setCurrentPageIndex(Math.min(initialPage - 1, data.pages.length - 1));
         }
         setIsLoading(false);
       } catch (err) {
-        console.error(err);
+        console.error('Failed to load book in ReadingMode:', err);
+        const fallbackBook = books.find(b => b.id === bookId);
+        if (fallbackBook) {
+          setBook(fallbackBook);
+          setPages([]);
+        } else {
+          setLoadError(err instanceof Error ? err.message : 'पावन ग्रन्थ लोड करने में त्रुटि उत्पन्न हुई');
+        }
         setIsLoading(false);
       }
     }
     loadBook();
-  }, [bookId, customStotra, initialPage]);
+  }, [bookId, customStotra, initialPage, books]);
+
+  if (loadError && !book) {
+    return (
+      <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-md w-full bg-stone-900/90 border border-sacred-600/30 rounded-2xl p-6 shadow-2xl backdrop-blur">
+          <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-950/60 border border-red-500/40 flex items-center justify-center text-red-400">
+            <AlertCircle className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-devanagari font-bold text-sacred-100 mb-2">ग्रन्थ पठन आरम्भ नहीं हो सका</h2>
+          <p className="text-sm font-devanagari text-stone-300 mb-6">{loadError}</p>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => {
+                setLoadError(null);
+                setIsLoading(true);
+                api.getBook(bookId).then(data => {
+                  const resolvedBook = data?.book || books.find(b => b.id === bookId) || null;
+                  setBook(resolvedBook);
+                  setPages(data?.pages || []);
+                  setIsLoading(false);
+                }).catch(e => {
+                  setLoadError(e.message || 'त्रुटि');
+                  setIsLoading(false);
+                });
+              }}
+              className="px-4 py-2 rounded-xl bg-sacred-600 hover:bg-sacred-500 text-white font-devanagari text-sm font-medium transition-all shadow-md active:scale-95 cursor-pointer"
+            >
+              पुनः प्रयास करें
+            </button>
+            <button
+              onClick={onBack}
+              className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 font-devanagari text-sm font-medium transition-all border border-stone-700 active:scale-95 cursor-pointer"
+            >
+              मुख्य ग्रन्थालय पर लौटें
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading || !book) {
     return (

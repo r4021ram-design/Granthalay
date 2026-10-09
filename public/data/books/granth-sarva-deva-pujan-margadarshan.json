@@ -1,30 +1,32 @@
 {
-  "id": "granth-sarva-deva-pujan-margadarshan",
-  "title": "सर्वदेव पूजन मार्गदर्शन एवं विधि-रहस्य",
-  "author": "वाजसनेयी एवं पौराणिक आगम परम्परा",
-  "description": "समस्त देवताओं (गणेश, शिव, विष्णु, दुर्गा, सूर्य, हनुमान्) के पूजन का सार्वभौमिक शास्त्रीय मार्गदर्शन — षोडशोपचार एवं राजोपचार फल-रहस्य, १७ अनिवार्य विचारणीय नियम, सर्वदेव पत्र-पुष्प-द्रव्य विवेक, दम्पती-पूजन नियम, अभिषेक-द्रव्य फल तथा पञ्चविध रुद्रपाठ विधान।",
-  "language": "sa",
-  "page_count": 8,
-  "status": "FULLY_VERIFIED",
-  "source_type": "pdf",
-  "original_filename": "sarva_deva_pujan_margadarshan.pdf",
-  "original_file_path": "D:\\August 2026\\Desktop\\Granth\\storage\\pages\\granth-sarva-deva-pujan-margadarshan\\granth-sarva-deva-pujan-margadarshan.pdf",
-  "created_at": "2026-10-07T06:31:57.464Z",
-  "updated_at": "2026-10-07T06:31:57.465Z",
-  "verified_pages": 8,
-  "total_issues": 0,
-  "critical_issues": 0,
-  "cover_path": "/data/pages/granth-sarva-deva-pujan-margadarshan/1.webp",
-  "tags": [
-    "पूजा पद्धति",
-    "पूजन मार्गदर्शन",
-    "विधि रहस्य",
-    "षोडशोपचार",
-    "कर्मकाण्ड",
-    "सर्वदेव",
-    "आगम"
-  ],
-  "category": "पूजा पद्धति",
+  "book": {
+    "id": "granth-sarva-deva-pujan-margadarshan",
+    "title": "सर्वदेव पूजन मार्गदर्शन एवं विधि-रहस्य",
+    "author": "वाजसनेयी एवं पौराणिक आगम परम्परा",
+    "description": "समस्त देवताओं (गणेश, शिव, विष्णु, दुर्गा, सूर्य, हनुमान्) के पूजन का सार्वभौमिक शास्त्रीय मार्गदर्शन — षोडशोपचार एवं राजोपचार फल-रहस्य, १७ अनिवार्य विचारणीय नियम, सर्वदेव पत्र-पुष्प-द्रव्य विवेक, दम्पती-पूजन नियम, अभिषेक-द्रव्य फल तथा पञ्चविध रुद्रपाठ विधान।",
+    "language": "sa",
+    "page_count": 8,
+    "status": "FULLY_VERIFIED",
+    "source_type": "pdf",
+    "original_filename": "sarva_deva_pujan_margadarshan.pdf",
+    "original_file_path": "D:\\August 2026\\Desktop\\Granth\\storage\\pages\\granth-sarva-deva-pujan-margadarshan\\granth-sarva-deva-pujan-margadarshan.pdf",
+    "created_at": "2026-10-07T06:31:57.464Z",
+    "updated_at": "2026-10-07T06:31:57.465Z",
+    "verified_pages": 8,
+    "total_issues": 0,
+    "critical_issues": 0,
+    "cover_path": "/data/pages/granth-sarva-deva-pujan-margadarshan/1.webp",
+    "tags": [
+      "पूजा पद्धति",
+      "पूजन मार्गदर्शन",
+      "विधि रहस्य",
+      "षोडशोपचार",
+      "कर्मकाण्ड",
+      "सर्वदेव",
+      "आगम"
+    ],
+    "category": "पूजा पद्धति"
+  },
   "pages": [
     {
       "id": "b7fc758a-1eaf-490a-9765-8e9b03453142",
@@ -154,5 +156,31 @@
       "verified_at": "2026-10-07T06:31:57.470Z",
       "verified_by": "Antigravity Authentic Sanskrit Proofing Engine"
     }
-  ]
+  ],
+  "id": "granth-sarva-deva-pujan-margadarshan",
+  "title": "सर्वदेव पूजन मार्गदर्शन एवं विधि-रहस्य",
+  "author": "वाजसनेयी एवं पौराणिक आगम परम्परा",
+  "description": "समस्त देवताओं (गणेश, शिव, विष्णु, दुर्गा, सूर्य, हनुमान्) के पूजन का सार्वभौमिक शास्त्रीय मार्गदर्शन — षोडशोपचार एवं राजोपचार फल-रहस्य, १७ अनिवार्य विचारणीय नियम, सर्वदेव पत्र-पुष्प-द्रव्य विवेक, दम्पती-पूजन नियम, अभिषेक-द्रव्य फल तथा पञ्चविध रुद्रपाठ विधान।",
+  "language": "sa",
+  "page_count": 8,
+  "status": "FULLY_VERIFIED",
+  "source_type": "pdf",
+  "original_filename": "sarva_deva_pujan_margadarshan.pdf",
+  "original_file_path": "D:\\August 2026\\Desktop\\Granth\\storage\\pages\\granth-sarva-deva-pujan-margadarshan\\granth-sarva-deva-pujan-margadarshan.pdf",
+  "created_at": "2026-10-07T06:31:57.464Z",
+  "updated_at": "2026-10-07T06:31:57.465Z",
+  "verified_pages": 8,
+  "total_issues": 0,
+  "critical_issues": 0,
+  "cover_path": "/data/pages/granth-sarva-deva-pujan-margadarshan/1.webp",
+  "tags": [
+    "पूजा पद्धति",
+    "पूजन मार्गदर्शन",
+    "विधि रहस्य",
+    "षोडशोपचार",
+    "कर्मकाण्ड",
+    "सर्वदेव",
+    "आगम"
+  ],
+  "category": "पूजा पद्धति"
 }

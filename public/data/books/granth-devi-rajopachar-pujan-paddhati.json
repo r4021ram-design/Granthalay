@@ -1,19 +1,21 @@
 {
-  "id": "granth-devi-rajopachar-pujan-paddhati",
-  "title": "श्री दुर्गा देवी राजोपचार पूजन पद्धति",
-  "author": "शारदातिलक एवं आगम परम्परा",
-  "description": "जगज्जननी भगवती आद्यशक्ति दुर्गा का सम्पूर्ण राजसी राजोपचार पूजन विधान, विस्तृत पञ्चामृत एवं सर्वतीर्थ महास्नान, छत्र-चामर-दर्पण-व्यजन-आभरण सेवा, भैरव-सखी-सिंह-आयुध अर्चन, अङ्गपूजा, देव्यपराधक्षमापन एवं पूर्ण समर्पण।",
-  "language": "sa",
-  "page_count": 11,
-  "status": "FULLY_VERIFIED",
-  "source_type": "pdf",
-  "original_filename": "devi_rajopachar_pujan_paddhati.pdf",
-  "original_file_path": "D:\\August 2026\\Desktop\\Granth\\storage\\pages\\granth-devi-rajopachar-pujan-paddhati\\granth-devi-rajopachar-pujan-paddhati.pdf",
-  "created_at": "2026-10-06T10:03:16.974Z",
-  "updated_at": "2026-10-06T10:03:16.976Z",
-  "verified_pages": 11,
-  "total_issues": 0,
-  "critical_issues": 0,
+  "book": {
+    "id": "granth-devi-rajopachar-pujan-paddhati",
+    "title": "श्री दुर्गा देवी राजोपचार पूजन पद्धति",
+    "author": "शारदातिलक एवं आगम परम्परा",
+    "description": "जगज्जननी भगवती आद्यशक्ति दुर्गा का सम्पूर्ण राजसी राजोपचार पूजन विधान, विस्तृत पञ्चामृत एवं सर्वतीर्थ महास्नान, छत्र-चामर-दर्पण-व्यजन-आभरण सेवा, भैरव-सखी-सिंह-आयुध अर्चन, अङ्गपूजा, देव्यपराधक्षमापन एवं पूर्ण समर्पण।",
+    "language": "sa",
+    "page_count": 11,
+    "status": "FULLY_VERIFIED",
+    "source_type": "pdf",
+    "original_filename": "devi_rajopachar_pujan_paddhati.pdf",
+    "original_file_path": "D:\\August 2026\\Desktop\\Granth\\storage\\pages\\granth-devi-rajopachar-pujan-paddhati\\granth-devi-rajopachar-pujan-paddhati.pdf",
+    "created_at": "2026-10-06T10:03:16.974Z",
+    "updated_at": "2026-10-06T10:03:16.976Z",
+    "verified_pages": 11,
+    "total_issues": 0,
+    "critical_issues": 0
+  },
   "pages": [
     {
       "id": "granth-devi-rajopachar-pujan-paddhati-p1",
@@ -191,5 +193,20 @@
       "verified_at": "2026-10-06T10:03:16.980Z",
       "verified_by": "Shakta & Vaidika Canonical Verifier"
     }
-  ]
+  ],
+  "id": "granth-devi-rajopachar-pujan-paddhati",
+  "title": "श्री दुर्गा देवी राजोपचार पूजन पद्धति",
+  "author": "शारदातिलक एवं आगम परम्परा",
+  "description": "जगज्जननी भगवती आद्यशक्ति दुर्गा का सम्पूर्ण राजसी राजोपचार पूजन विधान, विस्तृत पञ्चामृत एवं सर्वतीर्थ महास्नान, छत्र-चामर-दर्पण-व्यजन-आभरण सेवा, भैरव-सखी-सिंह-आयुध अर्चन, अङ्गपूजा, देव्यपराधक्षमापन एवं पूर्ण समर्पण।",
+  "language": "sa",
+  "page_count": 11,
+  "status": "FULLY_VERIFIED",
+  "source_type": "pdf",
+  "original_filename": "devi_rajopachar_pujan_paddhati.pdf",
+  "original_file_path": "D:\\August 2026\\Desktop\\Granth\\storage\\pages\\granth-devi-rajopachar-pujan-paddhati\\granth-devi-rajopachar-pujan-paddhati.pdf",
+  "created_at": "2026-10-06T10:03:16.974Z",
+  "updated_at": "2026-10-06T10:03:16.976Z",
+  "verified_pages": 11,
+  "total_issues": 0,
+  "critical_issues": 0
 }

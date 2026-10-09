@@ -48,11 +48,33 @@ export const api = {
   },
 
   async getBook(id: string): Promise<{ book: Book; pages: Page[] }> {
-    return fetchWithFallback<{ book: Book; pages: Page[] }>(
+    const raw = await fetchWithFallback<any>(
       `${API_BASE}/books/${id}`,
       `/data/books/${id}.json`
     );
+    if (!raw) {
+      throw new Error(`ग्रन्थ उपलब्ध नहीं है: ${id}`);
+    }
+    // Case 1: Standard wrapper { book: Book, pages: Page[] }
+    if (raw.book && Array.isArray(raw.pages)) {
+      return { book: raw.book as Book, pages: raw.pages as Page[] };
+    }
+    // Case 2: Flat book object containing pages array { ...bookProps, pages: Page[] }
+    if (Array.isArray(raw.pages)) {
+      const { pages, ...bookProps } = raw;
+      return {
+        book: bookProps as Book,
+        pages: pages as Page[],
+      };
+    }
+    // Case 3: Book object present but pages missing
+    if (raw.book) {
+      return { book: raw.book as Book, pages: [] };
+    }
+    // Case 4: Standalone book object
+    return { book: raw as Book, pages: [] };
   },
+
 
 
   async deleteBook(id: string): Promise<void> {
