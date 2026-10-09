@@ -1,8 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { Repository } from '../server/repository.js';
 import { analyzeDevanagariText } from '../server/devanagariSafety.js';
 
 describe('Verification Integrity & State Machine Audit (Section 1, 5, 6, 7)', () => {
+  const createdBookIds: string[] = [];
+
+  afterAll(() => {
+    for (const id of createdBookIds) {
+      Repository.deleteBook(id);
+    }
+  });
+
   it('enforces that OCR does not populate verified_text prematurely', () => {
     const book = Repository.createBook({
       title: 'अथर्वशीर्ष परीक्षण',
@@ -15,6 +23,7 @@ describe('Verification Integrity & State Machine Audit (Section 1, 5, 6, 7)', ()
       original_filename: 'atharva.png',
       original_file_path: '/path/atharva.png',
     });
+    createdBookIds.push(book.id);
 
     const page = Repository.createPage({
       book_id: book.id,
@@ -48,6 +57,7 @@ describe('Verification Integrity & State Machine Audit (Section 1, 5, 6, 7)', ()
       original_filename: 'p1.png',
       original_file_path: '/p1.png',
     });
+    createdBookIds.push(book.id);
 
     const page = Repository.createPage({
       book_id: book.id,
@@ -106,6 +116,7 @@ describe('Verification Integrity & State Machine Audit (Section 1, 5, 6, 7)', ()
       original_filename: 'rev.png',
       original_file_path: '/rev.png',
     });
+    createdBookIds.push(book.id);
 
     const page = Repository.createPage({
       book_id: book.id,

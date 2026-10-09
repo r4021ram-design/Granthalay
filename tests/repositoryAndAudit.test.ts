@@ -1,7 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { Repository } from '../server/repository.js';
 
 describe('Repository, Audit Logs & Non-Destructive Revision Tracking (Section 24 & Section 47)', () => {
+  const createdBookIds: string[] = [];
+
+  afterAll(() => {
+    for (const id of createdBookIds) {
+      Repository.deleteBook(id);
+    }
+  });
+
   it('creates book and preserves immutable metadata', () => {
     const book = Repository.createBook({
       title: 'अथर्वशीर्ष परीक्षण ग्रन्थ',
@@ -14,6 +22,7 @@ describe('Repository, Audit Logs & Non-Destructive Revision Tracking (Section 24
       original_filename: 'test.png',
       original_file_path: '/storage/uploads/test.png',
     });
+    createdBookIds.push(book.id);
 
     expect(book.id).toBeDefined();
     expect(book.title).toBe('अथर्वशीर्ष परीक्षण ग्रन्थ');
@@ -35,6 +44,7 @@ describe('Repository, Audit Logs & Non-Destructive Revision Tracking (Section 24
       original_filename: 'sample.png',
       original_file_path: '/path/to/sample.png',
     });
+    createdBookIds.push(book.id);
 
     const page = Repository.createPage({
       book_id: book.id,

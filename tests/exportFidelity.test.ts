@@ -60,6 +60,8 @@ describe('Export Fidelity & Unicode Preservation Audit (Section 11 & Section 17)
     } catch (err: any) {
       console.error('PDF Export FAILED:', err.message);
       throw err;
+    } finally {
+      Repository.deleteBook(book.id);
     }
   });
 });

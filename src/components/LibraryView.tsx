@@ -29,6 +29,7 @@ import {
   ScriptureItem,
   StotraGenreId,
   classifyStotraGenre,
+  getBookDarshan,
 } from '../data/darshanTaxonomy.js';
 import { DeitySvgIcon } from './DeitySvgIcons.js';
 
@@ -593,36 +594,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       if (isTestBook) return false;
 
       // Filter by active Darshan
-      if (activeDarshan === 'pujavidhi') {
-        const isPuja =
-          b.title.includes('पूजा') ||
-          b.title.includes('पद्धति') ||
-          b.title.includes('वास्तु') ||
-          b.title.includes('विधान') ||
-          b.title.includes('रुद्राष्टाध्यायी') ||
-          b.title.includes('सप्तशती') ||
-          b.title.includes('चण्डी');
-        if (!isPuja) return false;
-      } else if (activeDarshan === 'tantra') {
-        const isTantra =
-          b.title.includes('तन्त्र') ||
-          b.title.includes('तंत्र') ||
-          b.title.includes('विद्यार्णव') ||
-          b.title.includes('शाक्त') ||
-          b.title.includes('श्रीविद्या') ||
-          b.title.includes('सप्तशती') ||
-          b.title.includes('कुञ्जिका');
-        if (!isTantra) return false;
-      } else if (activeDarshan === 'veda-purana') {
-        const isVedaPurana =
-          b.title.includes('गीता') ||
-          b.title.includes('उपनिषद्') ||
-          b.title.includes('संहिता') ||
-          b.title.includes('पुराण') ||
-          b.title.includes('सहस्रनाम') ||
-          b.title.includes('सप्तशती') ||
-          b.title.includes('चण्डी');
-        if (!isVedaPurana) return false;
+      if (activeDarshan !== 'all') {
+        const bookDarshan = getBookDarshan(b.id, b.title);
+        if (bookDarshan !== activeDarshan) return false;
       }
 
       const matchSearch =
@@ -648,7 +622,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* 1. Canonical 4 Darshans Toolbar with Dropdown Buttons */}
       <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-neutral-800 relative z-30">
-        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-1 max-w-full -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto sm:overflow-visible no-scrollbar py-1 max-w-full -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
           {CANONICAL_DARSHANS.map((d) => {
             const isSelected = activeDarshan === d.id;
             const isDropdownOpen = openDropdown === d.id;
@@ -719,8 +693,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className={`fixed inset-x-3 bottom-18 sm:bottom-auto sm:inset-x-auto sm:top-full mt-2 w-auto sm:w-84 max-h-[75vh] overflow-y-auto bg-[#140C07] border border-amber-600/70 rounded-2xl shadow-2xl p-2 z-50 divide-y divide-neutral-900/80 animate-in fade-in zoom-in-95 duration-150 ${
-                        d.id === 'veda-purana' ? 'sm:right-0' : 'sm:left-0'
+                      className={`absolute top-full mt-2 w-72 sm:w-84 max-h-[75vh] overflow-y-auto bg-[#140C07] border border-amber-600/70 rounded-2xl shadow-2xl p-2 z-50 divide-y divide-neutral-900/80 animate-in fade-in zoom-in-95 duration-150 ${
+                        d.id === 'veda-purana' ? 'right-0' : 'left-0'
                       }`}
                     >
                     {/* Stotra Darshan Dropdown */}

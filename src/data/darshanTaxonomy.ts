@@ -402,3 +402,70 @@ export function findStotraById(id: string | number): ScriptureItem | undefined {
   const all = getAllStotrasForDarshan();
   return all.find((s) => String(s.id) === String(id));
 }
+
+/**
+ * Deterministically maps any book to its canonical Darshan.
+ * Solves cross-Darshan leakage (e.g. Siddha Kunjika leaking into Pujavidhi).
+ */
+export function getBookDarshan(bookId: string, bookTitle: string = ''): DarshanId {
+  const id = (bookId || '').toLowerCase();
+  const title = (bookTitle || '').toLowerCase();
+
+  // 1. Pujavidhi Darshan (Puja paddhatis & karmakanda)
+  if (
+    id.includes('pujan') ||
+    id.includes('paddhati') ||
+    id.includes('vastu') ||
+    id.includes('grahashanti') ||
+    id.includes('sarva-deva-mantra') ||
+    id.includes('shivarchan') ||
+    title.includes('पूजा पद्धति') ||
+    title.includes('पूजन पद्धति') ||
+    title.includes('वास्तु') ||
+    title.includes('मार्गदर्शन एवं विधि') ||
+    title.includes('ग्रहशान्ति पद्धति') ||
+    title.includes('मन्त्र सङ्ग्रह')
+  ) {
+    return 'pujavidhi';
+  }
+
+  // 2. Tantra Darshan (Agama, Mahavidya, Shakta Tantra)
+  if (
+    id === 'granth-durgasaptashati' ||
+    id === 'granth-durga-saptashati' ||
+    id === 'granth-saundarya-lahari' ||
+    id === 'granth-durga-saptashloki' ||
+    id === 'granth-chandika-stotram' ||
+    title.includes('सिद्ध कुञ्जिका') ||
+    title.includes('तन्त्र') ||
+    title.includes('विद्यार्णव')
+  ) {
+    return 'tantra';
+  }
+
+  // 3. Veda-Purana Darshan (Shruti, Samhita, Upanishads, Gita, Itihasa)
+  if (
+    id === 'granth-bhagavad-gita' ||
+    id === 'granth-rudri' ||
+    id === 'granth-purushasuktam' ||
+    id === 'granth-shrisuktam' ||
+    id === 'granth-sri-suktam' ||
+    id === 'granth-atharvashirsha' ||
+    id === 'granth-vishnu-sahasranama-gita-press' ||
+    id === 'granth-bhashaparichchheda' ||
+    title.includes('भगवद्गीता') ||
+    title.includes('रुद्राष्टाध्यायी') ||
+    title.includes('पुरुषसूक्तम्') ||
+    title.includes('अथर्वशीर्ष') ||
+    title.includes('भाषापरिच्छेद') ||
+    title.includes('उपनिषद्') ||
+    title.includes('संहिता') ||
+    title.includes('महाभारत')
+  ) {
+    return 'veda-purana';
+  }
+
+  // 4. Default: Stotra Darshan
+  return 'stotra';
+}
+
