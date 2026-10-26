@@ -190,6 +190,17 @@ export const ShlokaMeaningPopover: React.FC<ShlokaMeaningPopoverProps> = ({
                 </div>
               </div>
 
+              {data.detailedExplanationHindi && (
+                <div className="pt-1">
+                  <h4 className="text-xs uppercase tracking-wider font-bold text-rose-300/90 mb-1.5 flex items-center gap-1.5">
+                    <span>🕉️</span> विशद वेदान्त व्याख्या एवं तत्त्व-रहस्य
+                  </h4>
+                  <div className="p-3.5 bg-[#161210] border-l-2 border-[#8C2D19] rounded-r-lg text-stone-200 font-sans text-xs sm:text-sm leading-relaxed whitespace-pre-line space-y-2 border-y border-r border-stone-800/80">
+                    {data.detailedExplanationHindi}
+                  </div>
+                </div>
+              )}
+
               {data.dandanvaya && (
                 <div>
                   <h4 className="text-xs uppercase tracking-wider font-bold text-stone-400 mb-1 flex items-center gap-1.5">

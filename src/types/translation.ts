@@ -36,11 +36,12 @@ export interface ShlokaLinguisticData {
   shlokaNumber: number;
   shlokaText: string;
   hindiMeaning: string;     // १. सरल भावार्थ
-  dandanvaya: string;       // २. दण्डान्वय (गद्य क्रम)
-  khandanvaya?: { question: string; answer: string }[]; // ३. खण्डान्वय (आकांक्षा पद्धति)
-  padaccheda: string;       // ४. पदच्छेद
-  samasaList: SamasaEntry[];// ५. समास-विग्रह सूची
-  padaList: PadaAnalysisEntry[]; // ६. सुबन्त/तिङन्त पद-परिचय
-  chhandas?: ChhandasLinguisticInfo; // ७. छन्द व मात्रा विश्लेषण
+  detailedExplanationHindi?: string; // २. विशद दार्शनिक/वेदान्तिक व्याख्या
+  dandanvaya: string;       // ३. दण्डान्वय (गद्य क्रम)
+  khandanvaya?: { question: string; answer: string }[]; // ४. खण्डान्वय (आकांक्षा पद्धति)
+  padaccheda: string;       // ५. पदच्छेद
+  samasaList: SamasaEntry[];// ६. समास-विग्रह सूची
+  padaList: PadaAnalysisEntry[]; // ७. सुबन्त/तिङन्त पद-परिचय
+  chhandas?: ChhandasLinguisticInfo; // ८. छन्द व मात्रा विश्लेषण
   sourceReference?: string; // ग्रन्थ/पुराण सन्दर्भ
 }
